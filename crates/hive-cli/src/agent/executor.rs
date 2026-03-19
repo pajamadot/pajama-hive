@@ -1,6 +1,5 @@
 use anyhow::Result;
-use crate::pty::PtySession;
-use crate::ws::{WsClient, WsMessage};
+use crate::ws::WsClient;
 
 pub struct TaskAssignment {
     pub task_id: String,

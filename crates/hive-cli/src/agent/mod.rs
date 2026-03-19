@@ -1,4 +1,4 @@
-mod executor;
+pub mod executor;
 mod cc;
 mod cx;
 mod generic;

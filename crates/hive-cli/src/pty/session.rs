@@ -1,7 +1,6 @@
 use anyhow::Result;
 use portable_pty::{native_pty_system, CommandBuilder, PtySize};
 use std::io::{BufRead, BufReader, Write};
-use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc;
 
 pub struct PtySession {
