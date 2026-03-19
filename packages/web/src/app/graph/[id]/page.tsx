@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useAuth, UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
@@ -102,7 +102,7 @@ export default function GraphEditorPage() {
     }
   }, []);
 
-  useWebSocket({ url: `/v1/graphs/${graphId}/ws`, token, onMessage: handleWsMessage });
+  const { status: wsStatus } = useWebSocket({ url: `/v1/graphs/${graphId}/ws`, token, onMessage: handleWsMessage });
 
   const handleNewNode = useCallback(async (type: TaskType, position: { x: number; y: number }) => {
     if (!token) return;
@@ -129,6 +129,22 @@ export default function GraphEditorPage() {
       alert(err instanceof Error ? err.message : 'Failed to create edge — may cause a cycle');
     }
   }, [token, graphId]);
+
+  // Debounced position save — avoids spamming API during drag
+  const positionSaveTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const handleNodeDragStop = useCallback((nodeId: string, position: { x: number; y: number }) => {
+    if (!token) return;
+    const existing = positionSaveTimers.current.get(nodeId);
+    if (existing) clearTimeout(existing);
+    positionSaveTimers.current.set(nodeId, setTimeout(async () => {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'https://hive-api.pajamadot.com'}/v1/tasks/${nodeId}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ positionX: position.x, positionY: position.y }),
+      });
+      positionSaveTimers.current.delete(nodeId);
+    }, 500));
+  }, [token]);
 
   const handleUpdateTask = useCallback(async (taskId: string, updates: Record<string, unknown>) => {
     if (!token) return;
@@ -186,6 +202,22 @@ export default function GraphEditorPage() {
           graphStatus === 'failed' ? 'bg-red-500/20 text-red-400' :
           'bg-muted text-muted-foreground'
         }`}>{graphStatus}</span>
+        {/* WS connection indicator */}
+        <span className={`flex items-center gap-1.5 text-xs ${
+          wsStatus === 'connected' ? 'text-green-400' :
+          wsStatus === 'reconnecting' ? 'text-yellow-400' :
+          wsStatus === 'connecting' ? 'text-blue-400' :
+          'text-red-400'
+        }`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${
+            wsStatus === 'connected' ? 'bg-green-400' :
+            wsStatus === 'reconnecting' ? 'bg-yellow-400 animate-pulse' :
+            wsStatus === 'connecting' ? 'bg-blue-400 animate-pulse' :
+            'bg-red-400'
+          }`} />
+          {wsStatus === 'connected' ? 'Live' : wsStatus}
+        </span>
+
         <div className="flex-1" />
 
         {hasPlanTasks && (
@@ -229,6 +261,7 @@ export default function GraphEditorPage() {
             onNodeClick={(id) => store.setSelectedNode(id)}
             onNewNode={handleNewNode}
             onNewEdge={handleNewEdge}
+            onNodeDragStop={handleNodeDragStop}
           />
           <LogTerminal logs={logs} />
         </div>

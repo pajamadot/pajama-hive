@@ -31,6 +31,7 @@ interface DagCanvasProps {
   onNodeClick?: (nodeId: string) => void;
   onNewNode?: (type: TaskType, position: { x: number; y: number }) => void;
   onNewEdge?: (fromId: string, toId: string) => void;
+  onNodeDragStop?: (nodeId: string, position: { x: number; y: number }) => void;
 }
 
 export function DagCanvas({
@@ -39,6 +40,7 @@ export function DagCanvas({
   onNodeClick,
   onNewNode,
   onNewEdge,
+  onNodeDragStop,
 }: DagCanvasProps) {
   const [nodes, setNodes, onNodesChangeFn] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChangeFn] = useEdgesState(initialEdges);
@@ -90,6 +92,7 @@ export function DagCanvas({
         onDragOver={onDragOver}
         onDrop={onDrop}
         onNodeClick={(_, node) => onNodeClick?.(node.id)}
+        onNodeDragStop={(_, node) => onNodeDragStop?.(node.id, node.position)}
         nodeTypes={nodeTypes}
         fitView
         snapToGrid

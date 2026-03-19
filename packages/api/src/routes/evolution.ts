@@ -4,6 +4,7 @@ import { eq, desc } from 'drizzle-orm';
 import { createDb } from '../db/client.js';
 import { tasks, graphs, auditLogs } from '../db/schema.js';
 import { clerkAuth } from '../lib/auth.js';
+import { ingestGepCandidates } from '../lib/gep-bridge.js';
 import type { Env } from '../types/index.js';
 
 type HonoEnv = { Bindings: Env; Variables: { userId: string } };
@@ -136,5 +137,34 @@ After completing, output a JSON summary:
   "summary": "<what you changed and why>"
 }`;
 }
+
+/**
+ * Ingest GEP candidates from evolver into Hive DAG tasks.
+ * POST body: { candidates: [...], genes: [...] }
+ */
+app.post('/gep/ingest', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const body = await c.req.json() as {
+    candidates: unknown[];
+    genes: unknown[];
+  };
+
+  if (!body.candidates?.length) {
+    return c.json({ error: 'No candidates provided' }, 400);
+  }
+
+  try {
+    const result = await ingestGepCandidates(
+      db,
+      body.candidates as Parameters<typeof ingestGepCandidates>[1],
+      (body.genes ?? []) as Parameters<typeof ingestGepCandidates>[2],
+      userId,
+    );
+    return c.json(result, 201);
+  } catch (err) {
+    return c.json({ error: err instanceof Error ? err.message : 'Ingestion failed' }, 400);
+  }
+});
 
 export default app;
