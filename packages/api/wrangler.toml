@@ -20,10 +20,18 @@ class_name = "WsRoom"
 name = "ORCHESTRATOR"
 class_name = "Orchestrator"
 
+[[durable_objects.bindings]]
+name = "META_OBSERVER"
+class_name = "MetaObserverDO"
+
 # Migrations for Durable Objects
 [[migrations]]
 tag = "v1"
 new_classes = ["WsRoom", "Orchestrator"]
+
+[[migrations]]
+tag = "v2"
+new_classes = ["MetaObserverDO"]
 
 [vars]
 ENVIRONMENT = "development"

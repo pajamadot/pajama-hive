@@ -138,3 +138,48 @@ export const createEdgeSchema = z.object({
   fromTaskId: z.string().min(1),
   toTaskId: z.string().min(1),
 });
+
+// ── Meta-Thinking Schemas ──
+
+export const metaEventKindSchema = z.enum([
+  'observation', 'reflection', 'suggestion', 'anomaly', 'milestone', 'retrospective',
+]);
+export const metaSeveritySchema = z.enum(['info', 'warning', 'critical']);
+export const metaDomainSchema = z.enum([
+  'scheduling', 'execution', 'planning', 'reliability', 'evolution', 'architecture',
+]);
+
+export const metaEventSchema = z.object({
+  id: z.string().min(1),
+  kind: metaEventKindSchema,
+  severity: metaSeveritySchema,
+  domain: metaDomainSchema,
+  title: z.string().min(1),
+  body: z.string(),
+  evidence: z.record(z.unknown()),
+  suggestions: z.array(z.string()).optional(),
+  relatedGraphId: z.string().optional(),
+  relatedRunId: z.string().optional(),
+  relatedTaskIds: z.array(z.string()).optional(),
+  createdAt: z.string().datetime(),
+});
+
+export const runRetrospectiveSchema = z.object({
+  runId: z.string().min(1),
+  graphId: z.string().min(1),
+  summary: z.string(),
+  duration: z.number(),
+  tasksTotal: z.number().int(),
+  tasksSucceeded: z.number().int(),
+  tasksFailed: z.number().int(),
+  tasksRetried: z.number().int(),
+  criticalPathTasks: z.array(z.string()),
+  bottleneckTasks: z.array(z.object({
+    taskId: z.string(),
+    waitTimeMs: z.number(),
+  })),
+  observations: z.array(z.string()),
+  lessonsLearned: z.array(z.string()),
+  suggestedImprovements: z.array(z.string()),
+  createdAt: z.string().datetime(),
+});

@@ -106,6 +106,18 @@ export class Orchestrator extends DurableObject<Env> {
       // Broadcast completion
       await this.broadcast('graph.update', { graphId, status: finalStatus });
 
+      // Trigger retrospective via MetaObserver
+      try {
+        const metaId = this.env.META_OBSERVER.idFromName('global');
+        const metaDo = this.env.META_OBSERVER.get(metaId);
+        await metaDo.fetch(new Request('http://internal/run-completed', {
+          method: 'POST',
+          body: JSON.stringify({ runId, graphId }),
+        }));
+      } catch (err) {
+        console.error('Failed to trigger retrospective:', err);
+      }
+
       this.graphId = null;
       this.runId = null;
       await this.ctx.storage.delete('graphId');

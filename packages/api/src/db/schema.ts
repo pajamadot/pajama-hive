@@ -93,3 +93,67 @@ export const auditLogs = pgTable('audit_logs', {
   index('audit_task_idx').on(t.taskId),
   index('audit_worker_idx').on(t.workerId),
 ]);
+
+// ── Meta-Thinking Tables ──
+
+export const metaEvents = pgTable('meta_events', {
+  id: text('id').primaryKey(),
+  kind: text('kind').notNull(),        // observation, reflection, suggestion, anomaly, milestone, retrospective
+  severity: text('severity').notNull(), // info, warning, critical
+  domain: text('domain').notNull(),     // scheduling, execution, planning, reliability, evolution, architecture
+  title: text('title').notNull(),
+  body: text('body').notNull(),
+  evidence: jsonb('evidence'),
+  suggestions: text('suggestions').array(),
+  relatedGraphId: text('related_graph_id'),
+  relatedRunId: text('related_run_id'),
+  relatedTaskIds: text('related_task_ids').array(),
+  resolved: text('resolved').default('false'), // 'true' | 'false' | 'wontfix'
+  resolvedBy: text('resolved_by'),             // user or system
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+  index('meta_events_kind_idx').on(t.kind, t.createdAt),
+  index('meta_events_severity_idx').on(t.severity, t.createdAt),
+  index('meta_events_domain_idx').on(t.domain),
+  index('meta_events_graph_idx').on(t.relatedGraphId),
+]);
+
+export const runRetrospectives = pgTable('run_retrospectives', {
+  id: text('id').primaryKey(),
+  runId: text('run_id').notNull().references(() => runs.id),
+  graphId: text('graph_id').notNull().references(() => graphs.id),
+  summary: text('summary').notNull(),
+  durationMs: integer('duration_ms').notNull(),
+  tasksTotal: integer('tasks_total').notNull(),
+  tasksSucceeded: integer('tasks_succeeded').notNull(),
+  tasksFailed: integer('tasks_failed').notNull(),
+  tasksRetried: integer('tasks_retried').notNull(),
+  criticalPathTasks: text('critical_path_tasks').array(),
+  bottleneckTasks: jsonb('bottleneck_tasks'),    // {taskId, waitTimeMs}[]
+  observations: text('observations').array(),
+  lessonsLearned: text('lessons_learned').array(),
+  suggestedImprovements: text('suggested_improvements').array(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+  index('retro_run_idx').on(t.runId),
+  index('retro_graph_idx').on(t.graphId),
+]);
+
+export const systemSnapshots = pgTable('system_snapshots', {
+  id: text('id').primaryKey(),
+  overallHealth: text('overall_health').notNull(),  // healthy, degraded, critical
+  scoreScheduling: integer('score_scheduling').notNull(),
+  scoreExecution: integer('score_execution').notNull(),
+  scoreReliability: integer('score_reliability').notNull(),
+  scorePlanning: integer('score_planning').notNull(),
+  scoreEvolution: integer('score_evolution').notNull(),
+  activeWorkers: integer('active_workers').notNull(),
+  activeRuns: integer('active_runs').notNull(),
+  taskSuccessRate: real('task_success_rate').notNull(),
+  avgTaskDurationMs: real('avg_task_duration_ms').notNull(),
+  planAcceptanceRate: real('plan_acceptance_rate').notNull(),
+  selfImprovePrsMerged: integer('self_improve_prs_merged').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+  index('snapshot_created_idx').on(t.createdAt),
+]);

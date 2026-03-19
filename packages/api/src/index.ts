@@ -6,23 +6,33 @@ import tasksRouter from './routes/tasks.js';
 import runsRouter from './routes/runs.js';
 import workersRouter from './routes/workers.js';
 import auditRouter from './routes/audit.js';
+import metaRouter from './routes/meta.js';
+import plansRouter from './routes/plans.js';
+import evolutionRouter from './routes/evolution.js';
+import { standardRateLimit } from './lib/rate-limiter.js';
+import { maxPayloadSize, requestId, securityHeaders } from './lib/validation.js';
 import type { Env } from './types/index.js';
 
 export { WsRoom } from './durable-objects/ws-room.js';
 export { Orchestrator } from './durable-objects/orchestrator.js';
+export { MetaObserverDO } from './durable-objects/meta-observer-do.js';
 
 type HonoEnv = { Bindings: Env; Variables: { userId: string; claims: Record<string, unknown> } };
 
 const app = new Hono<HonoEnv>();
 
-// Middleware
+// Global middleware stack
+app.use('/*', requestId());
+app.use('/*', securityHeaders());
 app.use('/*', cors({
   origin: ['https://hive.pajamadot.com', 'http://localhost:3000'],
   allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization'],
+  allowHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
   credentials: true,
 }));
 app.use('/*', logger());
+app.use('/*', maxPayloadSize(2_097_152)); // 2MB max
+app.use('/v1/*', standardRateLimit);
 
 // Health check
 app.get('/', (c) => c.json({
@@ -37,6 +47,9 @@ app.route('/v1', tasksRouter);
 app.route('/v1', runsRouter);
 app.route('/v1/workers', workersRouter);
 app.route('/v1/audit', auditRouter);
+app.route('/v1/meta', metaRouter);
+app.route('/v1', plansRouter);
+app.route('/v1', evolutionRouter);
 
 // WebSocket upgrade endpoint — delegates to WsRoom Durable Object
 app.get('/v1/ws', async (c) => {

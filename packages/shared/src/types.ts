@@ -137,3 +137,73 @@ export interface PlanOutput {
   assumptions: string[];
   risks: string[];
 }
+
+// ── Meta-Thinking & Observability Types ──
+
+export type MetaEventKind =
+  | 'observation'     // Something noticed about system behavior
+  | 'reflection'      // Analysis of past performance
+  | 'suggestion'      // Actionable improvement proposal
+  | 'anomaly'         // Something unexpected detected
+  | 'milestone'       // A significant achievement or state change
+  | 'retrospective';  // Structured look-back at a completed run
+
+export type MetaSeverity = 'info' | 'warning' | 'critical';
+
+export type MetaDomain =
+  | 'scheduling'      // Task scheduling efficiency
+  | 'execution'       // Task execution quality
+  | 'planning'        // Plan generation quality
+  | 'reliability'     // System uptime, error rates
+  | 'evolution'       // Self-improvement activity
+  | 'architecture';   // Structural observations
+
+export interface MetaEvent {
+  id: string;
+  kind: MetaEventKind;
+  severity: MetaSeverity;
+  domain: MetaDomain;
+  title: string;
+  body: string;
+  evidence: Record<string, unknown>;  // Supporting data
+  suggestions?: string[];             // Actionable next steps
+  relatedGraphId?: string;
+  relatedRunId?: string;
+  relatedTaskIds?: string[];
+  createdAt: string;
+}
+
+export interface SystemHealth {
+  overall: 'healthy' | 'degraded' | 'critical';
+  scores: {
+    scheduling: number;   // 0-100
+    execution: number;
+    reliability: number;
+    planning: number;
+    evolution: number;
+  };
+  activeWorkers: number;
+  activeRuns: number;
+  taskSuccessRate: number;      // last 24h
+  avgTaskDurationMs: number;    // last 24h
+  planAcceptanceRate: number;   // % of plans approved
+  selfImprovePRsMerged: number; // total
+  lastUpdated: string;
+}
+
+export interface RunRetrospective {
+  runId: string;
+  graphId: string;
+  summary: string;
+  duration: number;
+  tasksTotal: number;
+  tasksSucceeded: number;
+  tasksFailed: number;
+  tasksRetried: number;
+  criticalPathTasks: string[];
+  bottleneckTasks: { taskId: string; waitTimeMs: number }[];
+  observations: string[];
+  lessonsLearned: string[];
+  suggestedImprovements: string[];
+  createdAt: string;
+}

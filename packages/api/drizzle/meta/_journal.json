@@ -8,6 +8,13 @@
       "when": 1773956258884,
       "tag": "0000_magical_william_stryker",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773957923040,
+      "tag": "0001_military_gideon",
+      "breakpoints": true
     }
   ]
 }

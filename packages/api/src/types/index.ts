@@ -5,6 +5,7 @@ export interface Env {
   // Durable Object bindings
   WS_ROOM: DurableObjectNamespace;
   ORCHESTRATOR: DurableObjectNamespace;
+  META_OBSERVER: DurableObjectNamespace;
 
   // Secrets
   CLERK_SECRET_KEY: string;
