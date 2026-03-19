@@ -3,14 +3,13 @@ main = "src/index.ts"
 compatibility_date = "2025-03-19"
 compatibility_flags = ["nodejs_compat"]
 
-# Custom domain: hive-api.pajamadot.com
-# routes = [{ pattern = "hive-api.pajamadot.com", custom_domain = true }]
+# Custom domain
+routes = [{ pattern = "hive-api.pajamadot.com", custom_domain = true }]
 
 # Hyperdrive binding for Neon Postgres
-# Create with: wrangler hyperdrive create hive-db --connection-string="<neon-url>"
-# [[hyperdrive]]
-# binding = "HYPERDRIVE"
-# id = "<hyperdrive-config-id>"
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "a2e07a49147448029c5ba139fcf5e890"
 
 # Durable Objects
 [[durable_objects.bindings]]
