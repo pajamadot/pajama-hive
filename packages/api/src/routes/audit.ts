@@ -17,15 +17,16 @@ app.get('/', async (c) => {
   const taskId = c.req.query('taskId');
   const limit = Math.min(parseInt(c.req.query('limit') ?? '50'), 200);
 
-  let query = db.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(limit);
+  const where = graphId
+    ? eq(auditLogs.graphId, graphId)
+    : taskId
+      ? eq(auditLogs.taskId, taskId)
+      : undefined;
 
-  if (graphId) {
-    query = db.select().from(auditLogs).where(eq(auditLogs.graphId, graphId)).orderBy(desc(auditLogs.createdAt)).limit(limit);
-  } else if (taskId) {
-    query = db.select().from(auditLogs).where(eq(auditLogs.taskId, taskId)).orderBy(desc(auditLogs.createdAt)).limit(limit);
-  }
+  const result = where
+    ? await db.select().from(auditLogs).where(where).orderBy(desc(auditLogs.createdAt)).limit(limit)
+    : await db.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(limit);
 
-  const result = await query;
   return c.json({ auditLogs: result });
 });
 

@@ -43,7 +43,7 @@ export function DagCanvas({
   const [nodes, setNodes, onNodesChangeFn] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChangeFn] = useEdgesState(initialEdges);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const rfInstance = useRef<ReactFlowInstance | null>(null);
+  const rfInstance = useRef<ReactFlowInstance<Node<TaskNodeData>, Edge> | null>(null);
 
   const onConnect: OnConnect = useCallback(
     (params) => {
