@@ -11,6 +11,7 @@ import { LogTerminal } from '@/components/terminal/LogTerminal';
 import { WorkerList } from '@/components/workers/WorkerList';
 import { useGraphStore, type TaskNodeData } from '@/stores/graph-store';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { getLayoutedElements } from '@/lib/layout';
 import { api } from '@/lib/api';
 import type { WsMessage, TaskType, GraphUpdatePayload, TaskLogPayload, WorkerStatusPayload } from '@pajamadot/hive-shared';
 import type { Node, Edge } from '@xyflow/react';
@@ -20,20 +21,18 @@ export default function GraphEditorPage() {
   const graphId = params.id as string;
   const { getToken } = useAuth();
 
-  const { nodes, edges, workers, selectedNodeId, setNodes, setEdges, updateNodeStatus, setSelectedNode, updateWorkerStatus } = useGraphStore();
+  const store = useGraphStore();
   const [logs, setLogs] = useState<string[]>([]);
   const [token, setToken] = useState<string | null>(null);
   const [graphName, setGraphName] = useState('');
+  const [graphStatus, setGraphStatus] = useState('draft');
+  const [showWorkers, setShowWorkers] = useState(false);
 
-  // Load token
-  useEffect(() => {
-    getToken().then(setToken);
-  }, [getToken]);
+  useEffect(() => { getToken().then(setToken); }, [getToken]);
 
   // Load graph data
   useEffect(() => {
     if (!token) return;
-
     async function load() {
       const [graphRes, tasksRes, edgesRes] = await Promise.all([
         api.getGraph(token!, graphId),
@@ -42,6 +41,7 @@ export default function GraphEditorPage() {
       ]);
 
       setGraphName(graphRes.graph.name);
+      setGraphStatus(graphRes.graph.status);
 
       const flowNodes: Node<TaskNodeData>[] = tasksRes.tasks.map((t: Record<string, unknown>) => ({
         id: t.id as string,
@@ -50,8 +50,8 @@ export default function GraphEditorPage() {
         data: {
           title: t.title as string,
           type: t.type as TaskType,
-          status: t.status as TaskNodeData['status'],
-          agentKind: t.agentKind as TaskNodeData['agentKind'],
+          status: (t.status as TaskNodeData['status']),
+          agentKind: (t.agentKind as TaskNodeData['agentKind']),
           input: (t.input as string) ?? '',
           outputSummary: t.outputSummary as string | undefined,
           assignedWorkerId: t.assignedWorkerId as string | undefined,
@@ -65,41 +65,44 @@ export default function GraphEditorPage() {
         target: e.toTaskId as string,
       }));
 
-      setNodes(flowNodes);
-      setEdges(flowEdges);
+      // Auto-layout if nodes don't have positions
+      const needsLayout = flowNodes.every((n) => n.position.x === 0 && n.position.y === 0);
+      if (needsLayout && flowNodes.length > 0) {
+        const { nodes: laid, edges: laidEdges } = getLayoutedElements(flowNodes, flowEdges);
+        store.setNodes(laid);
+        store.setEdges(laidEdges);
+      } else {
+        store.setNodes(flowNodes);
+        store.setEdges(flowEdges);
+      }
     }
-
     load();
-  }, [token, graphId, setNodes, setEdges]);
+  }, [token, graphId]);
 
-  // WebSocket for live updates
+  // WebSocket
   const handleWsMessage = useCallback((message: WsMessage) => {
     switch (message.type) {
       case 'graph.update': {
         const payload = message.payload as GraphUpdatePayload;
         for (const t of payload.tasks) {
-          updateNodeStatus(t.taskId, t.status, t.assignedWorkerId);
+          store.updateNodeStatus(t.taskId, t.status, t.assignedWorkerId);
         }
         break;
       }
       case 'task.log': {
         const payload = message.payload as TaskLogPayload;
-        setLogs((prev) => [...prev, payload.chunk]);
+        setLogs((prev) => [...prev.slice(-500), payload.chunk]);
         break;
       }
       case 'worker.status': {
         const payload = message.payload as WorkerStatusPayload;
-        updateWorkerStatus(payload.workerId, payload.status, payload.currentTaskId);
+        store.updateWorkerStatus(payload.workerId, payload.status, payload.currentTaskId);
         break;
       }
     }
-  }, [updateNodeStatus, updateWorkerStatus]);
+  }, []);
 
-  useWebSocket({
-    url: `/v1/graphs/${graphId}/ws`,
-    token,
-    onMessage: handleWsMessage,
-  });
+  useWebSocket({ url: `/v1/graphs/${graphId}/ws`, token, onMessage: handleWsMessage });
 
   const handleNewNode = useCallback(async (type: TaskType, position: { x: number; y: number }) => {
     if (!token) return;
@@ -110,20 +113,12 @@ export default function GraphEditorPage() {
       positionY: position.y,
     });
     const t = res.task;
-    const node: Node<TaskNodeData> = {
+    store.addNode({
       id: t.id,
       type: 'task',
       position,
-      data: {
-        title: t.title,
-        type: t.type,
-        status: t.status,
-        agentKind: t.agentKind,
-        input: t.input ?? '',
-        priority: t.priority,
-      },
-    };
-    useGraphStore.getState().addNode(node);
+      data: { title: t.title, type: t.type, status: t.status, agentKind: t.agentKind, input: t.input ?? '', priority: t.priority },
+    });
   }, [token, graphId]);
 
   const handleNewEdge = useCallback(async (fromId: string, toId: string) => {
@@ -131,71 +126,130 @@ export default function GraphEditorPage() {
     try {
       await api.createEdge(token, graphId, { fromTaskId: fromId, toTaskId: toId });
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to create edge');
+      alert(err instanceof Error ? err.message : 'Failed to create edge — may cause a cycle');
     }
   }, [token, graphId]);
+
+  const handleUpdateTask = useCallback(async (taskId: string, updates: Record<string, unknown>) => {
+    if (!token) return;
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'https://hive-api.pajamadot.com'}/v1/tasks/${taskId}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    if (res.ok) {
+      const { task: updated } = await res.json();
+      store.setNodes(store.nodes.map((n) =>
+        n.id === taskId ? { ...n, data: { ...n.data, ...updates } } : n,
+      ));
+    }
+  }, [token, store.nodes]);
 
   const handleRunGraph = useCallback(async () => {
     if (!token) return;
     await api.createRun(token, graphId);
+    setGraphStatus('running');
   }, [token, graphId]);
 
-  const selectedNode = nodes.find((n) => n.id === selectedNodeId);
+  const handleAutoLayout = useCallback(() => {
+    const { nodes: laid, edges: laidEdges } = getLayoutedElements(store.nodes, store.edges);
+    store.setNodes(laid);
+    store.setEdges(laidEdges);
+  }, [store.nodes, store.edges]);
+
+  const selectedNode = store.nodes.find((n) => n.id === store.selectedNodeId);
+  const hasPlanTasks = store.nodes.some((n) => n.id.startsWith('plan-') && n.data.status === 'pending');
+
+  const handleApprovePlans = useCallback(async () => {
+    if (!token) return;
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'https://hive-api.pajamadot.com'}/v1/graphs/${graphId}/plans/approve`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    // Reload
+    const tasksRes = await api.listTasks(token, graphId);
+    store.setNodes(store.nodes.map((n) => {
+      const updated = tasksRes.tasks.find((t: Record<string, unknown>) => t.id === n.id);
+      return updated ? { ...n, data: { ...n.data, status: updated.status as TaskNodeData['status'] } } : n;
+    }));
+  }, [token, graphId, store.nodes]);
 
   return (
     <div className="h-screen flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border px-4 py-2 flex items-center gap-4 shrink-0">
-        <Link href="/" className="text-muted-foreground hover:text-foreground text-sm">
-          Back
-        </Link>
-        <h1 className="text-lg font-semibold flex-1">{graphName || 'Graph'}</h1>
+      <header className="border-b border-border px-4 py-2 flex items-center gap-3 shrink-0">
+        <Link href="/" className="text-muted-foreground hover:text-foreground text-sm">Back</Link>
+        <h1 className="text-lg font-semibold">{graphName || 'Graph'}</h1>
+        <span className={`text-xs px-2 py-0.5 rounded-full ${
+          graphStatus === 'running' ? 'bg-yellow-500/20 text-yellow-400' :
+          graphStatus === 'completed' ? 'bg-green-500/20 text-green-400' :
+          graphStatus === 'failed' ? 'bg-red-500/20 text-red-400' :
+          'bg-muted text-muted-foreground'
+        }`}>{graphStatus}</span>
+        <div className="flex-1" />
+
+        {hasPlanTasks && (
+          <button
+            onClick={handleApprovePlans}
+            className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs font-medium hover:bg-blue-700"
+          >
+            Approve Plan Tasks
+          </button>
+        )}
+
+        <button
+          onClick={handleAutoLayout}
+          className="px-3 py-1.5 border border-border rounded-md text-xs hover:bg-accent/50"
+        >
+          Auto Layout
+        </button>
+        <button
+          onClick={() => setShowWorkers(!showWorkers)}
+          className="px-3 py-1.5 border border-border rounded-md text-xs hover:bg-accent/50"
+        >
+          Workers ({store.workers.length})
+        </button>
         <button
           onClick={handleRunGraph}
-          className="px-4 py-1.5 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
+          disabled={graphStatus === 'running'}
+          className="px-4 py-1.5 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 disabled:opacity-50"
         >
-          Run
+          {graphStatus === 'running' ? 'Running...' : 'Run'}
         </button>
         <UserButton />
       </header>
 
-      {/* Main layout */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left sidebar: node palette */}
         <NodeSidebar />
 
-        {/* Center: DAG canvas */}
         <div className="flex-1 flex flex-col">
           <DagCanvas
-            initialNodes={nodes}
-            initialEdges={edges}
-            onNodeClick={(id) => setSelectedNode(id)}
+            initialNodes={store.nodes}
+            initialEdges={store.edges}
+            onNodeClick={(id) => store.setSelectedNode(id)}
             onNewNode={handleNewNode}
             onNewEdge={handleNewEdge}
           />
-
-          {/* Bottom: terminal + workers */}
           <LogTerminal logs={logs} />
         </div>
 
-        {/* Right sidebar: node detail */}
         {selectedNode && (
           <NodeDetail
             nodeId={selectedNode.id}
             data={selectedNode.data}
-            onApprove={async (id) => {
-              if (token) await api.approveTask(token, id);
-            }}
-            onCancel={async (id) => {
-              if (token) await api.cancelTask(token, id);
-            }}
-            onClose={() => setSelectedNode(null)}
+            onApprove={async (id) => { if (token) await api.approveTask(token, id); }}
+            onCancel={async (id) => { if (token) await api.cancelTask(token, id); }}
+            onUpdate={handleUpdateTask}
+            onClose={() => store.setSelectedNode(null)}
           />
         )}
-      </div>
 
-      {/* Workers panel at bottom-left */}
-      <WorkerList workers={workers} />
+        {showWorkers && !selectedNode && (
+          <div className="w-64 border-l border-border bg-card overflow-y-auto">
+            <WorkerList workers={store.workers} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

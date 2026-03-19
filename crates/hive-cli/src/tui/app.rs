@@ -28,10 +28,11 @@ pub struct AppState {
     pub logs: Vec<String>,
     pub status_message: String,
     pub should_quit: bool,
+    pub tasks_completed: u32,
+    pub tasks_failed: u32,
 }
 
 pub async fn run_tui(config: TuiConfig) -> Result<()> {
-    // Setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen)?;
@@ -49,11 +50,13 @@ pub async fn run_tui(config: TuiConfig) -> Result<()> {
         logs: vec!["Starting Pajama Hive agent...".to_string()],
         status_message: "Connecting...".to_string(),
         should_quit: false,
+        tasks_completed: 0,
+        tasks_failed: 0,
     };
 
-    // Connect to server
     state.logs.push(format!("Connecting to {}...", config.server_url));
-    let ws = match WsClient::connect(&config.server_url, &config.token).await {
+
+    let mut ws = match WsClient::connect(&config.server_url, &config.token).await {
         Ok(ws) => {
             state.connected = true;
             state.status_message = "Connected".to_string();
@@ -63,54 +66,33 @@ pub async fn run_tui(config: TuiConfig) -> Result<()> {
         Err(e) => {
             state.logs.push(format!("Connection failed: {}", e));
             state.status_message = format!("Error: {}", e);
-
-            // Still show TUI with error
-            loop {
-                terminal.draw(|f| ui::render(f, &state))?;
-                if event::poll(Duration::from_millis(100))? {
-                    if let Event::Key(key) = event::read()? {
-                        if key.kind == KeyEventKind::Press && key.code == KeyCode::Char('q') {
-                            break;
-                        }
-                    }
-                }
-            }
-
+            show_error_tui(&mut terminal, &state).await?;
             disable_raw_mode()?;
             execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
             return Err(e);
         }
     };
 
-    // Register worker
-    ws.register(
-        &worker_id,
-        &config.agent_kinds,
-        &config.capabilities,
-        config.max_concurrency,
-    )
-    .await?;
+    ws.register(&worker_id, &config.agent_kinds, &config.capabilities, config.max_concurrency).await?;
     state.logs.push(format!("Registered as worker {}", worker_id));
 
-    // Request initial task
     ws.pull_task(&worker_id, 1).await?;
+    state.logs.push("Waiting for task assignment...".to_string());
 
-    // Main loop
     let mut heartbeat_interval = interval(Duration::from_secs(30));
-    let mut poll_interval = interval(Duration::from_secs(5));
+    let mut pull_interval = interval(Duration::from_secs(3));
 
     loop {
-        // Render
         terminal.draw(|f| ui::render(f, &state))?;
 
-        // Handle keyboard events
+        // Handle keyboard events (non-blocking)
         if event::poll(Duration::from_millis(50))? {
             if let Event::Key(key) = event::read()? {
                 if key.kind == KeyEventKind::Press {
                     match key.code {
-                        KeyCode::Char('q') => {
-                            state.should_quit = true;
-                            break;
+                        KeyCode::Char('q') => { state.should_quit = true; break; }
+                        KeyCode::Char('c') if key.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) => {
+                            state.should_quit = true; break;
                         }
                         _ => {}
                     }
@@ -118,27 +100,102 @@ pub async fn run_tui(config: TuiConfig) -> Result<()> {
             }
         }
 
-        // Handle heartbeat
-        tokio::select! {
-            _ = heartbeat_interval.tick() => {
-                let _ = ws.heartbeat(&worker_id).await;
+        // Check for incoming WS messages
+        match ws.incoming.try_recv() {
+            Ok(msg) => {
+                match msg.msg_type.as_str() {
+                    "task.assign" => {
+                        if let Some(assignment) = TaskAssignment::from_ws_payload(&msg.payload) {
+                            state.logs.push(format!(
+                                "Task assigned: {} (agent: {})",
+                                assignment.task_id, assignment.agent_kind
+                            ));
+                            state.status_message = format!("Executing: {}", assignment.task_id);
+                            state.current_task = Some(assignment);
+
+                            // Execute the task
+                            let task = state.current_task.as_ref().unwrap();
+                            state.logs.push(format!("Starting {} execution...", task.agent_kind));
+
+                            match TaskExecutor::execute(task, &ws).await {
+                                Ok(()) => {
+                                    state.tasks_completed += 1;
+                                    state.logs.push(format!("Task {} completed", task.task_id));
+                                }
+                                Err(e) => {
+                                    state.tasks_failed += 1;
+                                    state.logs.push(format!("Task {} failed: {}", task.task_id, e));
+                                }
+                            }
+
+                            state.current_task = None;
+                            state.status_message = "Idle — waiting for task".to_string();
+
+                            // Pull next task
+                            let _ = ws.pull_task(&worker_id, 1).await;
+                        }
+                    }
+                    "task.cancel" => {
+                        state.logs.push("Task canceled by server".to_string());
+                        state.current_task = None;
+                        state.status_message = "Idle — task was canceled".to_string();
+                    }
+                    "worker.registered" => {
+                        state.logs.push("Registration confirmed by server".to_string());
+                    }
+                    "error" => {
+                        let err_msg = msg.payload.get("message")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("Unknown error");
+                        state.logs.push(format!("Server error: {}", err_msg));
+                    }
+                    other => {
+                        state.logs.push(format!("Received: {}", other));
+                    }
+                }
             }
-            _ = poll_interval.tick() => {
-                if state.current_task.is_none() {
+            Err(tokio::sync::mpsc::error::TryRecvError::Empty) => {}
+            Err(tokio::sync::mpsc::error::TryRecvError::Disconnected) => {
+                state.connected = false;
+                state.status_message = "Disconnected from server".to_string();
+                state.logs.push("WebSocket connection lost".to_string());
+                break;
+            }
+        }
+
+        // Periodic tasks
+        tokio::select! {
+            biased;
+            _ = heartbeat_interval.tick() => {
+                if state.connected {
+                    let _ = ws.heartbeat(&worker_id).await;
+                }
+            }
+            _ = pull_interval.tick() => {
+                if state.connected && state.current_task.is_none() {
                     let _ = ws.pull_task(&worker_id, 1).await;
                 }
             }
-            else => {}
         }
 
-        if state.should_quit {
-            break;
-        }
+        if state.should_quit { break; }
     }
 
-    // Cleanup
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    Ok(())
+}
 
+async fn show_error_tui(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, state: &AppState) -> Result<()> {
+    loop {
+        terminal.draw(|f| ui::render(f, state))?;
+        if event::poll(Duration::from_millis(100))? {
+            if let Event::Key(key) = event::read()? {
+                if key.kind == KeyEventKind::Press && key.code == KeyCode::Char('q') {
+                    break;
+                }
+            }
+        }
+    }
     Ok(())
 }

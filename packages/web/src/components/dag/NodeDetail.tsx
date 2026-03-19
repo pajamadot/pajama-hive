@@ -1,32 +1,83 @@
 'use client';
 
+import { useState } from 'react';
 import type { TaskNodeData } from '@/stores/graph-store';
+import type { TaskType, AgentKind } from '@pajamadot/hive-shared';
 
 interface NodeDetailProps {
   nodeId: string;
   data: TaskNodeData;
   onApprove?: (taskId: string) => void;
   onCancel?: (taskId: string) => void;
+  onUpdate?: (taskId: string, updates: Record<string, unknown>) => void;
   onClose: () => void;
 }
 
-export function NodeDetail({ nodeId, data, onApprove, onCancel, onClose }: NodeDetailProps) {
+const taskTypes: TaskType[] = ['plan', 'code', 'review', 'test', 'lint', 'docs', 'custom'];
+const agentKinds: AgentKind[] = ['cc', 'cx', 'generic'];
+
+export function NodeDetail({ nodeId, data, onApprove, onCancel, onUpdate, onClose }: NodeDetailProps) {
+  const [editingInput, setEditingInput] = useState(false);
+  const [inputDraft, setInputDraft] = useState(data.input);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(data.title);
+
+  const isEditable = data.status === 'pending' || data.status === 'ready' || data.status === 'draft' as string;
+
+  const handleSaveInput = () => {
+    if (inputDraft !== data.input) {
+      onUpdate?.(nodeId, { input: inputDraft });
+    }
+    setEditingInput(false);
+  };
+
+  const handleSaveTitle = () => {
+    if (titleDraft !== data.title) {
+      onUpdate?.(nodeId, { title: titleDraft });
+    }
+    setEditingTitle(false);
+  };
+
   return (
     <div className="w-80 border-l border-border bg-card p-4 overflow-y-auto">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">{data.title}</h3>
-        <button
-          onClick={onClose}
-          className="text-muted-foreground hover:text-foreground text-lg"
-        >
+        {editingTitle ? (
+          <input
+            autoFocus
+            value={titleDraft}
+            onChange={(e) => setTitleDraft(e.target.value)}
+            onBlur={handleSaveTitle}
+            onKeyDown={(e) => e.key === 'Enter' && handleSaveTitle()}
+            className="text-lg font-semibold bg-background border border-border rounded px-2 py-0.5 w-full mr-2"
+          />
+        ) : (
+          <h3
+            className={`text-lg font-semibold ${isEditable ? 'cursor-pointer hover:text-primary' : ''}`}
+            onClick={() => isEditable && setEditingTitle(true)}
+          >
+            {data.title}
+          </h3>
+        )}
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-lg shrink-0 ml-2">
           x
         </button>
       </div>
 
       <div className="space-y-3">
+        {/* Type selector */}
         <div>
           <label className="text-xs text-muted-foreground uppercase">Type</label>
-          <p className="text-sm font-medium">{data.type}</p>
+          {isEditable ? (
+            <select
+              value={data.type}
+              onChange={(e) => onUpdate?.(nodeId, { type: e.target.value })}
+              className="w-full mt-1 px-2 py-1.5 bg-background border border-border rounded-md text-sm"
+            >
+              {taskTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          ) : (
+            <p className="text-sm font-medium">{data.type}</p>
+          )}
         </div>
 
         <div>
@@ -34,14 +85,36 @@ export function NodeDetail({ nodeId, data, onApprove, onCancel, onClose }: NodeD
           <p className="text-sm font-medium">{data.status}</p>
         </div>
 
+        {/* Agent kind selector */}
         <div>
           <label className="text-xs text-muted-foreground uppercase">Agent</label>
-          <p className="text-sm font-medium">{data.agentKind}</p>
+          {isEditable ? (
+            <select
+              value={data.agentKind}
+              onChange={(e) => onUpdate?.(nodeId, { agentKind: e.target.value })}
+              className="w-full mt-1 px-2 py-1.5 bg-background border border-border rounded-md text-sm"
+            >
+              {agentKinds.map((a) => <option key={a} value={a}>{a}</option>)}
+            </select>
+          ) : (
+            <p className="text-sm font-medium">{data.agentKind}</p>
+          )}
         </div>
 
         <div>
           <label className="text-xs text-muted-foreground uppercase">Priority</label>
-          <p className="text-sm font-medium">{data.priority}</p>
+          {isEditable ? (
+            <input
+              type="number"
+              min={0}
+              max={1000}
+              value={data.priority}
+              onChange={(e) => onUpdate?.(nodeId, { priority: parseInt(e.target.value) || 100 })}
+              className="w-full mt-1 px-2 py-1.5 bg-background border border-border rounded-md text-sm"
+            />
+          ) : (
+            <p className="text-sm font-medium">{data.priority}</p>
+          )}
         </div>
 
         {data.assignedWorkerId && (
@@ -51,11 +124,48 @@ export function NodeDetail({ nodeId, data, onApprove, onCancel, onClose }: NodeD
           </div>
         )}
 
+        {/* Editable input */}
         <div>
-          <label className="text-xs text-muted-foreground uppercase">Input</label>
-          <pre className="text-xs bg-muted p-2 rounded mt-1 whitespace-pre-wrap max-h-40 overflow-y-auto">
-            {data.input || '(empty)'}
-          </pre>
+          <div className="flex items-center justify-between">
+            <label className="text-xs text-muted-foreground uppercase">Input / Prompt</label>
+            {isEditable && !editingInput && (
+              <button
+                onClick={() => { setInputDraft(data.input); setEditingInput(true); }}
+                className="text-xs text-primary hover:underline"
+              >
+                Edit
+              </button>
+            )}
+          </div>
+          {editingInput ? (
+            <div className="mt-1">
+              <textarea
+                autoFocus
+                value={inputDraft}
+                onChange={(e) => setInputDraft(e.target.value)}
+                rows={6}
+                className="w-full px-2 py-1.5 bg-background border border-border rounded-md text-xs font-mono resize-y"
+              />
+              <div className="flex gap-1 mt-1">
+                <button
+                  onClick={handleSaveInput}
+                  className="px-2 py-1 bg-primary text-primary-foreground rounded text-xs"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setEditingInput(false)}
+                  className="px-2 py-1 border border-border rounded text-xs"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <pre className="text-xs bg-muted p-2 rounded mt-1 whitespace-pre-wrap max-h-40 overflow-y-auto">
+              {data.input || '(empty — click Edit to add a prompt)'}
+            </pre>
+          )}
         </div>
 
         {data.outputSummary && (

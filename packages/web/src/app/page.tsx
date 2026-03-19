@@ -1,8 +1,9 @@
 'use client';
 
 import { useAuth, UserButton } from '@clerk/nextjs';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Graph {
   id: string;
@@ -16,29 +17,64 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://hive-api.pajamadot.c
 
 export default function DashboardPage() {
   const { getToken } = useAuth();
+  const router = useRouter();
   const [graphs, setGraphs] = useState<Graph[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [createName, setCreateName] = useState('');
+  const [createDesc, setCreateDesc] = useState('');
+  const [creating, setCreating] = useState(false);
 
-  useEffect(() => {
-    async function load() {
-      const token = await getToken();
-      const res = await fetch(`${API_URL}/v1/graphs`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setGraphs(data.graphs);
-      }
-      setLoading(false);
+  const loadGraphs = useCallback(async () => {
+    const token = await getToken();
+    const res = await fetch(`${API_URL}/v1/graphs`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setGraphs(data.graphs);
     }
-    load();
+    setLoading(false);
   }, [getToken]);
+
+  useEffect(() => { loadGraphs(); }, [loadGraphs]);
+
+  const handleCreate = async () => {
+    if (!createName.trim()) return;
+    setCreating(true);
+    const token = await getToken();
+    const res = await fetch(`${API_URL}/v1/graphs`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: createName, description: createDesc || undefined }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      router.push(`/graph/${data.graph.id}`);
+    }
+    setCreating(false);
+  };
+
+  const handleDelete = async (e: React.MouseEvent, graphId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm('Delete this graph?')) return;
+    const token = await getToken();
+    await fetch(`${API_URL}/v1/graphs/${graphId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    loadGraphs();
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border px-6 py-4 flex items-center justify-between">
         <h1 className="text-xl font-bold">Pajama Hive</h1>
         <div className="flex items-center gap-4">
+          <Link href="/evolution" className="text-sm text-muted-foreground hover:text-foreground">
+            Evolution
+          </Link>
           <Link href="/meta" className="text-sm text-muted-foreground hover:text-foreground">
             Meta Observatory
           </Link>
@@ -49,10 +85,60 @@ export default function DashboardPage() {
       <main className="max-w-5xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-semibold">Graphs</h2>
-          <button className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:opacity-90">
+          <button
+            onClick={() => setShowCreate(true)}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:opacity-90"
+          >
             New Graph
           </button>
         </div>
+
+        {/* Create modal */}
+        {showCreate && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreate(false)}>
+            <div className="bg-card border border-border rounded-lg p-6 w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-lg font-semibold mb-4">New Graph</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm text-muted-foreground">Name</label>
+                  <input
+                    autoFocus
+                    value={createName}
+                    onChange={(e) => setCreateName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                    placeholder="My workflow"
+                    className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-muted-foreground">Description (optional)</label>
+                  <textarea
+                    value={createDesc}
+                    onChange={(e) => setCreateDesc(e.target.value)}
+                    placeholder="What this graph does..."
+                    rows={2}
+                    className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 mt-5">
+                <button
+                  onClick={() => setShowCreate(false)}
+                  className="flex-1 px-4 py-2 border border-border rounded-md text-sm hover:bg-accent/50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreate}
+                  disabled={creating || !createName.trim()}
+                  className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-50"
+                >
+                  {creating ? 'Creating...' : 'Create'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <p className="text-muted-foreground">Loading...</p>
@@ -62,28 +148,36 @@ export default function DashboardPage() {
             <p className="text-sm mt-1">Create a new graph to get started</p>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-3">
             {graphs.map((graph) => (
               <Link
                 key={graph.id}
                 href={`/graph/${graph.id}`}
-                className="block border border-border rounded-lg p-4 hover:bg-accent/50 transition-colors"
+                className="block border border-border rounded-lg p-4 hover:bg-accent/50 transition-colors group"
               >
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <h3 className="font-medium">{graph.name}</h3>
                     {graph.description && (
-                      <p className="text-sm text-muted-foreground mt-1">{graph.description}</p>
+                      <p className="text-sm text-muted-foreground mt-1 truncate">{graph.description}</p>
                     )}
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                    graph.status === 'running' ? 'bg-yellow-500/20 text-yellow-400' :
-                    graph.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                    graph.status === 'failed' ? 'bg-red-500/20 text-red-400' :
-                    'bg-muted text-muted-foreground'
-                  }`}>
-                    {graph.status}
-                  </span>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                      graph.status === 'running' ? 'bg-yellow-500/20 text-yellow-400' :
+                      graph.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                      graph.status === 'failed' ? 'bg-red-500/20 text-red-400' :
+                      'bg-muted text-muted-foreground'
+                    }`}>
+                      {graph.status}
+                    </span>
+                    <button
+                      onClick={(e) => handleDelete(e, graph.id)}
+                      className="text-xs text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </Link>
             ))}
