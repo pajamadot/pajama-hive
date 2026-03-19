@@ -1,0 +1,9 @@
+{
+  "name": "@pajamadot/hive-darwin-arm64",
+  "version": "0.1.0",
+  "description": "Pajama Hive CLI binary for macOS ARM64",
+  "license": "MIT",
+  "os": ["darwin"],
+  "cpu": ["arm64"],
+  "files": ["hive"]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@pajamadot/hive",
+  "version": "0.1.0",
+  "description": "Pajama Hive CLI - Agent orchestration tool",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PajamaDot/pajama-hive"
+  },
+  "bin": {
+    "hive": "bin/hive.js"
+  },
+  "files": [
+    "bin/"
+  ],
+  "optionalDependencies": {
+    "@pajamadot/hive-win32-x64": "0.1.0",
+    "@pajamadot/hive-darwin-x64": "0.1.0",
+    "@pajamadot/hive-darwin-arm64": "0.1.0",
+    "@pajamadot/hive-linux-x64": "0.1.0"
+  }
+}

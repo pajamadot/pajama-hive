@@ -1,0 +1,21 @@
+{
+  "name": "pajama-hive",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Agent Orchestrator + DAG Visualizer for AI coding agents",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "clean": "turbo clean"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.0"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20"
+  }
+}

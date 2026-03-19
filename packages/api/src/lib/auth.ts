@@ -1,0 +1,105 @@
+import { createMiddleware } from 'hono/factory';
+import type { Env } from '../types/index.js';
+
+interface ClerkJWKS {
+  keys: {
+    kty: string;
+    n: string;
+    e: string;
+    kid: string;
+    alg: string;
+    use: string;
+  }[];
+}
+
+let cachedJwks: ClerkJWKS | null = null;
+let jwksCachedAt = 0;
+const JWKS_CACHE_TTL = 300_000; // 5 minutes
+
+async function getClerkJwks(publishableKey: string): Promise<ClerkJWKS> {
+  const now = Date.now();
+  if (cachedJwks && now - jwksCachedAt < JWKS_CACHE_TTL) {
+    return cachedJwks;
+  }
+
+  // Extract Clerk frontend API URL from publishable key
+  const decoded = atob(publishableKey.replace('pk_test_', '').replace('pk_live_', ''));
+  const frontendApi = decoded.endsWith('$') ? decoded.slice(0, -1) : decoded;
+
+  const res = await fetch(`https://${frontendApi}/.well-known/jwks.json`);
+  if (!res.ok) throw new Error(`Failed to fetch JWKS: ${res.status}`);
+
+  cachedJwks = await res.json() as ClerkJWKS;
+  jwksCachedAt = now;
+  return cachedJwks;
+}
+
+async function importJwk(jwk: ClerkJWKS['keys'][0]): Promise<CryptoKey> {
+  return crypto.subtle.importKey(
+    'jwk',
+    { kty: jwk.kty, n: jwk.n, e: jwk.e, alg: jwk.alg, ext: true },
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false,
+    ['verify'],
+  );
+}
+
+function base64UrlDecode(str: string): Uint8Array {
+  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+async function verifyClerkToken(token: string, publishableKey: string): Promise<{ sub: string; [key: string]: unknown }> {
+  const parts = token.split('.');
+  if (parts.length !== 3) throw new Error('Invalid JWT format');
+
+  const [headerB64, payloadB64, signatureB64] = parts;
+  const header = JSON.parse(new TextDecoder().decode(base64UrlDecode(headerB64)));
+
+  const jwks = await getClerkJwks(publishableKey);
+  const jwk = jwks.keys.find((k) => k.kid === header.kid);
+  if (!jwk) throw new Error('No matching JWK found');
+
+  const key = await importJwk(jwk);
+  const signature = base64UrlDecode(signatureB64);
+  const data = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
+
+  const valid = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, signature, data);
+  if (!valid) throw new Error('Invalid signature');
+
+  const payload = JSON.parse(new TextDecoder().decode(base64UrlDecode(payloadB64)));
+
+  // Check expiration
+  if (payload.exp && payload.exp < Date.now() / 1000) {
+    throw new Error('Token expired');
+  }
+
+  return payload;
+}
+
+type HonoEnv = { Bindings: Env; Variables: { userId: string; claims: Record<string, unknown> } };
+
+export const clerkAuth = createMiddleware<HonoEnv>(async (c, next) => {
+  const authHeader = c.req.header('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return c.json({ error: 'Missing or invalid Authorization header' }, 401);
+  }
+
+  const token = authHeader.slice(7);
+
+  try {
+    const claims = await verifyClerkToken(token, c.env.CLERK_PUBLISHABLE_KEY);
+    c.set('userId', claims.sub);
+    c.set('claims', claims);
+    await next();
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Authentication failed';
+    return c.json({ error: message }, 401);
+  }
+});

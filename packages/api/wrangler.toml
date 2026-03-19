@@ -1,0 +1,30 @@
+name = "hive-api"
+main = "src/index.ts"
+compatibility_date = "2025-03-19"
+compatibility_flags = ["nodejs_compat"]
+
+# Custom domain: hive-api.pajamadot.com
+# routes = [{ pattern = "hive-api.pajamadot.com", custom_domain = true }]
+
+# Hyperdrive binding for Neon Postgres
+# Create with: wrangler hyperdrive create hive-db --connection-string="<neon-url>"
+# [[hyperdrive]]
+# binding = "HYPERDRIVE"
+# id = "<hyperdrive-config-id>"
+
+# Durable Objects
+[[durable_objects.bindings]]
+name = "WS_ROOM"
+class_name = "WsRoom"
+
+[[durable_objects.bindings]]
+name = "ORCHESTRATOR"
+class_name = "Orchestrator"
+
+# Migrations for Durable Objects
+[[migrations]]
+tag = "v1"
+new_classes = ["WsRoom", "Orchestrator"]
+
+[vars]
+ENVIRONMENT = "development"

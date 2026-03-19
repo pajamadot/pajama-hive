@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+.vercel/
+out/
+target/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+secrets/
+.dev.vars
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Turborepo
+.turbo/
+
+# Wrangler
+.wrangler/
+
+# Rust
+target/
+Cargo.lock
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
