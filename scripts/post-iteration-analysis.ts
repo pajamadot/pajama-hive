@@ -137,20 +137,20 @@ function analyzeDomainCoverage(): Record<string, { implemented: string[]; missin
       missing: ['image_gen'],
     },
     chat: {
-      implemented: ['conversations', 'messages', 'chat runs', 'LLM integration', 'SSE streaming', 'playground UI', 'message editing', 'regenerate'],
-      missing: ['branch conversations', 'file attachments in chat'],
+      implemented: ['conversations', 'messages', 'chat runs', 'LLM integration', 'SSE streaming', 'playground UI', 'message editing', 'regenerate', 'file attachments'],
+      missing: ['branch conversations'],
     },
     plugins: {
-      implemented: ['CRUD', 'tools', 'versioning', 'publish', 'HTTP execution', 'debug endpoint', 'OpenAPI import'],
-      missing: ['OAuth flow', 'marketplace integration'],
+      implemented: ['CRUD', 'tools', 'versioning', 'publish', 'HTTP execution', 'debug endpoint', 'OpenAPI import', 'OAuth2 flow'],
+      missing: ['marketplace integration'],
     },
     knowledge: {
       implemented: ['CRUD', 'documents', 'chunking', 'keyword search', 'pgvector embeddings', 'vector search', 'detail UI', 'file upload', 'text extraction', 'URL scraping'],
       missing: ['PDF parsing', 'DOCX parsing'],
     },
     data: {
-      implemented: ['databases', 'tables', 'rows', 'variables', 'agent memory'],
-      missing: ['NL2SQL', 'query builder UI'],
+      implemented: ['databases', 'tables', 'rows', 'variables', 'agent memory', 'NL2SQL query'],
+      missing: ['query builder UI'],
     },
     prompts: {
       implemented: ['CRUD', 'versioning', 'auto-version on edit', 'template rendering', 'test with model'],

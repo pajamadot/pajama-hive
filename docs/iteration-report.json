@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-03-20T19:51:22.340Z",
-  "iteration": 74,
+  "timestamp": "2026-03-20T19:54:48.426Z",
+  "iteration": 76,
   "metrics": {
     "tables": 54,
     "apiRoutes": 24,
@@ -10,7 +10,7 @@
     "libModules": 18,
     "adapters": 6,
     "totalTsFiles": 115,
-    "totalLines": 18077
+    "totalLines": 18305
   },
   "gaps": [
     {
@@ -257,11 +257,11 @@
         "SSE streaming",
         "playground UI",
         "message editing",
-        "regenerate"
+        "regenerate",
+        "file attachments"
       ],
       "missing": [
-        "branch conversations",
-        "file attachments in chat"
+        "branch conversations"
       ]
     },
     "plugins": {
@@ -272,10 +272,10 @@
         "publish",
         "HTTP execution",
         "debug endpoint",
-        "OpenAPI import"
+        "OpenAPI import",
+        "OAuth2 flow"
       ],
       "missing": [
-        "OAuth flow",
         "marketplace integration"
       ]
     },
@@ -303,10 +303,10 @@
         "tables",
         "rows",
         "variables",
-        "agent memory"
+        "agent memory",
+        "NL2SQL query"
       ],
       "missing": [
-        "NL2SQL",
         "query builder UI"
       ]
     },
@@ -370,9 +370,9 @@
   "nextPriorities": [
     "Fix 2 high-priority gaps (TODOs in core routes/libs)",
     "workspace: team billing, SSO",
-    "chat: branch conversations, file attachments in chat",
-    "plugins: OAuth flow, marketplace integration",
     "knowledge: PDF parsing, DOCX parsing",
-    "data: NL2SQL, query builder UI"
+    "agents: multi-agent handoff",
+    "workflows: image_gen",
+    "chat: branch conversations"
   ]
 }
