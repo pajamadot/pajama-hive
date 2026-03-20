@@ -56,6 +56,9 @@ function TaskNodeComponent({ data, selected }: NodeProps & { data: TaskNodeData 
             {data.priority > 100 && (
               <span className="text-amber-400 text-[10px]">P{data.priority}</span>
             )}
+            {(data.attempt ?? 0) > 0 && (
+              <span className="text-orange-400 text-[10px]">#{(data.attempt ?? 0) + 1}</span>
+            )}
           </div>
         </div>
       </div>

@@ -14,6 +14,7 @@ export interface TaskNodeData {
   timeoutMs?: number;
   maxRetries?: number;
   requiredCapabilities?: string[];
+  attempt?: number;
   [key: string]: unknown;
 }
 
