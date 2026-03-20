@@ -113,6 +113,16 @@ export class Orchestrator extends DurableObject<Env> {
         })
         .where(eq(schema.tasks.id, payload.taskId));
 
+      // Fire task webhooks
+      try {
+        const [graph] = await db.select({ ownerId: schema.graphs.ownerId }).from(schema.graphs).where(eq(schema.graphs.id, this.graphId!));
+        if (graph) {
+          await fireWebhooks(db, graph.ownerId, `task.${payload.status}`, {
+            taskId: payload.taskId, graphId: this.graphId, runId: this.runId, status: payload.status, summary: payload.summary,
+          });
+        }
+      } catch { /* best-effort */ }
+
       // On failure: cascade-cancel downstream dependent tasks
       if (payload.status === 'failed' && payload.errorKind !== 'retryable') {
         const allEdges = await db.select().from(schema.edges).where(eq(schema.edges.graphId, this.graphId!));
