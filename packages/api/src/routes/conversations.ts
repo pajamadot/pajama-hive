@@ -178,6 +178,58 @@ app.post('/:id/clear', async (c) => {
   return c.json({ ok: true });
 });
 
+// Create new section (context boundary — Coze-parity)
+app.post('/:id/sections', async (c) => {
+  const db = createDb(c.env);
+  const id = c.req.param('id');
+  const sectionId = nanoid();
+
+  // Mark all existing messages as belonging to previous section
+  // Update conversation's lastSectionId
+  await db.update(conversations).set({ lastSectionId: sectionId, updatedAt: new Date() })
+    .where(eq(conversations.id, id));
+
+  return c.json({ sectionId });
+});
+
+// Fork conversation from a specific message (branching)
+app.post('/:id/fork', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const id = c.req.param('id');
+  const body = await c.req.json();
+  const fromMessageId = body.fromMessageId;
+
+  const [conv] = await db.select().from(conversations).where(eq(conversations.id, id));
+  if (!conv) return c.json({ error: 'Conversation not found' }, 404);
+
+  // Get messages up to the fork point
+  const allMsgs = await db.select().from(messages)
+    .where(eq(messages.conversationId, id))
+    .orderBy(messages.createdAt);
+
+  const forkIndex = allMsgs.findIndex((m) => m.id === fromMessageId);
+  const msgsToKeep = forkIndex >= 0 ? allMsgs.slice(0, forkIndex + 1) : allMsgs;
+
+  // Create new conversation
+  const newConvId = nanoid();
+  const now = new Date();
+  await db.insert(conversations).values({
+    ...conv, id: newConvId, title: `${conv.title ?? 'Chat'} (branch)`,
+    metadata: { forkedFrom: id, forkMessageId: fromMessageId },
+    createdAt: now, updatedAt: now,
+  });
+
+  // Copy messages
+  for (const msg of msgsToKeep) {
+    await db.insert(messages).values({
+      ...msg, id: nanoid(), conversationId: newConvId, createdAt: msg.createdAt,
+    });
+  }
+
+  return c.json({ conversation: { id: newConvId, forkedFrom: id } }, 201);
+});
+
 // Edit message content
 app.patch('/messages/:msgId', async (c) => {
   const db = createDb(c.env);

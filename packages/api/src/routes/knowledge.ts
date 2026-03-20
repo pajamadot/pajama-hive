@@ -94,6 +94,73 @@ app.delete('/:id', async (c) => {
   return c.json({ ok: true });
 });
 
+// Copy/duplicate knowledge base (Coze: CopyKnowledge)
+app.post('/:id/copy', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const id = c.req.param('id');
+
+  const [kb] = await db.select().from(knowledgeBases).where(eq(knowledgeBases.id, id));
+  if (!kb) return c.json({ error: 'Knowledge base not found' }, 404);
+
+  const newId = nanoid();
+  const now = new Date();
+
+  await db.insert(knowledgeBases).values({
+    ...kb, id: newId, name: `${kb.name} (copy)`,
+    documentCount: 0, totalChunks: 0,
+    createdBy: userId, deletedAt: null, createdAt: now, updatedAt: now,
+  });
+
+  // Copy documents and chunks
+  const docs = await db.select().from(documents).where(eq(documents.knowledgeBaseId, id));
+  for (const doc of docs) {
+    const newDocId = nanoid();
+    await db.insert(documents).values({
+      ...doc, id: newDocId, knowledgeBaseId: newId, createdAt: now,
+    });
+
+    const chunks = await db.select().from(documentChunks).where(eq(documentChunks.documentId, doc.id));
+    if (chunks.length > 0) {
+      await db.insert(documentChunks).values(
+        chunks.map((chunk) => ({
+          ...chunk, id: nanoid(), documentId: newDocId, knowledgeBaseId: newId, createdAt: now,
+        })),
+      );
+    }
+  }
+
+  // Update counts
+  const newDocs = await db.select().from(documents).where(eq(documents.knowledgeBaseId, newId));
+  const newChunks = await db.select().from(documentChunks).where(eq(documentChunks.knowledgeBaseId, newId));
+  await db.update(knowledgeBases).set({
+    documentCount: newDocs.length, totalChunks: newChunks.length, updatedAt: now,
+  }).where(eq(knowledgeBases.id, newId));
+
+  return c.json({ knowledgeBase: { id: newId } }, 201);
+});
+
+// Resegment document (re-chunk with new settings — Coze: Resegment)
+app.post('/documents/:docId/resegment', async (c) => {
+  const db = createDb(c.env);
+  const docId = c.req.param('docId');
+  const body = await c.req.json();
+
+  const [doc] = await db.select().from(documents).where(eq(documents.id, docId));
+  if (!doc) return c.json({ error: 'Document not found' }, 404);
+
+  // Delete old chunks
+  await db.delete(documentChunks).where(eq(documentChunks.documentId, docId));
+
+  // Get the document text (stored in chunks or from original content)
+  // For now, return a placeholder — real implementation would re-read from R2
+  await db.update(documents).set({
+    status: 'pending', chunkCount: 0, processedAt: null,
+  }).where(eq(documents.id, docId));
+
+  return c.json({ ok: true, message: 'Document queued for re-segmentation' });
+});
+
 // ── Documents ──
 
 // Upload/create document

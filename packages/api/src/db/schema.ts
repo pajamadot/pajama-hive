@@ -322,6 +322,19 @@ export const agents = pgTable('agents', {
   status: text('status').notNull().default('draft'), // draft, published, archived
   mode: text('mode').notNull().default('single'), // single, workflow, multi-agent
   createdBy: text('created_by').notNull(),
+  // Coze parity fields
+  modelInfo: jsonb('model_info'),               // Coze: model configuration
+  onboardingInfo: jsonb('onboarding_info'),     // Coze: onboarding messages
+  promptConfig: jsonb('prompt_config'),          // Coze: prompt structure
+  pluginConfig: jsonb('plugin_config'),          // Coze: plugin base config
+  knowledgeConfig: jsonb('knowledge_config'),    // Coze: knowledge base config
+  workflowConfig: jsonb('workflow_config'),      // Coze: workflow config
+  databaseConfig: jsonb('database_config'),      // Coze: database config
+  suggestReply: jsonb('suggest_reply'),           // Coze: suggested replies
+  jumpConfig: jsonb('jump_config'),               // Coze: jump/redirect config
+  backgroundImages: jsonb('background_images'),  // Coze: background image list
+  shortcutCommands: jsonb('shortcut_commands'),  // Coze: shortcut commands
+  layoutInfo: text('layout_info'),               // Coze: chatflow layout
   publishedAt: timestamp('published_at'),
   deletedAt: timestamp('deleted_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -470,6 +483,11 @@ export const conversations = pgTable('conversations', {
   userId: text('user_id').notNull(),
   title: text('title'),
   metadata: jsonb('metadata'),
+  // Coze parity fields
+  lastSectionId: text('last_section_id'),       // Coze: current active section
+  scene: text('scene'),                           // Coze: conversation scene (playground, api, connector)
+  connectorId: text('connector_id'),             // Coze: which connector initiated
+  isDebug: boolean('is_debug').notNull().default(false), // Coze: debug/test conversation
   deletedAt: timestamp('deleted_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
@@ -487,9 +505,21 @@ export const messages = pgTable('messages', {
   content: text('content').notNull(),
   metadata: jsonb('metadata'), // tool calls, citations, file refs
   tokenCount: integer('token_count'),
+  // Coze parity fields
+  runId: text('run_id'),                         // Coze: which run generated this
+  agentId: text('agent_id'),                     // Coze: which agent responded
+  messageType: integer('message_type'),           // Coze: 0=normal, 1=function_call, etc.
+  displayContent: text('display_content'),       // Coze: formatted display content
+  reasoningContent: text('reasoning_content'),   // Coze: chain-of-thought
+  sectionId: text('section_id'),                 // Coze: conversation section
+  chatId: text('chat_id'),                       // Coze: chat session ID
+  replyId: text('reply_id'),                     // Coze: reply-to message ID
+  isFinish: boolean('is_finish'),                 // Coze: streaming finished flag
   createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (t) => [
   index('messages_conversation_idx').on(t.conversationId, t.createdAt),
+  index('messages_section_idx').on(t.sectionId),
 ]);
 
 export const chatRuns = pgTable('chat_runs', {
@@ -609,8 +639,19 @@ export const documents = pgTable('documents', {
   chunkCount: integer('chunk_count').notNull().default(0),
   status: text('status').notNull().default('pending'), // pending, processing, completed, error
   error: text('error'),
+  // Coze parity fields
+  fileExtension: text('file_extension'),         // Coze: .pdf, .txt, etc.
+  documentType: integer('document_type'),         // Coze: 0=text, 1=image, 2=table, etc.
+  uri: text('uri'),                               // Coze: original URI
+  sourceInfo: jsonb('source_info'),              // Coze: source metadata
+  formatType: integer('format_type'),             // Coze: 0=auto, 1=custom
+  hitCount: integer('hit_count').notNull().default(0), // Coze: search hit counter
+  autoSave: boolean('auto_save').notNull().default(true),
+  language: text('language'),                     // Coze: document language
+  charCount: integer('char_count'),               // Coze: character count
   processedAt: timestamp('processed_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (t) => [
   index('documents_kb_idx').on(t.knowledgeBaseId),
   index('documents_status_idx').on(t.status),
@@ -623,10 +664,15 @@ export const documentChunks = pgTable('document_chunks', {
   content: text('content').notNull(),
   chunkIndex: integer('chunk_index').notNull(),
   metadata: jsonb('metadata'), // page number, section title, etc.
-  // embedding stored as jsonb array (for pgvector, would use vector type)
-  embedding: jsonb('embedding'),
+  embedding: jsonb('embedding'), // jsonb fallback (pgvector column added via ALTER TABLE)
   tokenCount: integer('token_count'),
+  // Coze parity fields
+  hash: text('hash'),                            // Coze: content hash for dedup
+  wordCount: integer('word_count'),               // Coze: word count
+  caption: text('caption'),                       // Coze: image caption
+  status: integer('status').notNull().default(0), // Coze: 0=active, 1=disabled
   createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (t) => [
   index('chunks_document_idx').on(t.documentId),
   index('chunks_kb_idx').on(t.knowledgeBaseId),
