@@ -129,6 +129,23 @@ export function NodeDetail({ nodeId, data, onApprove, onCancel, onRetry, onDelet
           )}
         </div>
 
+        {/* Max retries */}
+        <div>
+          <label className="text-xs text-muted-foreground uppercase">Max Retries</label>
+          {isEditable ? (
+            <input
+              type="number"
+              min={0}
+              max={20}
+              value={data.maxRetries ?? 2}
+              onChange={(e) => onUpdate?.(nodeId, { maxRetries: parseInt(e.target.value) || 0 })}
+              className="w-full mt-1 px-2 py-1.5 bg-background border border-border rounded-md text-sm"
+            />
+          ) : (
+            <p className="text-sm font-medium">{data.maxRetries ?? 2}</p>
+          )}
+        </div>
+
         {data.assignedWorkerId && (
           <div>
             <label className="text-xs text-muted-foreground uppercase">Worker</label>

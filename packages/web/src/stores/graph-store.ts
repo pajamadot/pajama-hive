@@ -12,6 +12,7 @@ export interface TaskNodeData {
   assignedWorkerId?: string;
   priority: number;
   timeoutMs?: number;
+  maxRetries?: number;
   [key: string]: unknown;
 }
 
