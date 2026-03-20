@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth, UserButton } from '@clerk/nextjs';
+import { useAuth } from '@clerk/nextjs';
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -90,29 +90,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border px-6 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold">Pajama Hive</h1>
-        <div className="flex items-center gap-4">
-          <Link href="/evolution" className="text-sm text-muted-foreground hover:text-foreground">
-            Evolution
-          </Link>
-          <Link href="/meta" className="text-sm text-muted-foreground hover:text-foreground">
-            Meta Observatory
-          </Link>
-          <Link href="/workers" className="text-sm text-muted-foreground hover:text-foreground">
-            Workers
-          </Link>
-          <Link href="/audit" className="text-sm text-muted-foreground hover:text-foreground">
-            Audit Log
-          </Link>
-          <Link href="/settings" className="text-sm text-muted-foreground hover:text-foreground">
-            Settings
-          </Link>
-          <UserButton />
-        </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-semibold">Graphs</h2>
           <div className="flex gap-2">
@@ -331,7 +309,7 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

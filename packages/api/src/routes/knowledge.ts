@@ -1,0 +1,235 @@
+import { Hono } from 'hono';
+import { nanoid } from 'nanoid';
+import { eq, and, desc, lt, isNull } from 'drizzle-orm';
+import { createKnowledgeBaseSchema, createDocumentSchema } from '@pajamadot/hive-shared';
+import { createDb } from '../db/client.js';
+import { knowledgeBases, documents, documentChunks } from '../db/schema.js';
+import { clerkAuth } from '../lib/auth.js';
+import { processDocument } from '../lib/chunker.js';
+import type { Env } from '../types/index.js';
+
+type HonoEnv = { Bindings: Env; Variables: { userId: string } };
+
+const app = new Hono<HonoEnv>();
+
+app.use('/*', clerkAuth);
+
+// List knowledge bases
+app.get('/', async (c) => {
+  const db = createDb(c.env);
+  const workspaceId = c.req.query('workspaceId');
+  if (!workspaceId) return c.json({ error: 'workspaceId required' }, 400);
+
+  const result = await db.select().from(knowledgeBases)
+    .where(and(eq(knowledgeBases.workspaceId, workspaceId), isNull(knowledgeBases.deletedAt)))
+    .orderBy(desc(knowledgeBases.updatedAt));
+
+  return c.json({ knowledgeBases: result });
+});
+
+// Get knowledge base with document count
+app.get('/:id', async (c) => {
+  const db = createDb(c.env);
+  const id = c.req.param('id');
+
+  const [kb] = await db.select().from(knowledgeBases)
+    .where(and(eq(knowledgeBases.id, id), isNull(knowledgeBases.deletedAt)));
+  if (!kb) return c.json({ error: 'Knowledge base not found' }, 404);
+
+  const docs = await db.select().from(documents)
+    .where(eq(documents.knowledgeBaseId, id));
+
+  return c.json({ knowledgeBase: kb, documents: docs });
+});
+
+// Create knowledge base
+app.post('/', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const body = await c.req.json();
+  const parsed = createKnowledgeBaseSchema.safeParse(body);
+  if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
+
+  const workspaceId = body.workspaceId;
+  if (!workspaceId) return c.json({ error: 'workspaceId required' }, 400);
+
+  const id = nanoid();
+  const now = new Date();
+
+  await db.insert(knowledgeBases).values({
+    id,
+    workspaceId,
+    ...parsed.data,
+    createdBy: userId,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return c.json({ knowledgeBase: { id, workspaceId, ...parsed.data } }, 201);
+});
+
+// Update knowledge base
+app.patch('/:id', async (c) => {
+  const db = createDb(c.env);
+  const id = c.req.param('id');
+  const body = await c.req.json();
+
+  const updates: Record<string, unknown> = { updatedAt: new Date() };
+  if (body.name) updates.name = body.name;
+  if (body.description !== undefined) updates.description = body.description;
+  if (body.chunkSize) updates.chunkSize = body.chunkSize;
+  if (body.chunkOverlap !== undefined) updates.chunkOverlap = body.chunkOverlap;
+
+  await db.update(knowledgeBases).set(updates).where(eq(knowledgeBases.id, id));
+  return c.json({ ok: true });
+});
+
+// Delete knowledge base
+app.delete('/:id', async (c) => {
+  const db = createDb(c.env);
+  const id = c.req.param('id');
+  await db.update(knowledgeBases).set({ deletedAt: new Date() }).where(eq(knowledgeBases.id, id));
+  return c.json({ ok: true });
+});
+
+// ── Documents ──
+
+// Upload/create document
+app.post('/:id/documents', async (c) => {
+  const db = createDb(c.env);
+  const kbId = c.req.param('id');
+  const body = await c.req.json();
+  const parsed = createDocumentSchema.safeParse(body);
+  if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
+
+  const id = nanoid();
+  const now = new Date();
+
+  await db.insert(documents).values({
+    id,
+    knowledgeBaseId: kbId,
+    ...parsed.data,
+    status: 'pending',
+    createdAt: now,
+  });
+
+  // Process document if text content provided
+  let chunkCount = 0;
+  const textContent = body.content ?? '';
+
+  if (textContent) {
+    // Get KB chunk settings
+    const [kb] = await db.select().from(knowledgeBases).where(eq(knowledgeBases.id, kbId));
+    const chunkSize = kb?.chunkSize ?? 500;
+    const chunkOverlap = kb?.chunkOverlap ?? 50;
+
+    const chunks = processDocument(textContent, id, chunkSize, chunkOverlap);
+    chunkCount = chunks.length;
+
+    // Insert chunks
+    if (chunks.length > 0) {
+      await db.insert(documentChunks).values(
+        chunks.map((chunk) => ({
+          id: chunk.id,
+          documentId: id,
+          knowledgeBaseId: kbId,
+          content: chunk.content,
+          chunkIndex: chunk.chunkIndex,
+          metadata: chunk.metadata,
+          tokenCount: chunk.tokenCount,
+          createdAt: now,
+        })),
+      );
+    }
+
+    // Mark document as completed
+    await db.update(documents).set({
+      status: 'completed',
+      chunkCount,
+      processedAt: now,
+    }).where(eq(documents.id, id));
+  }
+
+  // Update KB counts
+  const allDocs = await db.select().from(documents).where(eq(documents.knowledgeBaseId, kbId));
+  const allChunks = await db.select().from(documentChunks).where(eq(documentChunks.knowledgeBaseId, kbId));
+  await db.update(knowledgeBases).set({
+    documentCount: allDocs.length,
+    totalChunks: allChunks.length,
+    updatedAt: now,
+  }).where(eq(knowledgeBases.id, kbId));
+
+  return c.json({
+    document: { id, knowledgeBaseId: kbId, ...parsed.data, status: textContent ? 'completed' : 'pending', chunkCount },
+  }, 201);
+});
+
+// List documents in knowledge base
+app.get('/:id/documents', async (c) => {
+  const db = createDb(c.env);
+  const kbId = c.req.param('id');
+
+  const result = await db.select().from(documents)
+    .where(eq(documents.knowledgeBaseId, kbId))
+    .orderBy(desc(documents.createdAt));
+
+  return c.json({ documents: result });
+});
+
+// Delete document
+app.delete('/documents/:docId', async (c) => {
+  const db = createDb(c.env);
+  const docId = c.req.param('docId');
+
+  // Get doc to find KB ID
+  const [doc] = await db.select().from(documents).where(eq(documents.id, docId));
+  if (!doc) return c.json({ error: 'Document not found' }, 404);
+
+  // Delete chunks first, then document
+  await db.delete(documentChunks).where(eq(documentChunks.documentId, docId));
+  await db.delete(documents).where(eq(documents.id, docId));
+
+  // Update KB counts
+  const remainingDocs = await db.select().from(documents)
+    .where(eq(documents.knowledgeBaseId, doc.knowledgeBaseId));
+  const remainingChunks = await db.select().from(documentChunks)
+    .where(eq(documentChunks.knowledgeBaseId, doc.knowledgeBaseId));
+
+  await db.update(knowledgeBases).set({
+    documentCount: remainingDocs.length,
+    totalChunks: remainingChunks.length,
+    updatedAt: new Date(),
+  }).where(eq(knowledgeBases.id, doc.knowledgeBaseId));
+
+  return c.json({ ok: true });
+});
+
+// ── Search ──
+
+app.post('/:id/search', async (c) => {
+  const db = createDb(c.env);
+  const kbId = c.req.param('id');
+  const body = await c.req.json();
+  const query = body.query;
+  if (!query) return c.json({ error: 'query required' }, 400);
+
+  // Basic keyword search using SQL ILIKE (will upgrade to pgvector when embeddings are added)
+  const limit = body.limit ?? 10;
+
+  const allChunks = await db.select().from(documentChunks)
+    .where(eq(documentChunks.knowledgeBaseId, kbId));
+
+  // Simple relevance: filter chunks containing query terms, rank by match count
+  const queryTerms = query.toLowerCase().split(/\s+/).filter((t: string) => t.length > 2);
+  const scored = allChunks.map((chunk) => {
+    const lower = chunk.content.toLowerCase();
+    const matchCount = queryTerms.filter((term: string) => lower.includes(term)).length;
+    return { ...chunk, score: matchCount };
+  }).filter((c) => c.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+
+  return c.json({ results: scored, total: scored.length });
+});
+
+export default app;

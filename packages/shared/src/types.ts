@@ -207,3 +207,414 @@ export interface RunRetrospective {
   suggestedImprovements: string[];
   createdAt: string;
 }
+
+// ════════════════════════════════════════════════════════════
+// Phase 1: Core Platform Types
+// ════════════════════════════════════════════════════════════
+
+// ── 1.1 Workspace Types ──
+
+export type WorkspaceRole = 'owner' | 'admin' | 'member';
+export type WorkspacePlan = 'free' | 'pro' | 'enterprise';
+
+export interface Workspace {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  ownerId: string;
+  iconUrl?: string;
+  plan: WorkspacePlan;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkspaceMember {
+  id: string;
+  workspaceId: string;
+  userId: string;
+  role: WorkspaceRole;
+  invitedBy?: string;
+  joinedAt: string;
+}
+
+export interface UserProfile {
+  id: string;
+  displayName?: string;
+  avatarUrl?: string;
+  bio?: string;
+  defaultWorkspaceId?: string;
+  preferences?: Record<string, unknown>;
+}
+
+// ── 1.2 Model Types ──
+
+export type ModelProviderType = 'openai' | 'anthropic' | 'google' | 'volcengine' | 'deepseek' | 'qwen' | 'ollama' | 'custom';
+export type ModelType = 'chat' | 'embedding' | 'image' | 'code';
+
+export interface ModelProvider {
+  id: string;
+  workspaceId: string;
+  name: string;
+  provider: ModelProviderType;
+  baseUrl?: string;
+  isEnabled: boolean;
+  config?: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface ModelConfig {
+  id: string;
+  providerId: string;
+  modelId: string;
+  displayName?: string;
+  modelType: ModelType;
+  maxTokens?: number;
+  contextWindow?: number;
+  isDefault: boolean;
+  config?: Record<string, unknown>;
+}
+
+// ── 1.3 Agent Types ──
+
+export type AgentStatus = 'draft' | 'published' | 'archived';
+export type AgentMode = 'single' | 'workflow' | 'multi-agent';
+
+export interface Agent {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description?: string;
+  iconUrl?: string;
+  status: AgentStatus;
+  mode: AgentMode;
+  createdBy: string;
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AgentVersion {
+  id: string;
+  agentId: string;
+  version: number;
+  changelog?: string;
+  snapshot: Record<string, unknown>;
+  publishedBy: string;
+  createdAt: string;
+}
+
+export interface AgentConfig {
+  id: string;
+  agentId: string;
+  modelConfigId?: string;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  knowledgeBaseIds?: string[];
+  pluginIds?: string[];
+  workflowId?: string;
+  memoryEnabled: boolean;
+  memoryWindowSize?: number;
+  openingMessage?: string;
+  suggestedReplies?: string[];
+}
+
+// ── 1.4 Workflow Types ──
+
+export type WorkflowNodeType =
+  | 'start' | 'end' | 'llm' | 'code' | 'condition' | 'loop'
+  | 'variable' | 'http_request' | 'plugin' | 'knowledge_retrieval'
+  | 'message' | 'sub_workflow' | 'database' | 'image_gen'
+  | 'text_processor' | 'intent_detector' | 'variable_assigner'
+  | 'batch' | 'selector' | 'json_transform' | 'qa' | 'emitter' | 'receiver';
+
+export type WorkflowRunStatus = 'pending' | 'running' | 'completed' | 'failed' | 'canceled';
+export type WorkflowTriggerType = 'manual' | 'api' | 'agent' | 'scheduled';
+
+export interface WorkflowDefinition {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description?: string;
+  status: string;
+  isChatFlow: boolean;
+  createdBy: string;
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkflowNode {
+  id: string;
+  workflowId: string;
+  nodeType: WorkflowNodeType;
+  label: string;
+  positionX: number;
+  positionY: number;
+  config?: Record<string, unknown>;
+}
+
+export interface WorkflowEdge {
+  id: string;
+  workflowId: string;
+  fromNodeId: string;
+  toNodeId: string;
+  sourceHandle?: string;
+  label?: string;
+  condition?: Record<string, unknown>;
+}
+
+export interface WorkflowRun {
+  id: string;
+  workflowId: string;
+  versionId?: string;
+  status: WorkflowRunStatus;
+  triggerType: WorkflowTriggerType;
+  input?: Record<string, unknown>;
+  output?: Record<string, unknown>;
+  error?: string;
+  startedAt?: string;
+  completedAt?: string;
+  createdAt: string;
+}
+
+export interface WorkflowTrace {
+  id: string;
+  runId: string;
+  nodeId: string;
+  nodeType: string;
+  status: string;
+  input?: Record<string, unknown>;
+  output?: Record<string, unknown>;
+  error?: string;
+  durationMs?: number;
+  tokenUsage?: { prompt: number; completion: number; total: number };
+  startedAt?: string;
+  completedAt?: string;
+}
+
+// ── 1.5 Conversation & Chat Types ──
+
+export type MessageRole = 'user' | 'assistant' | 'system' | 'tool';
+export type MessageContentType = 'text' | 'image' | 'file' | 'json';
+export type ChatRunStatus = 'pending' | 'running' | 'completed' | 'failed' | 'canceled';
+
+export interface Conversation {
+  id: string;
+  workspaceId: string;
+  agentId?: string;
+  userId: string;
+  title?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  role: MessageRole;
+  contentType: MessageContentType;
+  content: string;
+  metadata?: Record<string, unknown>;
+  tokenCount?: number;
+  createdAt: string;
+}
+
+export interface ChatRun {
+  id: string;
+  conversationId: string;
+  agentId?: string;
+  status: ChatRunStatus;
+  modelConfigId?: string;
+  usage?: { promptTokens: number; completionTokens: number; totalTokens: number };
+  error?: string;
+  startedAt?: string;
+  completedAt?: string;
+  createdAt: string;
+}
+
+// ════════════════════════════════════════════════════════════
+// Phase 2: Resources & Integrations Types
+// ════════════════════════════════════════════════════════════
+
+// ── 2.1 Plugin Types ──
+
+export type PluginType = 'api' | 'webhook' | 'workflow';
+export type PluginAuthType = 'none' | 'api_key' | 'oauth2' | 'bearer';
+export type PluginStatus = 'draft' | 'published' | 'archived';
+
+export interface Plugin {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description?: string;
+  iconUrl?: string;
+  pluginType: PluginType;
+  status: PluginStatus;
+  authType: PluginAuthType;
+  baseUrl?: string;
+  createdBy: string;
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PluginTool {
+  id: string;
+  pluginId: string;
+  name: string;
+  description?: string;
+  method: string;
+  path: string;
+  inputSchema?: Record<string, unknown>;
+  outputSchema?: Record<string, unknown>;
+  isEnabled: boolean;
+}
+
+// ── 2.2 Knowledge Base Types ──
+
+export interface KnowledgeBase {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description?: string;
+  embeddingModelId?: string;
+  chunkSize: number;
+  chunkOverlap: number;
+  documentCount: number;
+  totalChunks: number;
+  status: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface Document {
+  id: string;
+  knowledgeBaseId: string;
+  name: string;
+  sourceType: string;
+  sourceUrl?: string;
+  mimeType?: string;
+  fileSize?: number;
+  chunkCount: number;
+  status: string;
+  error?: string;
+  createdAt: string;
+}
+
+export interface DocumentChunk {
+  id: string;
+  documentId: string;
+  knowledgeBaseId: string;
+  content: string;
+  chunkIndex: number;
+  metadata?: Record<string, unknown>;
+  tokenCount?: number;
+}
+
+// ── 2.3 User Database Types ──
+
+export interface UserDatabase {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description?: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface UserTable {
+  id: string;
+  databaseId: string;
+  name: string;
+  schema: { name: string; type: string; required: boolean }[];
+  rowCount: number;
+}
+
+// ── 2.4 Variable Types ──
+
+export type VariableScope = 'workspace' | 'agent' | 'conversation' | 'workflow';
+export type VariableValueType = 'string' | 'number' | 'boolean' | 'json' | 'array';
+
+export interface Variable {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description?: string;
+  valueType: VariableValueType;
+  defaultValue?: string;
+  scope: VariableScope;
+  scopeId?: string;
+}
+
+// ── 2.5 Prompt Types ──
+
+export interface Prompt {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description?: string;
+  content: string;
+  templateVars?: string[];
+  category?: string;
+  isPublic: boolean;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface PromptVersion {
+  id: string;
+  promptId: string;
+  version: number;
+  content: string;
+  changelog?: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+// ════════════════════════════════════════════════════════════
+// Phase 3: Publishing & API Types
+// ════════════════════════════════════════════════════════════
+
+export type AppType = 'chat' | 'workflow' | 'custom';
+
+export interface App {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description?: string;
+  iconUrl?: string;
+  appType: AppType;
+  agentId?: string;
+  workflowId?: string;
+  config?: Record<string, unknown>;
+  status: string;
+  createdBy: string;
+  publishedAt?: string;
+  createdAt: string;
+}
+
+export interface MarketplaceProduct {
+  id: string;
+  resourceType: string;
+  resourceId: string;
+  workspaceId: string;
+  name: string;
+  description?: string;
+  iconUrl?: string;
+  category?: string;
+  tags?: string[];
+  installCount: number;
+  rating?: number;
+  ratingCount: number;
+  publishedBy: string;
+  status: string;
+  createdAt: string;
+}
+
+// ── Resource Type (unified) ──
+
+export type ResourceType = 'agent' | 'plugin' | 'workflow' | 'knowledge_base' | 'prompt' | 'database' | 'app';

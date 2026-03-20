@@ -11,6 +11,22 @@ import plansRouter from './routes/plans.js';
 import evolutionRouter from './routes/evolution.js';
 import apiKeysRouter from './routes/api-keys.js';
 import webhooksRouter from './routes/webhooks.js';
+// Phase 1: Core Platform
+import workspacesRouter from './routes/workspaces.js';
+import modelsRouter from './routes/models.js';
+import agentsRouter from './routes/agents.js';
+import workflowsRouter from './routes/workflows.js';
+import conversationsRouter from './routes/conversations.js';
+// Phase 2: Resources & Integrations
+import pluginsRouter from './routes/plugins.js';
+import knowledgeRouter from './routes/knowledge.js';
+import databasesRouter from './routes/databases.js';
+import variablesRouter from './routes/variables.js';
+import promptsRouter from './routes/prompts.js';
+// Phase 3: Publishing & API
+import appsRouter from './routes/apps.js';
+import marketplaceRouter from './routes/marketplace.js';
+import replicationRouter from './routes/replication.js';
 import { standardRateLimit } from './lib/rate-limiter.js';
 import { maxPayloadSize, requestId, securityHeaders, responseTime } from './lib/validation.js';
 import type { Env } from './types/index.js';
@@ -40,11 +56,16 @@ app.use('/v1/*', standardRateLimit);
 // Health check
 app.get('/', (c) => c.json({
   name: 'pajama-hive-api',
-  version: '0.3.0',
+  version: '0.4.0',
   status: 'ok',
-  iteration: 50,
+  iteration: 61,
   uptime: Date.now(),
-  features: ['dag-orchestrator', 'meta-observer', 'webhooks', 'api-keys', 'gep-bridge'],
+  features: [
+    'dag-orchestrator', 'meta-observer', 'webhooks', 'api-keys', 'gep-bridge',
+    'workspaces', 'models', 'agents', 'workflows', 'conversations',
+    'plugins', 'knowledge', 'databases', 'variables', 'prompts',
+    'apps', 'marketplace',
+  ],
 }));
 
 // REST API routes
@@ -58,6 +79,25 @@ app.route('/v1', plansRouter);
 app.route('/v1', evolutionRouter);
 app.route('/v1/api-keys', apiKeysRouter);
 app.route('/v1/webhooks', webhooksRouter);
+
+// Phase 1: Core Platform
+app.route('/v1/workspaces', workspacesRouter);
+app.route('/v1/models', modelsRouter);
+app.route('/v1/agents', agentsRouter);
+app.route('/v1/workflows', workflowsRouter);
+app.route('/v1/conversations', conversationsRouter);
+
+// Phase 2: Resources & Integrations
+app.route('/v1/plugins', pluginsRouter);
+app.route('/v1/knowledge', knowledgeRouter);
+app.route('/v1/databases', databasesRouter);
+app.route('/v1/variables', variablesRouter);
+app.route('/v1/prompts', promptsRouter);
+
+// Phase 3: Publishing & API
+app.route('/v1/apps', appsRouter);
+app.route('/v1/marketplace', marketplaceRouter);
+app.route('/v1/replication', replicationRouter);
 
 // WebSocket upgrade endpoint — delegates to WsRoom Durable Object
 app.get('/v1/ws', async (c) => {

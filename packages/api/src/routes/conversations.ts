@@ -1,0 +1,356 @@
+import { Hono } from 'hono';
+import { nanoid } from 'nanoid';
+import { eq, and, desc, lt, isNull } from 'drizzle-orm';
+import { createConversationSchema, sendMessageSchema, chatRequestSchema } from '@pajamadot/hive-shared';
+import { createDb } from '../db/client.js';
+import { conversations, messages, chatRuns, runSteps, agentConfigs } from '../db/schema.js';
+import { clerkAuth } from '../lib/auth.js';
+import { chatCompletion } from '../lib/llm.js';
+import { createChatStream } from '../lib/llm-stream.js';
+import type { ChatMessage } from '../lib/llm.js';
+import { modelProviders, modelConfigs } from '../db/schema.js';
+import type { Env } from '../types/index.js';
+
+type HonoEnv = { Bindings: Env; Variables: { userId: string } };
+
+const app = new Hono<HonoEnv>();
+
+app.use('/*', clerkAuth);
+
+// List conversations
+app.get('/', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const workspaceId = c.req.query('workspaceId');
+  const agentId = c.req.query('agentId');
+  const cursor = c.req.query('cursor');
+  const limit = Math.min(parseInt(c.req.query('limit') ?? '20', 10), 100);
+
+  const conditions = [eq(conversations.userId, userId), isNull(conversations.deletedAt)];
+  if (workspaceId) conditions.push(eq(conversations.workspaceId, workspaceId));
+  if (agentId) conditions.push(eq(conversations.agentId, agentId));
+  if (cursor) conditions.push(lt(conversations.updatedAt, new Date(cursor)));
+
+  const result = await db.select().from(conversations)
+    .where(and(...conditions))
+    .orderBy(desc(conversations.updatedAt))
+    .limit(limit);
+
+  return c.json({
+    conversations: result,
+    nextCursor: result.length === limit ? result[result.length - 1].updatedAt?.toISOString() : null,
+  });
+});
+
+// Create conversation
+app.post('/', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const body = await c.req.json();
+  const parsed = createConversationSchema.safeParse(body);
+  if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
+
+  const workspaceId = body.workspaceId;
+  if (!workspaceId) return c.json({ error: 'workspaceId required' }, 400);
+
+  const id = nanoid();
+  const now = new Date();
+
+  await db.insert(conversations).values({
+    id,
+    workspaceId,
+    userId,
+    ...parsed.data,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return c.json({ conversation: { id, workspaceId, userId, ...parsed.data } }, 201);
+});
+
+// Get conversation with messages
+app.get('/:id', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const id = c.req.param('id');
+
+  const [conv] = await db.select().from(conversations)
+    .where(and(eq(conversations.id, id), eq(conversations.userId, userId)));
+  if (!conv) return c.json({ error: 'Conversation not found' }, 404);
+
+  return c.json({ conversation: conv });
+});
+
+// Get messages for conversation
+app.get('/:id/messages', async (c) => {
+  const db = createDb(c.env);
+  const id = c.req.param('id');
+  const cursor = c.req.query('cursor');
+  const limit = Math.min(parseInt(c.req.query('limit') ?? '50', 10), 200);
+
+  const conditions = [eq(messages.conversationId, id)];
+  if (cursor) conditions.push(lt(messages.createdAt, new Date(cursor)));
+
+  const result = await db.select().from(messages)
+    .where(and(...conditions))
+    .orderBy(desc(messages.createdAt))
+    .limit(limit);
+
+  return c.json({
+    messages: result.reverse(), // chronological order
+    nextCursor: result.length === limit ? result[0].createdAt?.toISOString() : null,
+  });
+});
+
+// Send message (creates user message)
+app.post('/:id/messages', async (c) => {
+  const db = createDb(c.env);
+  const id = c.req.param('id');
+  const body = await c.req.json();
+
+  const msgId = nanoid();
+  const now = new Date();
+
+  await db.insert(messages).values({
+    id: msgId,
+    conversationId: id,
+    role: 'user',
+    contentType: body.contentType ?? 'text',
+    content: body.content,
+    metadata: body.metadata ?? null,
+    createdAt: now,
+  });
+
+  // Update conversation timestamp
+  await db.update(conversations).set({ updatedAt: now }).where(eq(conversations.id, id));
+
+  return c.json({ message: { id: msgId, role: 'user', content: body.content } }, 201);
+});
+
+// Clear conversation
+app.post('/:id/clear', async (c) => {
+  const db = createDb(c.env);
+  const id = c.req.param('id');
+
+  await db.delete(messages).where(eq(messages.conversationId, id));
+  return c.json({ ok: true });
+});
+
+// Delete conversation (soft)
+app.delete('/:id', async (c) => {
+  const db = createDb(c.env);
+  const id = c.req.param('id');
+  await db.update(conversations).set({ deletedAt: new Date() }).where(eq(conversations.id, id));
+  return c.json({ ok: true });
+});
+
+// ── Chat API (SSE streaming) ──
+
+app.post('/chat', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const body = await c.req.json();
+  const parsed = chatRequestSchema.safeParse(body);
+  if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
+
+  const { conversationId, message } = parsed.data;
+  const now = new Date();
+
+  // Save user message
+  const userMsgId = nanoid();
+  await db.insert(messages).values({
+    id: userMsgId,
+    conversationId,
+    role: 'user',
+    contentType: 'text',
+    content: message,
+    createdAt: now,
+  });
+
+  // Create chat run
+  const runId = nanoid();
+  await db.insert(chatRuns).values({
+    id: runId,
+    conversationId,
+    status: 'pending',
+    startedAt: now,
+    createdAt: now,
+  });
+
+  // Resolve agent config and system prompt
+  const [conv] = await db.select().from(conversations).where(eq(conversations.id, conversationId));
+  let systemPrompt = 'You are a helpful AI assistant.';
+  let modelConfigId: string | null = null;
+  let temperature = 0.7;
+  let maxTokens: number | undefined;
+  const workspaceId = conv?.workspaceId ?? 'default';
+
+  if (conv?.agentId) {
+    const [config] = await db.select().from(agentConfigs).where(eq(agentConfigs.agentId, conv.agentId));
+    if (config) {
+      if (config.systemPrompt) systemPrompt = config.systemPrompt;
+      modelConfigId = config.modelConfigId;
+      if (config.temperature != null) temperature = config.temperature;
+      if (config.maxTokens != null) maxTokens = config.maxTokens;
+    }
+  }
+
+  // Build message history
+  const history = await db.select().from(messages)
+    .where(eq(messages.conversationId, conversationId))
+    .orderBy(messages.createdAt)
+    .limit(40);
+
+  const chatMessages: ChatMessage[] = [
+    { role: 'system', content: systemPrompt },
+    ...history.map((m) => ({
+      role: m.role as 'user' | 'assistant' | 'system',
+      content: m.content,
+    })),
+  ];
+
+  // Call LLM
+  let assistantContent: string;
+  let usage: { promptTokens: number; completionTokens: number; totalTokens: number } | undefined;
+
+  try {
+    await db.update(chatRuns).set({ status: 'running' }).where(eq(chatRuns.id, runId));
+
+    const result = await chatCompletion(db, workspaceId, chatMessages, {
+      modelConfigId,
+      temperature,
+      maxTokens,
+    });
+
+    assistantContent = result.content;
+    usage = result.usage;
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : 'LLM call failed';
+    assistantContent = `[Error: ${errorMsg}]`;
+
+    await db.update(chatRuns).set({ status: 'failed', error: errorMsg, completedAt: new Date() })
+      .where(eq(chatRuns.id, runId));
+
+    // Still save the error as a message for visibility
+    const assistantMsgId = nanoid();
+    await db.insert(messages).values({
+      id: assistantMsgId, conversationId, role: 'assistant',
+      contentType: 'text', content: assistantContent, createdAt: new Date(),
+    });
+
+    await db.update(conversations).set({ updatedAt: new Date() }).where(eq(conversations.id, conversationId));
+
+    return c.json({
+      run: { id: runId, status: 'failed', error: errorMsg },
+      message: { id: assistantMsgId, role: 'assistant', content: assistantContent },
+    });
+  }
+
+  // Save assistant message
+  const assistantMsgId = nanoid();
+  await db.insert(messages).values({
+    id: assistantMsgId, conversationId, role: 'assistant',
+    contentType: 'text', content: assistantContent,
+    tokenCount: usage?.totalTokens ?? null, createdAt: new Date(),
+  });
+
+  await db.update(chatRuns).set({
+    status: 'completed',
+    usage: usage ?? null,
+    completedAt: new Date(),
+  }).where(eq(chatRuns.id, runId));
+
+  await db.update(conversations).set({ updatedAt: new Date() }).where(eq(conversations.id, conversationId))
+
+  return c.json({
+    run: { id: runId, status: 'completed', usage },
+    message: { id: assistantMsgId, role: 'assistant', content: assistantContent },
+  });
+});
+
+// ── SSE Streaming Chat ──
+
+app.post('/chat/stream', async (c) => {
+  const db = createDb(c.env);
+  const body = await c.req.json();
+  const parsed = chatRequestSchema.safeParse(body);
+  if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
+
+  const { conversationId, message } = parsed.data;
+  const now = new Date();
+
+  // Save user message
+  await db.insert(messages).values({
+    id: nanoid(), conversationId, role: 'user',
+    contentType: 'text', content: message, createdAt: now,
+  });
+
+  // Resolve agent config
+  const [conv] = await db.select().from(conversations).where(eq(conversations.id, conversationId));
+  let systemPrompt = 'You are a helpful AI assistant.';
+  let modelConfigId: string | null = null;
+  let temperature = 0.7;
+  let maxTokens: number | undefined;
+  const workspaceId = conv?.workspaceId ?? 'default';
+
+  if (conv?.agentId) {
+    const [config] = await db.select().from(agentConfigs).where(eq(agentConfigs.agentId, conv.agentId));
+    if (config) {
+      if (config.systemPrompt) systemPrompt = config.systemPrompt;
+      modelConfigId = config.modelConfigId;
+      if (config.temperature != null) temperature = config.temperature;
+      if (config.maxTokens != null) maxTokens = config.maxTokens;
+    }
+  }
+
+  // Build message history
+  const history = await db.select().from(messages)
+    .where(eq(messages.conversationId, conversationId))
+    .orderBy(messages.createdAt)
+    .limit(40);
+
+  const chatMessages = [
+    { role: 'system' as const, content: systemPrompt },
+    ...history.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+  ];
+
+  // Resolve provider
+  let providerConfig = null;
+  if (modelConfigId) {
+    const [mc] = await db.select().from(modelConfigs).where(eq(modelConfigs.id, modelConfigId));
+    if (mc) {
+      const [prov] = await db.select().from(modelProviders).where(eq(modelProviders.id, mc.providerId));
+      if (prov?.apiKeyEncrypted) {
+        providerConfig = { provider: prov.provider, baseUrl: prov.baseUrl, apiKey: prov.apiKeyEncrypted, modelId: mc.modelId };
+      }
+    }
+  }
+  if (!providerConfig) {
+    const providers = await db.select().from(modelProviders).where(eq(modelProviders.workspaceId, workspaceId));
+    for (const prov of providers) {
+      if (!prov.isEnabled || !prov.apiKeyEncrypted) continue;
+      const configs = await db.select().from(modelConfigs).where(eq(modelConfigs.providerId, prov.id));
+      const mc = configs.find((c) => c.isDefault) ?? configs[0];
+      if (mc) {
+        providerConfig = { provider: prov.provider, baseUrl: prov.baseUrl, apiKey: prov.apiKeyEncrypted, modelId: mc.modelId };
+        break;
+      }
+    }
+  }
+
+  if (!providerConfig) {
+    return c.json({ error: 'No model provider configured' }, 400);
+  }
+
+  const stream = createChatStream(providerConfig, chatMessages, { temperature, maxTokens });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    },
+  });
+});
+
+export default app;

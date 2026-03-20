@@ -231,3 +231,286 @@ export const runRetrospectiveSchema = z.object({
   suggestedImprovements: z.array(z.string()),
   createdAt: z.string().datetime(),
 });
+
+// ════════════════════════════════════════════════════════════
+// Phase 1: Core Platform Schemas
+// ════════════════════════════════════════════════════════════
+
+// ── Workspace Enums ──
+
+export const workspaceRoleSchema = z.enum(['owner', 'admin', 'member']);
+export const workspacePlanSchema = z.enum(['free', 'pro', 'enterprise']);
+
+// ── Model Enums ──
+
+export const modelProviderTypeSchema = z.enum([
+  'openai', 'anthropic', 'google', 'volcengine', 'deepseek', 'qwen', 'ollama', 'custom',
+]);
+export const modelTypeSchema = z.enum(['chat', 'embedding', 'image', 'code']);
+
+// ── Agent Enums ──
+
+export const agentStatusSchema = z.enum(['draft', 'published', 'archived']);
+export const agentModeSchema = z.enum(['single', 'workflow', 'multi-agent']);
+
+// ── Workflow Enums ──
+
+export const workflowNodeTypeSchema = z.enum([
+  'start', 'end', 'llm', 'code', 'condition', 'loop', 'variable',
+  'http_request', 'plugin', 'knowledge_retrieval', 'message',
+  'sub_workflow', 'database', 'image_gen', 'text_processor',
+  'intent_detector', 'variable_assigner', 'batch', 'selector',
+  'json_transform', 'qa', 'emitter', 'receiver',
+]);
+
+export const workflowRunStatusSchema = z.enum(['pending', 'running', 'completed', 'failed', 'canceled']);
+export const workflowTriggerTypeSchema = z.enum(['manual', 'api', 'agent', 'scheduled']);
+
+// ── Chat Enums ──
+
+export const messageRoleSchema = z.enum(['user', 'assistant', 'system', 'tool']);
+export const messageContentTypeSchema = z.enum(['text', 'image', 'file', 'json']);
+export const chatRunStatusSchema = z.enum(['pending', 'running', 'completed', 'failed', 'canceled']);
+
+// ── 1.1 Workspace Schemas ──
+
+export const createWorkspaceSchema = z.object({
+  name: z.string().min(1).max(100),
+  slug: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/),
+  description: z.string().max(500).optional(),
+});
+
+export const updateWorkspaceSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  description: z.string().max(500).optional(),
+  iconUrl: z.string().url().optional(),
+});
+
+export const inviteMemberSchema = z.object({
+  userId: z.string().min(1),
+  role: workspaceRoleSchema.default('member'),
+});
+
+// ── 1.2 Model Schemas ──
+
+export const createModelProviderSchema = z.object({
+  name: z.string().min(1).max(100),
+  provider: modelProviderTypeSchema,
+  baseUrl: z.string().url().optional(),
+  apiKey: z.string().min(1).optional(),
+  config: z.record(z.unknown()).optional(),
+});
+
+export const createModelConfigSchema = z.object({
+  providerId: z.string().min(1),
+  modelId: z.string().min(1),
+  displayName: z.string().max(100).optional(),
+  modelType: modelTypeSchema.default('chat'),
+  maxTokens: z.number().int().min(1).optional(),
+  contextWindow: z.number().int().min(1).optional(),
+  isDefault: z.boolean().default(false),
+  config: z.record(z.unknown()).optional(),
+});
+
+// ── 1.3 Agent Schemas ──
+
+export const createAgentSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(2000).optional(),
+  mode: agentModeSchema.default('single'),
+  iconUrl: z.string().url().optional(),
+});
+
+export const updateAgentSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  description: z.string().max(2000).optional(),
+  iconUrl: z.string().url().optional(),
+});
+
+export const agentConfigSchema = z.object({
+  modelConfigId: z.string().optional(),
+  systemPrompt: z.string().optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  maxTokens: z.number().int().min(1).optional(),
+  topP: z.number().min(0).max(1).optional(),
+  knowledgeBaseIds: z.array(z.string()).optional(),
+  pluginIds: z.array(z.string()).optional(),
+  workflowId: z.string().optional(),
+  memoryEnabled: z.boolean().optional(),
+  memoryWindowSize: z.number().int().min(1).max(100).optional(),
+  openingMessage: z.string().optional(),
+  suggestedReplies: z.array(z.string()).optional(),
+});
+
+// ── 1.4 Workflow Schemas ──
+
+export const createWorkflowSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(2000).optional(),
+  isChatFlow: z.boolean().default(false),
+});
+
+export const updateWorkflowSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  description: z.string().max(2000).optional(),
+});
+
+export const createWorkflowNodeSchema = z.object({
+  nodeType: workflowNodeTypeSchema,
+  label: z.string().min(1).max(100),
+  positionX: z.number().default(0),
+  positionY: z.number().default(0),
+  config: z.record(z.unknown()).optional(),
+});
+
+export const createWorkflowEdgeSchema = z.object({
+  fromNodeId: z.string().min(1),
+  toNodeId: z.string().min(1),
+  sourceHandle: z.string().optional(),
+  label: z.string().optional(),
+  condition: z.record(z.unknown()).optional(),
+});
+
+export const runWorkflowSchema = z.object({
+  input: z.record(z.unknown()).optional(),
+  versionId: z.string().optional(),
+});
+
+// ── 1.5 Conversation & Chat Schemas ──
+
+export const createConversationSchema = z.object({
+  agentId: z.string().optional(),
+  title: z.string().max(200).optional(),
+  metadata: z.record(z.unknown()).optional(),
+});
+
+export const sendMessageSchema = z.object({
+  conversationId: z.string().min(1),
+  content: z.string().min(1),
+  contentType: messageContentTypeSchema.default('text'),
+  metadata: z.record(z.unknown()).optional(),
+});
+
+export const chatRequestSchema = z.object({
+  conversationId: z.string().min(1),
+  message: z.string().min(1),
+  stream: z.boolean().default(true),
+});
+
+// ════════════════════════════════════════════════════════════
+// Phase 2: Resources & Integrations Schemas
+// ════════════════════════════════════════════════════════════
+
+// ── 2.1 Plugin Schemas ──
+
+export const pluginTypeSchema = z.enum(['api', 'webhook', 'workflow']);
+export const pluginAuthTypeSchema = z.enum(['none', 'api_key', 'oauth2', 'bearer']);
+export const pluginStatusSchema = z.enum(['draft', 'published', 'archived']);
+
+export const createPluginSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(2000).optional(),
+  pluginType: pluginTypeSchema.default('api'),
+  authType: pluginAuthTypeSchema.default('none'),
+  baseUrl: z.string().url().optional(),
+  openapiSpec: z.record(z.unknown()).optional(),
+});
+
+export const createPluginToolSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().max(1000).optional(),
+  method: z.enum(['GET', 'POST', 'PUT', 'DELETE']).default('POST'),
+  path: z.string().min(1),
+  inputSchema: z.record(z.unknown()).optional(),
+  outputSchema: z.record(z.unknown()).optional(),
+});
+
+// ── 2.2 Knowledge Base Schemas ──
+
+export const createKnowledgeBaseSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(2000).optional(),
+  embeddingModelId: z.string().optional(),
+  chunkSize: z.number().int().min(100).max(4000).default(500),
+  chunkOverlap: z.number().int().min(0).max(500).default(50),
+});
+
+export const createDocumentSchema = z.object({
+  name: z.string().min(1).max(200),
+  sourceType: z.enum(['file', 'url', 'text', 'api']).default('file'),
+  sourceUrl: z.string().url().optional(),
+  content: z.string().optional(), // for text sourceType
+});
+
+// ── 2.3 Database Schemas ──
+
+export const createUserDatabaseSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(500).optional(),
+});
+
+export const createUserTableSchema = z.object({
+  name: z.string().min(1).max(100),
+  schema: z.array(z.object({
+    name: z.string().min(1),
+    type: z.enum(['string', 'number', 'boolean', 'date', 'json']),
+    required: z.boolean().default(false),
+  })).min(1),
+});
+
+// ── 2.4 Variable Schemas ──
+
+export const variableScopeSchema = z.enum(['workspace', 'agent', 'conversation', 'workflow']);
+export const variableTypeSchema = z.enum(['string', 'number', 'boolean', 'json', 'array']);
+
+export const createVariableSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().max(500).optional(),
+  valueType: variableTypeSchema.default('string'),
+  defaultValue: z.string().optional(),
+  scope: variableScopeSchema.default('workspace'),
+  scopeId: z.string().optional(),
+});
+
+// ── 2.5 Prompt Schemas ──
+
+export const createPromptSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(1000).optional(),
+  content: z.string().min(1),
+  category: z.string().optional(),
+  templateVars: z.array(z.string()).optional(),
+  isPublic: z.boolean().default(false),
+});
+
+export const updatePromptSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  description: z.string().max(1000).optional(),
+  content: z.string().min(1).optional(),
+  category: z.string().optional(),
+  isPublic: z.boolean().optional(),
+});
+
+// ════════════════════════════════════════════════════════════
+// Phase 3: Publishing & API Schemas
+// ════════════════════════════════════════════════════════════
+
+export const appTypeSchema = z.enum(['chat', 'workflow', 'custom']);
+
+export const createAppSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(2000).optional(),
+  appType: appTypeSchema.default('chat'),
+  agentId: z.string().optional(),
+  workflowId: z.string().optional(),
+  config: z.record(z.unknown()).optional(),
+});
+
+export const publishToMarketplaceSchema = z.object({
+  resourceType: z.enum(['agent', 'plugin', 'workflow', 'prompt']),
+  resourceId: z.string().min(1),
+  name: z.string().min(1).max(200),
+  description: z.string().max(2000).optional(),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+});
