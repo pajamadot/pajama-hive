@@ -28,6 +28,7 @@ import appsRouter from './routes/apps.js';
 import marketplaceRouter from './routes/marketplace.js';
 import replicationRouter from './routes/replication.js';
 import uploadsRouter from './routes/uploads.js';
+import cozeCompatRouter from './routes/coze-compat.js';
 import { standardRateLimit } from './lib/rate-limiter.js';
 import { maxPayloadSize, requestId, securityHeaders, responseTime } from './lib/validation.js';
 import type { Env } from './types/index.js';
@@ -100,6 +101,9 @@ app.route('/v1/apps', appsRouter);
 app.route('/v1/marketplace', marketplaceRouter);
 app.route('/v1/replication', replicationRouter);
 app.route('/v1/uploads', uploadsRouter);
+
+// Coze API compatibility layer (maps Coze paths → Hive)
+app.route('/', cozeCompatRouter);
 
 // WebSocket upgrade endpoint — delegates to WsRoom Durable Object
 app.get('/v1/ws', async (c) => {

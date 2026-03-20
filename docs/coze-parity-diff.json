@@ -1,0 +1,1842 @@
+{
+  "timestamp": "2026-03-20T19:59:01.135Z",
+  "coze": {
+    "endpoints": 244,
+    "tables": 55,
+    "routes": 25
+  },
+  "hive": {
+    "endpoints": 190,
+    "tables": 54,
+    "pages": 25
+  },
+  "endpointMapping": [
+    {
+      "cozeEndpoint": "GET /api/admin/config/basic/get",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/admin/config/basic/save",
+      "hiveEquivalent": "POST /v1/graphs/:graphId/save-template",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /api/admin/config/knowledge/get",
+      "hiveEquivalent": "GET /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/admin/config/knowledge/save",
+      "hiveEquivalent": "POST /v1/graphs/:graphId/save-template",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/admin/config/model/create",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/admin/config/model/delete",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "GET /api/admin/config/model/list",
+      "hiveEquivalent": "GET /v1/graphs/templates/list",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/bot/get_type_list",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/bot/upload_file",
+      "hiveEquivalent": "POST /v1/conversations/:id/messages/upload",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /api/common/upload/apply_upload_action",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/common/upload/apply_upload_action",
+      "hiveEquivalent": "POST /v1/conversations/:id/messages/upload",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/common/upload/*tos_uri",
+      "hiveEquivalent": "POST /v1/conversations/:id/messages/upload",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/conversation/break_message",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/conversation/chat",
+      "hiveEquivalent": "POST /v1/conversations/chat",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/conversation/clear_message",
+      "hiveEquivalent": "POST /v1/conversations/:id/clear",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/conversation/create_section",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/conversation/delete_message",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/conversation/get_message_list",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/developer/get_icon",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/draftbot/commit_check",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/draftbot/create",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/draftbot/delete",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/draftbot/duplicate",
+      "hiveEquivalent": "POST /v1/agents/:id/duplicate",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/draftbot/get_display_info",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/draftbot/list_draft_history",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/draftbot/publish",
+      "hiveEquivalent": "POST /v1/agents/:id/publish",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/draftbot/update_display_info",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/draftbot/publish/connector/list",
+      "hiveEquivalent": "POST /v1/agents/:id/publish",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/intelligence_api/draft_project/copy",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/intelligence_api/draft_project/create",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/intelligence_api/draft_project/delete",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/intelligence_api/draft_project/inner_task_list",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/intelligence_api/draft_project/update",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/intelligence_api/publish/check_version_number",
+      "hiveEquivalent": "POST /v1/agents/:id/publish",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/intelligence_api/publish/connector_list",
+      "hiveEquivalent": "POST /v1/agents/:id/publish",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/intelligence_api/publish/get_published_connector",
+      "hiveEquivalent": "POST /v1/agents/:id/publish",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/intelligence_api/publish/publish_project",
+      "hiveEquivalent": "POST /v1/agents/:id/publish",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/intelligence_api/publish/publish_record_detail",
+      "hiveEquivalent": "POST /v1/agents/:id/publish",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/intelligence_api/publish/publish_record_list",
+      "hiveEquivalent": "POST /v1/agents/:id/publish",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/intelligence_api/search/get_draft_intelligence_info",
+      "hiveEquivalent": "POST /v1/knowledge/:id/search",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/intelligence_api/search/get_draft_intelligence_list",
+      "hiveEquivalent": "POST /v1/knowledge/:id/search",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/intelligence_api/search/get_recently_edit_intelligence",
+      "hiveEquivalent": "POST /v1/knowledge/:id/search",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/create",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/delete",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/detail",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/list",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/update",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/document/create",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/document/delete",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/document/list",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/document/resegment",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/document/update",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/document/progress/get",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/icon/get",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/photo/caption",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/photo/detail",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/photo/extract_caption",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/photo/list",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/review/create",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/review/mget",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/review/save",
+      "hiveEquivalent": "POST /v1/graphs/:graphId/save-template",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/slice/create",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/slice/delete",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/slice/list",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/slice/update",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/table_schema/get",
+      "hiveEquivalent": "POST /v1/databases/:id/tables",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/knowledge/table_schema/validate",
+      "hiveEquivalent": "POST /v1/databases/:id/tables",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /api/marketplace/product/call_info",
+      "hiveEquivalent": "GET /v1/marketplace",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /api/marketplace/product/config",
+      "hiveEquivalent": "GET /v1/marketplace",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /api/marketplace/product/detail",
+      "hiveEquivalent": "GET /v1/marketplace",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/marketplace/product/duplicate",
+      "hiveEquivalent": "POST /v1/agents/:id/duplicate",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/marketplace/product/favorite",
+      "hiveEquivalent": "POST /v1/marketplace",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /api/marketplace/product/favorite/list.v2",
+      "hiveEquivalent": "GET /v1/graphs/templates/list",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /api/marketplace/product/list",
+      "hiveEquivalent": "GET /v1/graphs/templates/list",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /api/marketplace/product/search",
+      "hiveEquivalent": "GET /v1/marketplace",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /api/marketplace/product/search/suggest",
+      "hiveEquivalent": "GET /v1/marketplace",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /api/marketplace/product/category/list",
+      "hiveEquivalent": "GET /v1/graphs/templates/list",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /api/memory/doc_table_info",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "GET /api/memory/sys_variable_conf",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "GET /api/memory/table_mode_config",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/database/add",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/database/bind_to_bot",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/database/delete",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/database/get_by_id",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/database/get_connector_name",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/database/get_online_database_id",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/database/get_template",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/database/list",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/database/list_records",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/database/unbind_to_bot",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/database/update",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/database/update_bot_switch",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/database/update_records",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/database/table/list_new",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/database/table/reset",
+      "hiveEquivalent": "POST /v1/graphs/:graphId/reset",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /api/memory/project/variable/meta_list",
+      "hiveEquivalent": "GET /v1/graphs/templates/list",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/project/variable/meta_update",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/table_file/get_progress",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/table_file/submit",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/table_schema/get",
+      "hiveEquivalent": "POST /v1/databases/:id/tables",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/table_schema/validate",
+      "hiveEquivalent": "POST /v1/databases/:id/tables",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/variable/delete",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/variable/get",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/variable/get_meta",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/memory/variable/upsert",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "GET /api/oauth/authorization_code",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/passport/account/info/v2/",
+      "hiveEquivalent": "POST /v1/agents",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/passport/web/email/login/",
+      "hiveEquivalent": "POST /v1/agents",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /api/passport/web/email/password/reset/",
+      "hiveEquivalent": "GET /v1/agents",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/passport/web/email/register/v2/",
+      "hiveEquivalent": "POST /v1/agents",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /api/passport/web/logout/",
+      "hiveEquivalent": "GET /v1/agents",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/permission_api/coze_web_app/impersonate_coze_user",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/permission_api/pat/create_personal_access_token_and_permission",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/permission_api/pat/delete_personal_access_token_and_permission",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "GET /api/permission_api/pat/get_personal_access_token_and_permission",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "GET /api/permission_api/pat/list_personal_access_tokens",
+      "hiveEquivalent": "GET /v1/graphs/templates/list",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/permission_api/pat/update_personal_access_token_and_permission",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/playground/get_onboarding",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/playground/upload/auth_token",
+      "hiveEquivalent": "POST /v1/conversations/:id/messages/upload",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/playground_api/create_update_shortcut_command",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/playground_api/delete_prompt_resource",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/playground_api/get_file_list",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/playground_api/get_imagex_url",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/playground_api/get_official_prompt_list",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "GET /api/playground_api/get_prompt_resource_info",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/playground_api/mget_user_info",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/playground_api/report_user_behavior",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/playground_api/upsert_prompt_resource",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/playground_api/draftbot/get_draft_bot_info",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/playground_api/draftbot/update_draft_bot_info",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/playground_api/operate/get_bot_popup_info",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/playground_api/operate/update_bot_popup_info",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/playground_api/space/list",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin/get_oauth_schema",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/batch_create_api",
+      "hiveEquivalent": "POST /v1/graphs/:graphId/tasks/batch",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/check_and_lock_plugin_edit",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/convert_to_openapi",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/create_api",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/debug_api",
+      "hiveEquivalent": "POST /v1/plugins/tools/:toolId/debug",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/del_plugin",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/delete_api",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/get_bot_default_params",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/get_dev_plugin_list",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/get_oauth_schema",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/get_oauth_status",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/get_playground_plugin_list",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/get_plugin_apis",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/get_plugin_info",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/get_plugin_next_version",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/get_queried_oauth_plugins",
+      "hiveEquivalent": "POST /v1/plugins",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/get_updated_apis",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/get_user_authority",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/library_resource_list",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/project_resource_list",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/publish_plugin",
+      "hiveEquivalent": "POST /v1/agents/:id/publish",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/register",
+      "hiveEquivalent": "POST /v1/workers/register",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/register_plugin_meta",
+      "hiveEquivalent": "POST /v1/workers/register",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/resource_copy_cancel",
+      "hiveEquivalent": "POST /v1/graphs/:graphId/runs/:runId/cancel",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/resource_copy_detail",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/resource_copy_dispatch",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/resource_copy_retry",
+      "hiveEquivalent": "POST /v1/tasks/:taskId/retry",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/revoke_auth_token",
+      "hiveEquivalent": "POST /v1/plugins/:id/oauth/revoke",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/unlock_plugin_edit",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/update",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/update_api",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/update_bot_default_params",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/plugin_api/update_plugin_meta",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/user/update_profile",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/user/update_profile_check",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/web/user/update/upload_avatar/",
+      "hiveEquivalent": "POST /v1/agents",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /api/workflow_api/apiDetail",
+      "hiveEquivalent": "GET /v1/runs/:runId/detail",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/batch_delete",
+      "hiveEquivalent": "POST /v1/graphs/:graphId/tasks/batch",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/cancel",
+      "hiveEquivalent": "POST /v1/graphs/:graphId/runs/:runId/cancel",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/canvas",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/copy",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/copy_wk_template",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/create",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/delete",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/delete_strategy",
+      "hiveEquivalent": "POST /v1/models/providers/:id/test",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/example_workflow_list",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "GET /api/workflow_api/get_node_execute_history",
+      "hiveEquivalent": "GET /v1/meta/health/history",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /api/workflow_api/get_process",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/get_trace",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/history_schema",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/list_publish_workflow",
+      "hiveEquivalent": "POST /v1/agents/:id/publish",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/list_spans",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/llm_fc_setting_detail",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/llm_fc_setting_merged",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/nodeDebug",
+      "hiveEquivalent": "POST /v1/plugins/tools/:toolId/debug",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/node_panel_search",
+      "hiveEquivalent": "POST /v1/knowledge/:id/search",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/node_template_list",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/node_type",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/publish",
+      "hiveEquivalent": "POST /v1/agents/:id/publish",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/released_workflows",
+      "hiveEquivalent": "POST /v1/workflows",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/save",
+      "hiveEquivalent": "POST /v1/graphs/:graphId/save-template",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/sign_image_url",
+      "hiveEquivalent": "POST /v1/uploads/sign",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/test_resume",
+      "hiveEquivalent": "POST /v1/models/providers/:id/test",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/test_run",
+      "hiveEquivalent": "POST /v1/models/providers/:id/test",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/update_meta",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/validate_tree",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/workflow_detail",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/workflow_detail_info",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/workflow_list",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/workflow_references",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/chat_flow_role/create",
+      "hiveEquivalent": "POST /v1/conversations/chat",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/chat_flow_role/delete",
+      "hiveEquivalent": "POST /v1/conversations/chat",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /api/workflow_api/chat_flow_role/get",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/project_conversation/create",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/project_conversation/delete",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "GET /api/workflow_api/project_conversation/list",
+      "hiveEquivalent": "GET /v1/graphs/templates/list",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/project_conversation/update",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /api/workflow_api/upload/auth_token",
+      "hiveEquivalent": "POST /v1/conversations/:id/messages/upload",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /open_api/knowledge/document/create",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /open_api/knowledge/document/list",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /open_api/knowledge/document/delete",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /open_api/knowledge/document/update",
+      "hiveEquivalent": "POST /v1/knowledge",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /v1/conversations",
+      "hiveEquivalent": "GET /v1/conversations",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "DELETE /v1/conversations/:conversation_id",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "PUT /v1/conversations/:conversation_id",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "GET /v1/datasets",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "DELETE /v1/datasets/:dataset_id",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "GET /v1/datasets/:dataset_id/images",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /v1/datasets/:dataset_id/process",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "PUT /v1/datasets/:dataset_id",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /v1/datasets",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "GET /v1/apps/:app_id",
+      "hiveEquivalent": "GET /v1/apps",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /v1/bot/get_online_info",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "GET /v1/bots/:bot_id",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /v1/conversation/create",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "GET /v1/conversation/retrieve",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /v1/conversation/message/list",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /v1/conversations/:conversation_id/clear",
+      "hiveEquivalent": "POST /v1/conversations",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /v1/files/upload",
+      "hiveEquivalent": "POST /v1/conversations/:id/messages/upload",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /v1/workflow/get_run_history",
+      "hiveEquivalent": "GET /v1/meta/health/history",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /v1/workflow/run",
+      "hiveEquivalent": "POST /v1/graphs/:graphId/runs",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /v1/workflow/stream_resume",
+      "hiveEquivalent": "POST /v1/conversations/chat/stream",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /v1/workflow/stream_run",
+      "hiveEquivalent": "POST /v1/conversations/chat/stream",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /v1/workflow/conversation/create",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "POST /v1/workflows/chat",
+      "hiveEquivalent": "POST /v1/conversations/chat",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /v1/workflows/:workflow_id",
+      "hiveEquivalent": "GET /v1/workflows",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /v3/chat",
+      "hiveEquivalent": "POST /v1/conversations/chat",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /v3/chat/cancel",
+      "hiveEquivalent": "POST /v1/conversations/chat",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "GET /v3/chat/retrieve",
+      "hiveEquivalent": null,
+      "status": "missing"
+    },
+    {
+      "cozeEndpoint": "GET /v3/chat/message/list",
+      "hiveEquivalent": "GET /v1/graphs/templates/list",
+      "status": "mapped"
+    }
+  ],
+  "tableDiff": {
+    "cozeOnly": [
+      "agent_to_database",
+      "agent_tool_draft",
+      "agent_tool_version",
+      "api_key",
+      "app_connector_release_ref",
+      "app_conversation_template_draft",
+      "app_conversation_template_online",
+      "app_draft",
+      "app_dynamic_conversation_draft",
+      "app_dynamic_conversation_online",
+      "app_release_record",
+      "app_static_conversation_draft",
+      "app_static_conversation_online",
+      "chat_flow_role_config",
+      "connector_workflow_version",
+      "conversation",
+      "data_copy_task",
+      "draft_database_info",
+      "files",
+      "knowledge",
+      "knowledge_document",
+      "knowledge_document_review",
+      "knowledge_document_slice",
+      "kv_entries",
+      "message",
+      "model_entity",
+      "model_instance",
+      "model_meta",
+      "node_execution",
+      "online_database_info",
+      "plugin",
+      "plugin_draft",
+      "plugin_oauth_auth",
+      "plugin_version",
+      "prompt_resource",
+      "run_record",
+      "shortcut_command",
+      "single_agent_draft",
+      "single_agent_publish",
+      "single_agent_version",
+      "space",
+      "space_user",
+      "template",
+      "tool",
+      "tool_draft",
+      "tool_version",
+      "user",
+      "variable_instance",
+      "variables_meta",
+      "workflow_draft",
+      "workflow_execution",
+      "workflow_meta",
+      "workflow_reference",
+      "workflow_snapshot",
+      "workflow_version"
+    ],
+    "hiveOnly": [
+      "agent_configs",
+      "agent_memories",
+      "agent_versions",
+      "agents",
+      "api_keys",
+      "app_deployments",
+      "app_versions",
+      "apps",
+      "audit_logs",
+      "chat_runs",
+      "conversations",
+      "document_chunks",
+      "documents",
+      "edges",
+      "graph_snapshots",
+      "graphs",
+      "knowledge_bases",
+      "marketplace_installs",
+      "marketplace_products",
+      "marketplace_reviews",
+      "messages",
+      "meta_events",
+      "model_configs",
+      "model_providers",
+      "model_usage_logs",
+      "plugin_tools",
+      "plugin_versions",
+      "plugins",
+      "prompt_versions",
+      "prompts",
+      "resources",
+      "run_retrospectives",
+      "run_steps",
+      "runs",
+      "system_snapshots",
+      "task_logs",
+      "tasks",
+      "user_databases",
+      "user_profiles",
+      "user_table_rows",
+      "user_tables",
+      "variable_values",
+      "variables",
+      "webhook_deliveries",
+      "webhooks",
+      "workers",
+      "workflow_definitions",
+      "workflow_edges",
+      "workflow_nodes",
+      "workflow_runs",
+      "workflow_traces",
+      "workflow_versions",
+      "workspace_members",
+      "workspaces"
+    ],
+    "both": []
+  },
+  "missingEndpointsByDomain": {
+    "api": [
+      "GET /api/admin/config/basic/get",
+      "POST /api/admin/config/model/create",
+      "POST /api/admin/config/model/delete",
+      "POST /api/bot/get_type_list",
+      "GET /api/common/upload/apply_upload_action",
+      "POST /api/conversation/break_message",
+      "POST /api/conversation/create_section",
+      "POST /api/conversation/delete_message",
+      "POST /api/conversation/get_message_list",
+      "POST /api/developer/get_icon",
+      "POST /api/draftbot/commit_check",
+      "POST /api/draftbot/create",
+      "POST /api/draftbot/delete",
+      "POST /api/draftbot/get_display_info",
+      "POST /api/draftbot/list_draft_history",
+      "POST /api/draftbot/update_display_info",
+      "POST /api/intelligence_api/draft_project/copy",
+      "POST /api/intelligence_api/draft_project/create",
+      "POST /api/intelligence_api/draft_project/delete",
+      "POST /api/intelligence_api/draft_project/inner_task_list",
+      "POST /api/intelligence_api/draft_project/update",
+      "GET /api/memory/doc_table_info",
+      "GET /api/memory/sys_variable_conf",
+      "GET /api/memory/table_mode_config",
+      "POST /api/memory/database/add",
+      "POST /api/memory/database/bind_to_bot",
+      "POST /api/memory/database/delete",
+      "POST /api/memory/database/get_by_id",
+      "POST /api/memory/database/get_connector_name",
+      "POST /api/memory/database/get_online_database_id",
+      "POST /api/memory/database/get_template",
+      "POST /api/memory/database/list",
+      "POST /api/memory/database/list_records",
+      "POST /api/memory/database/unbind_to_bot",
+      "POST /api/memory/database/update",
+      "POST /api/memory/database/update_bot_switch",
+      "POST /api/memory/database/update_records",
+      "POST /api/memory/database/table/list_new",
+      "POST /api/memory/project/variable/meta_update",
+      "POST /api/memory/table_file/get_progress",
+      "POST /api/memory/table_file/submit",
+      "POST /api/memory/variable/delete",
+      "POST /api/memory/variable/get",
+      "POST /api/memory/variable/get_meta",
+      "POST /api/memory/variable/upsert",
+      "GET /api/oauth/authorization_code",
+      "POST /api/permission_api/coze_web_app/impersonate_coze_user",
+      "POST /api/permission_api/pat/create_personal_access_token_and_permission",
+      "POST /api/permission_api/pat/delete_personal_access_token_and_permission",
+      "GET /api/permission_api/pat/get_personal_access_token_and_permission",
+      "POST /api/permission_api/pat/update_personal_access_token_and_permission",
+      "POST /api/playground/get_onboarding",
+      "POST /api/playground_api/create_update_shortcut_command",
+      "POST /api/playground_api/delete_prompt_resource",
+      "POST /api/playground_api/get_file_list",
+      "POST /api/playground_api/get_imagex_url",
+      "POST /api/playground_api/get_official_prompt_list",
+      "GET /api/playground_api/get_prompt_resource_info",
+      "POST /api/playground_api/mget_user_info",
+      "POST /api/playground_api/report_user_behavior",
+      "POST /api/playground_api/upsert_prompt_resource",
+      "POST /api/playground_api/draftbot/get_draft_bot_info",
+      "POST /api/playground_api/draftbot/update_draft_bot_info",
+      "POST /api/playground_api/operate/get_bot_popup_info",
+      "POST /api/playground_api/operate/update_bot_popup_info",
+      "POST /api/playground_api/space/list",
+      "POST /api/plugin/get_oauth_schema",
+      "POST /api/plugin_api/check_and_lock_plugin_edit",
+      "POST /api/plugin_api/convert_to_openapi",
+      "POST /api/plugin_api/create_api",
+      "POST /api/plugin_api/del_plugin",
+      "POST /api/plugin_api/delete_api",
+      "POST /api/plugin_api/get_bot_default_params",
+      "POST /api/plugin_api/get_dev_plugin_list",
+      "POST /api/plugin_api/get_oauth_schema",
+      "POST /api/plugin_api/get_oauth_status",
+      "POST /api/plugin_api/get_playground_plugin_list",
+      "POST /api/plugin_api/get_plugin_apis",
+      "POST /api/plugin_api/get_plugin_info",
+      "POST /api/plugin_api/get_plugin_next_version",
+      "POST /api/plugin_api/get_updated_apis",
+      "POST /api/plugin_api/get_user_authority",
+      "POST /api/plugin_api/library_resource_list",
+      "POST /api/plugin_api/project_resource_list",
+      "POST /api/plugin_api/resource_copy_detail",
+      "POST /api/plugin_api/resource_copy_dispatch",
+      "POST /api/plugin_api/unlock_plugin_edit",
+      "POST /api/plugin_api/update",
+      "POST /api/plugin_api/update_api",
+      "POST /api/plugin_api/update_bot_default_params",
+      "POST /api/plugin_api/update_plugin_meta",
+      "POST /api/user/update_profile",
+      "POST /api/user/update_profile_check",
+      "POST /api/workflow_api/canvas",
+      "POST /api/workflow_api/copy",
+      "POST /api/workflow_api/copy_wk_template",
+      "POST /api/workflow_api/create",
+      "POST /api/workflow_api/delete",
+      "POST /api/workflow_api/example_workflow_list",
+      "GET /api/workflow_api/get_process",
+      "POST /api/workflow_api/get_trace",
+      "POST /api/workflow_api/history_schema",
+      "POST /api/workflow_api/list_spans",
+      "POST /api/workflow_api/llm_fc_setting_detail",
+      "POST /api/workflow_api/llm_fc_setting_merged",
+      "POST /api/workflow_api/node_template_list",
+      "POST /api/workflow_api/node_type",
+      "POST /api/workflow_api/update_meta",
+      "POST /api/workflow_api/validate_tree",
+      "POST /api/workflow_api/workflow_detail",
+      "POST /api/workflow_api/workflow_detail_info",
+      "POST /api/workflow_api/workflow_list",
+      "POST /api/workflow_api/workflow_references",
+      "GET /api/workflow_api/chat_flow_role/get",
+      "POST /api/workflow_api/project_conversation/create",
+      "POST /api/workflow_api/project_conversation/delete",
+      "POST /api/workflow_api/project_conversation/update"
+    ],
+    "v1": [
+      "DELETE /v1/conversations/:conversation_id",
+      "PUT /v1/conversations/:conversation_id",
+      "GET /v1/datasets",
+      "DELETE /v1/datasets/:dataset_id",
+      "GET /v1/datasets/:dataset_id/images",
+      "POST /v1/datasets/:dataset_id/process",
+      "PUT /v1/datasets/:dataset_id",
+      "POST /v1/datasets",
+      "GET /v1/bot/get_online_info",
+      "GET /v1/bots/:bot_id",
+      "POST /v1/conversation/create",
+      "GET /v1/conversation/retrieve",
+      "POST /v1/conversation/message/list",
+      "POST /v1/workflow/conversation/create"
+    ],
+    "v3": [
+      "GET /v3/chat/retrieve"
+    ]
+  },
+  "actionItems": [
+    {
+      "priority": "high",
+      "category": "api/api",
+      "description": "117 Coze api endpoints not mapped in Hive",
+      "cozeReference": "GET /api/admin/config/basic/get, POST /api/admin/config/model/create, POST /api/admin/config/model/delete, POST /api/bot/get_type_list, GET /api/common/upload/apply_upload_action"
+    },
+    {
+      "priority": "high",
+      "category": "api/v1",
+      "description": "14 Coze v1 endpoints not mapped in Hive",
+      "cozeReference": "DELETE /v1/conversations/:conversation_id, PUT /v1/conversations/:conversation_id, GET /v1/datasets, DELETE /v1/datasets/:dataset_id, GET /v1/datasets/:dataset_id/images"
+    },
+    {
+      "priority": "medium",
+      "category": "api/v3",
+      "description": "Missing endpoint: GET /v3/chat/retrieve",
+      "cozeReference": "GET /v3/chat/retrieve"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'agent_to_database' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → agent_to_database"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'agent_tool_draft' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → agent_tool_draft"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'agent_tool_version' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → agent_tool_version"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'api_key' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → api_key"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'app_connector_release_ref' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → app_connector_release_ref"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'app_conversation_template_draft' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → app_conversation_template_draft"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'app_conversation_template_online' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → app_conversation_template_online"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'app_draft' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → app_draft"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'app_dynamic_conversation_draft' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → app_dynamic_conversation_draft"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'app_dynamic_conversation_online' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → app_dynamic_conversation_online"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'app_release_record' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → app_release_record"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'app_static_conversation_draft' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → app_static_conversation_draft"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'app_static_conversation_online' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → app_static_conversation_online"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'chat_flow_role_config' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → chat_flow_role_config"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'connector_workflow_version' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → connector_workflow_version"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'conversation' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → conversation"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'data_copy_task' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → data_copy_task"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'draft_database_info' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → draft_database_info"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'files' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → files"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'knowledge' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → knowledge"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'knowledge_document' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → knowledge_document"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'knowledge_document_review' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → knowledge_document_review"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'knowledge_document_slice' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → knowledge_document_slice"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'kv_entries' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → kv_entries"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'message' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → message"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'model_entity' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → model_entity"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'model_instance' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → model_instance"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'model_meta' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → model_meta"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'node_execution' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → node_execution"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'online_database_info' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → online_database_info"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'plugin' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → plugin"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'plugin_draft' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → plugin_draft"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'plugin_oauth_auth' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → plugin_oauth_auth"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'plugin_version' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → plugin_version"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'prompt_resource' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → prompt_resource"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'run_record' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → run_record"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'shortcut_command' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → shortcut_command"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'single_agent_draft' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → single_agent_draft"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'single_agent_publish' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → single_agent_publish"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'single_agent_version' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → single_agent_version"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'space' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → space"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'space_user' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → space_user"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'template' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → template"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'tool' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → tool"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'tool_draft' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → tool_draft"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'tool_version' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → tool_version"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'user' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → user"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'variable_instance' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → variable_instance"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'variables_meta' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → variables_meta"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'workflow_draft' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → workflow_draft"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'workflow_execution' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → workflow_execution"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'workflow_meta' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → workflow_meta"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'workflow_reference' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → workflow_reference"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'workflow_snapshot' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → workflow_snapshot"
+    },
+    {
+      "priority": "low",
+      "category": "schema",
+      "description": "Coze table 'workflow_version' has no Hive equivalent",
+      "cozeReference": "docker/volumes/mysql/schema.sql → workflow_version"
+    }
+  ],
+  "score": 32
+}

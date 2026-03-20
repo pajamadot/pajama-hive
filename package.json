@@ -10,7 +10,8 @@
     "test": "turbo test",
     "typecheck": "turbo typecheck",
     "clean": "turbo clean",
-    "analyze": "npx tsx scripts/post-iteration-analysis.ts"
+    "analyze": "npx tsx scripts/post-iteration-analysis.ts",
+    "parity": "npx tsx scripts/coze-parity-diff.ts"
   },
   "devDependencies": {
     "turbo": "^2.4.0",
