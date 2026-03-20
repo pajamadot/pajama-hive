@@ -40,9 +40,9 @@ app.use('/v1/*', standardRateLimit);
 // Health check
 app.get('/', (c) => c.json({
   name: 'pajama-hive-api',
-  version: '0.2.0',
+  version: '0.3.0',
   status: 'ok',
-  iteration: 31,
+  iteration: 50,
   uptime: Date.now(),
   features: ['dag-orchestrator', 'meta-observer', 'webhooks', 'api-keys', 'gep-bridge'],
 }));

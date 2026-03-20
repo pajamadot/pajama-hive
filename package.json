@@ -1,7 +1,7 @@
 {
   "name": "pajama-hive",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Agent Orchestrator + DAG Visualizer for AI coding agents",
   "scripts": {
     "dev": "turbo dev",
