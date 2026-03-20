@@ -51,6 +51,9 @@ export const api = {
   createEdge: (token: string, graphId: string, data: { fromTaskId: string; toTaskId: string }) =>
     apiFetch(`/v1/graphs/${graphId}/edges`, token, { method: 'POST', body: JSON.stringify(data) }),
 
+  deleteEdge: (token: string, edgeId: string) =>
+    apiFetch(`/v1/edges/${edgeId}`, token, { method: 'DELETE' }),
+
   // Runs
   createRun: (token: string, graphId: string) =>
     apiFetch(`/v1/graphs/${graphId}/runs`, token, { method: 'POST' }),

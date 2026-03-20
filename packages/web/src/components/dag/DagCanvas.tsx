@@ -31,6 +31,7 @@ interface DagCanvasProps {
   onNodeClick?: (nodeId: string) => void;
   onNewNode?: (type: TaskType, position: { x: number; y: number }) => void;
   onNewEdge?: (fromId: string, toId: string) => void;
+  onDeleteEdge?: (edgeId: string) => void;
   onNodeDragStop?: (nodeId: string, position: { x: number; y: number }) => void;
   showCriticalPath?: boolean;
 }
@@ -70,6 +71,7 @@ export function DagCanvas({
   onNodeClick,
   onNewNode,
   onNewEdge,
+  onDeleteEdge,
   onNodeDragStop,
   showCriticalPath = false,
 }: DagCanvasProps) {
@@ -153,6 +155,12 @@ export function DagCanvas({
         onDrop={onDrop}
         onNodeClick={(_, node) => onNodeClick?.(node.id)}
         onNodeDragStop={(_, node) => onNodeDragStop?.(node.id, node.position)}
+        onEdgeDoubleClick={(_, edge) => {
+          if (onDeleteEdge && confirm('Delete this edge?')) {
+            onDeleteEdge(edge.id);
+            setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+          }
+        }}
         nodeTypes={nodeTypes}
         fitView
         snapToGrid

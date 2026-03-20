@@ -329,6 +329,9 @@ export default function GraphEditorPage() {
             onNodeClick={(id) => store.setSelectedNode(id)}
             onNewNode={handleNewNode}
             onNewEdge={handleNewEdge}
+            onDeleteEdge={async (edgeId) => {
+              if (token) await api.deleteEdge(token, edgeId);
+            }}
             onNodeDragStop={handleNodeDragStop}
             showCriticalPath={showCriticalPath}
           />
