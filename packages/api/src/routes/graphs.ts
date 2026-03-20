@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { nanoid } from 'nanoid';
-import { eq, ilike, and, desc } from 'drizzle-orm';
+import { eq, ilike, and, desc, lt } from 'drizzle-orm';
 import { createGraphSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
 import { graphs, tasks, edges } from '../db/schema.js';
@@ -21,14 +21,23 @@ app.get('/', async (c) => {
   const search = c.req.query('search');
   const status = c.req.query('status');
 
+  const cursor = c.req.query('cursor');
+  const limit = Math.min(parseInt(c.req.query('limit') ?? '30', 10), 100);
+
   const conditions = [eq(graphs.ownerId, userId)];
   if (search) conditions.push(ilike(graphs.name, `%${search}%`));
   if (status) conditions.push(eq(graphs.status, status));
+  if (cursor) conditions.push(lt(graphs.updatedAt, new Date(cursor)));
 
   const result = await db.select().from(graphs)
     .where(and(...conditions))
-    .orderBy(desc(graphs.updatedAt));
-  return c.json({ graphs: result });
+    .orderBy(desc(graphs.updatedAt))
+    .limit(limit);
+
+  return c.json({
+    graphs: result,
+    nextCursor: result.length === limit ? result[result.length - 1].updatedAt?.toISOString() : null,
+  });
 });
 
 // Create graph

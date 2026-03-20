@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { eq, desc, gte, and } from 'drizzle-orm';
+import { eq, desc, gte, and, lt } from 'drizzle-orm';
 import { createDb } from '../db/client.js';
 import { metaEvents, runRetrospectives, systemSnapshots } from '../db/schema.js';
 import { clerkAuth } from '../lib/auth.js';
@@ -12,24 +12,29 @@ app.use('/*', clerkAuth);
 
 // ── Meta Events ──
 
-// List meta events (with filters)
+// List meta events (with filters + cursor pagination)
 app.get('/events', async (c) => {
   const db = createDb(c.env);
   const kind = c.req.query('kind');
   const severity = c.req.query('severity');
   const domain = c.req.query('domain');
+  const cursor = c.req.query('cursor');
   const limit = Math.min(parseInt(c.req.query('limit') ?? '50'), 200);
 
   const conditions = [];
   if (kind) conditions.push(eq(metaEvents.kind, kind));
   if (severity) conditions.push(eq(metaEvents.severity, severity));
   if (domain) conditions.push(eq(metaEvents.domain, domain));
+  if (cursor) conditions.push(lt(metaEvents.createdAt, new Date(cursor)));
 
   const result = conditions.length > 0
     ? await db.select().from(metaEvents).where(and(...conditions)).orderBy(desc(metaEvents.createdAt)).limit(limit)
     : await db.select().from(metaEvents).orderBy(desc(metaEvents.createdAt)).limit(limit);
 
-  return c.json({ events: result });
+  return c.json({
+    events: result,
+    nextCursor: result.length === limit ? result[result.length - 1].createdAt?.toISOString() : null,
+  });
 });
 
 // Resolve a meta event
@@ -53,17 +58,25 @@ app.post('/events/:eventId/resolve', async (c) => {
 
 // ── Retrospectives ──
 
-// List retrospectives
+// List retrospectives (with cursor pagination)
 app.get('/retrospectives', async (c) => {
   const db = createDb(c.env);
   const graphId = c.req.query('graphId');
+  const cursor = c.req.query('cursor');
   const limit = Math.min(parseInt(c.req.query('limit') ?? '20'), 100);
 
-  const result = graphId
-    ? await db.select().from(runRetrospectives).where(eq(runRetrospectives.graphId, graphId)).orderBy(desc(runRetrospectives.createdAt)).limit(limit)
+  const conditions = [];
+  if (graphId) conditions.push(eq(runRetrospectives.graphId, graphId));
+  if (cursor) conditions.push(lt(runRetrospectives.createdAt, new Date(cursor)));
+
+  const result = conditions.length > 0
+    ? await db.select().from(runRetrospectives).where(and(...conditions)).orderBy(desc(runRetrospectives.createdAt)).limit(limit)
     : await db.select().from(runRetrospectives).orderBy(desc(runRetrospectives.createdAt)).limit(limit);
 
-  return c.json({ retrospectives: result });
+  return c.json({
+    retrospectives: result,
+    nextCursor: result.length === limit ? result[result.length - 1].createdAt?.toISOString() : null,
+  });
 });
 
 // Get specific retrospective
@@ -123,19 +136,27 @@ app.get('/health', async (c) => {
 app.get('/health/history', async (c) => {
   const db = createDb(c.env);
   const hours = parseInt(c.req.query('hours') ?? '24');
+  const cursor = c.req.query('cursor');
+  const limit = Math.min(parseInt(c.req.query('limit') ?? '100'), 500);
   const since = new Date(Date.now() - hours * 3_600_000);
+
+  const conditions = [gte(systemSnapshots.createdAt, since)];
+  if (cursor) conditions.push(lt(systemSnapshots.createdAt, new Date(cursor)));
 
   const result = await db.select()
     .from(systemSnapshots)
-    .where(gte(systemSnapshots.createdAt, since))
-    .orderBy(desc(systemSnapshots.createdAt));
+    .where(and(...conditions))
+    .orderBy(desc(systemSnapshots.createdAt))
+    .limit(limit);
 
-  return c.json({ snapshots: result });
+  return c.json({
+    snapshots: result,
+    nextCursor: result.length === limit ? result[result.length - 1].createdAt?.toISOString() : null,
+  });
 });
 
 // ── Manual triggers ──
 
-// Trigger health snapshot
 app.post('/health/snapshot', async (c) => {
   const metaId = c.env.META_OBSERVER.idFromName('global');
   const metaDo = c.env.META_OBSERVER.get(metaId);
@@ -143,7 +164,6 @@ app.post('/health/snapshot', async (c) => {
   return c.json(await res.json());
 });
 
-// Start the meta observer
 app.post('/start', async (c) => {
   const metaId = c.env.META_OBSERVER.idFromName('global');
   const metaDo = c.env.META_OBSERVER.get(metaId);
