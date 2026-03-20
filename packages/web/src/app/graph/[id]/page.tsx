@@ -94,8 +94,13 @@ export default function GraphEditorPage() {
           if (t.status === 'done') toast.success(`Task ${t.taskId.slice(0, 8)} completed`);
           else if (t.status === 'failed') toast.error(`Task ${t.taskId.slice(0, 8)} failed`);
         }
-        if ('status' in (message.payload as object) && (message.payload as { status?: string }).status === 'completed') toast.success('Run completed');
-        else if ('status' in (message.payload as object) && (message.payload as { status?: string }).status === 'failed') toast.error('Run failed');
+        const graphPayload = message.payload as { status?: string };
+        if ('status' in graphPayload && graphPayload.status) {
+          setGraphStatus(graphPayload.status);
+          setCurrentRunId(null);
+          if (graphPayload.status === 'completed') toast.success('Run completed');
+          else if (graphPayload.status === 'failed') toast.error('Run failed');
+        }
         break;
       }
       case 'task.log': {
