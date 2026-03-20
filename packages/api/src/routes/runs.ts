@@ -151,8 +151,12 @@ app.get('/runs/:runId/detail', async (c) => {
       assignedWorkerId: t.assignedWorkerId,
       attempt: t.attempt,
       outputSummary: t.outputSummary,
+      startedAt: t.startedAt,
       createdAt: t.createdAt,
       updatedAt: t.updatedAt,
+      durationMs: t.startedAt && t.updatedAt && (t.status === 'done' || t.status === 'failed')
+        ? t.updatedAt.getTime() - t.startedAt.getTime()
+        : null,
     })),
     retrospective: retro ?? null,
     snapshot: snapshot?.snapshotData ?? null,

@@ -15,8 +15,10 @@ interface RunTask {
   assignedWorkerId?: string;
   attempt: number;
   outputSummary?: string;
+  startedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  durationMs: number | null;
 }
 
 interface Retrospective {
@@ -214,6 +216,7 @@ export default function RunHistoryPage() {
                         <div className="text-sm font-medium truncate">{task.title}</div>
                         <div className="text-xs text-muted-foreground">
                           {task.type} · {task.agentKind}
+                          {task.durationMs != null && ` · ${formatDuration(task.durationMs)}`}
                           {task.attempt > 0 && ` · ${task.attempt + 1} attempts`}
                           {task.assignedWorkerId && ` · ${task.assignedWorkerId.slice(0, 8)}`}
                         </div>
