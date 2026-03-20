@@ -132,6 +132,33 @@ export default function DashboardPage() {
             >
               Seed Test Graph
             </button>
+            <label className="px-4 py-2 border border-border rounded-md text-sm font-medium cursor-pointer hover:bg-accent/50">
+              Import
+              <input
+                type="file"
+                accept=".json"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const text = await file.text();
+                  try {
+                    const data = JSON.parse(text);
+                    const token = await getToken();
+                    const res = await fetch(`${API_URL}/v1/graphs/import`, {
+                      method: 'POST',
+                      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                      body: JSON.stringify(data),
+                    });
+                    if (res.ok) {
+                      const result = await res.json();
+                      router.push(`/graph/${result.graph.id}`);
+                    }
+                  } catch { /* invalid json */ }
+                  e.target.value = '';
+                }}
+              />
+            </label>
             <button
               onClick={() => setShowCreate(true)}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:opacity-90"
