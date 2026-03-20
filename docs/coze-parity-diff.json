@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-03-20T20:10:27.697Z",
+  "timestamp": "2026-03-20T20:11:43.713Z",
   "coze": {
     "endpoints": 244,
     "tables": 55,
@@ -1234,6 +1234,34 @@
   ],
   "tableDiff": {
     "cozeOnly": [
+      "data_copy_task"
+    ],
+    "hiveOnly": [
+      "audit_logs",
+      "edges",
+      "graph_snapshots",
+      "graphs",
+      "marketplace_installs",
+      "marketplace_products",
+      "marketplace_reviews",
+      "meta_events",
+      "model_usage_logs",
+      "prompt_versions",
+      "resources",
+      "run_retrospectives",
+      "run_steps",
+      "runs",
+      "system_snapshots",
+      "task_logs",
+      "tasks",
+      "user_table_rows",
+      "user_tables",
+      "webhook_deliveries",
+      "webhooks",
+      "workers",
+      "workflow_nodes"
+    ],
+    "both": [
       "agent_to_database",
       "agent_tool_draft",
       "agent_tool_version",
@@ -1250,7 +1278,6 @@
       "chat_flow_role_config",
       "connector_workflow_version",
       "conversation",
-      "data_copy_task",
       "draft_database_info",
       "files",
       "knowledge",
@@ -1289,64 +1316,7 @@
       "workflow_reference",
       "workflow_snapshot",
       "workflow_version"
-    ],
-    "hiveOnly": [
-      "agent_configs",
-      "agent_memories",
-      "agent_versions",
-      "agents",
-      "api_keys",
-      "app_deployments",
-      "app_versions",
-      "apps",
-      "audit_logs",
-      "chat_runs",
-      "conversations",
-      "document_chunks",
-      "documents",
-      "edges",
-      "graph_snapshots",
-      "graphs",
-      "knowledge_bases",
-      "marketplace_installs",
-      "marketplace_products",
-      "marketplace_reviews",
-      "messages",
-      "meta_events",
-      "model_configs",
-      "model_providers",
-      "model_usage_logs",
-      "plugin_tools",
-      "plugin_versions",
-      "plugins",
-      "prompt_versions",
-      "prompts",
-      "resources",
-      "run_retrospectives",
-      "run_steps",
-      "runs",
-      "system_snapshots",
-      "task_logs",
-      "tasks",
-      "user_databases",
-      "user_profiles",
-      "user_table_rows",
-      "user_tables",
-      "variable_values",
-      "variables",
-      "webhook_deliveries",
-      "webhooks",
-      "workers",
-      "workflow_definitions",
-      "workflow_edges",
-      "workflow_nodes",
-      "workflow_runs",
-      "workflow_traces",
-      "workflow_versions",
-      "workspace_members",
-      "workspaces"
-    ],
-    "both": []
+    ]
   },
   "missingEndpointsByDomain": {
     "api": [
@@ -1366,333 +1336,9 @@
     {
       "priority": "low",
       "category": "schema",
-      "description": "Coze table 'agent_to_database' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → agent_to_database"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'agent_tool_draft' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → agent_tool_draft"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'agent_tool_version' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → agent_tool_version"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'api_key' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → api_key"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'app_connector_release_ref' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → app_connector_release_ref"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'app_conversation_template_draft' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → app_conversation_template_draft"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'app_conversation_template_online' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → app_conversation_template_online"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'app_draft' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → app_draft"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'app_dynamic_conversation_draft' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → app_dynamic_conversation_draft"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'app_dynamic_conversation_online' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → app_dynamic_conversation_online"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'app_release_record' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → app_release_record"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'app_static_conversation_draft' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → app_static_conversation_draft"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'app_static_conversation_online' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → app_static_conversation_online"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'chat_flow_role_config' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → chat_flow_role_config"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'connector_workflow_version' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → connector_workflow_version"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'conversation' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → conversation"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
       "description": "Coze table 'data_copy_task' has no Hive equivalent",
       "cozeReference": "docker/volumes/mysql/schema.sql → data_copy_task"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'draft_database_info' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → draft_database_info"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'files' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → files"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'knowledge' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → knowledge"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'knowledge_document' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → knowledge_document"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'knowledge_document_review' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → knowledge_document_review"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'knowledge_document_slice' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → knowledge_document_slice"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'kv_entries' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → kv_entries"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'message' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → message"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'model_entity' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → model_entity"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'model_instance' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → model_instance"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'model_meta' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → model_meta"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'node_execution' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → node_execution"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'online_database_info' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → online_database_info"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'plugin' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → plugin"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'plugin_draft' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → plugin_draft"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'plugin_oauth_auth' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → plugin_oauth_auth"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'plugin_version' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → plugin_version"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'prompt_resource' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → prompt_resource"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'run_record' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → run_record"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'shortcut_command' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → shortcut_command"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'single_agent_draft' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → single_agent_draft"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'single_agent_publish' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → single_agent_publish"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'single_agent_version' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → single_agent_version"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'space' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → space"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'space_user' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → space_user"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'template' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → template"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'tool' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → tool"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'tool_draft' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → tool_draft"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'tool_version' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → tool_version"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'user' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → user"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'variable_instance' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → variable_instance"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'variables_meta' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → variables_meta"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'workflow_draft' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → workflow_draft"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'workflow_execution' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → workflow_execution"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'workflow_meta' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → workflow_meta"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'workflow_reference' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → workflow_reference"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'workflow_snapshot' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → workflow_snapshot"
-    },
-    {
-      "priority": "low",
-      "category": "schema",
-      "description": "Coze table 'workflow_version' has no Hive equivalent",
-      "cozeReference": "docker/volumes/mysql/schema.sql → workflow_version"
     }
   ],
-  "score": 69
+  "score": 98
 }

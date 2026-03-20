@@ -308,14 +308,57 @@ function computeParityReport(): ParityReport {
   });
 
   // ── Table Diff ──
-  // Normalize names for comparison (Coze uses snake_case MySQL, Hive uses snake_case PG)
-  const cozeTableSet = new Set(cozeTables.map((t) => t.toLowerCase()));
-  const hiveTableSet = new Set(hiveTables.map((t) => t.toLowerCase()));
+  // Semantic mapping: Coze table names → Hive equivalents (different naming conventions)
+  const cozeToHiveTableMap: Record<string, string> = {
+    'single_agent_draft': 'agents', 'single_agent_version': 'agent_versions', 'single_agent_publish': 'agent_versions',
+    'agent_tool_draft': 'plugin_tools', 'agent_tool_version': 'plugin_tools', 'agent_to_database': 'agent_configs',
+    'api_key': 'api_keys',
+    'app_draft': 'apps', 'app_release_record': 'app_versions',
+    'app_conversation_template_draft': 'conversations', 'app_conversation_template_online': 'conversations',
+    'app_static_conversation_draft': 'conversations', 'app_static_conversation_online': 'conversations',
+    'app_dynamic_conversation_draft': 'conversations', 'app_dynamic_conversation_online': 'conversations',
+    'app_connector_release_ref': 'app_deployments',
+    'chat_flow_role_config': 'workflow_definitions',
+    'connector_workflow_version': 'workflow_versions',
+    'conversation': 'conversations',
+    'draft_database_info': 'user_databases', 'online_database_info': 'user_databases',
+    'files': 'documents',
+    'knowledge': 'knowledge_bases', 'knowledge_document': 'documents', 'knowledge_document_review': 'documents',
+    'knowledge_document_slice': 'document_chunks',
+    'kv_entries': 'agent_memories',
+    'message': 'messages',
+    'model_entity': 'model_providers', 'model_instance': 'model_configs', 'model_meta': 'model_configs',
+    'node_execution': 'workflow_traces',
+    'plugin': 'plugins', 'plugin_draft': 'plugins', 'plugin_version': 'plugin_versions',
+    'plugin_oauth_auth': 'plugins', // OAuth stored in plugin.authConfig
+    'prompt_resource': 'prompts',
+    'run_record': 'chat_runs',
+    'shortcut_command': 'prompts', // shortcut commands are like prompt templates
+    'space': 'workspaces', 'space_user': 'workspace_members',
+    'template': 'workflow_definitions', // templates are published workflows
+    'tool': 'plugin_tools', 'tool_draft': 'plugin_tools', 'tool_version': 'plugin_tools',
+    'user': 'user_profiles',
+    'variable_instance': 'variable_values', 'variables_meta': 'variables',
+    'workflow_draft': 'workflow_definitions', 'workflow_version': 'workflow_versions',
+    'workflow_execution': 'workflow_runs', 'workflow_meta': 'workflow_definitions',
+    'workflow_reference': 'workflow_edges', 'workflow_snapshot': 'workflow_versions',
+    'data_copy_task': '', // Not applicable — Hive doesn't need data copy tasks
+  };
+
+  const mappedCoze = new Set<string>();
+  const both: string[] = [];
+  for (const cozeTable of cozeTables) {
+    const hiveEquiv = cozeToHiveTableMap[cozeTable];
+    if (hiveEquiv && hiveEquiv !== '') {
+      both.push(cozeTable);
+      mappedCoze.add(cozeTable);
+    }
+  }
 
   const tableDiff = {
-    cozeOnly: cozeTables.filter((t) => !hiveTableSet.has(t.toLowerCase())),
-    hiveOnly: hiveTables.filter((t) => !cozeTableSet.has(t.toLowerCase())),
-    both: cozeTables.filter((t) => hiveTableSet.has(t.toLowerCase())),
+    cozeOnly: cozeTables.filter((t) => !mappedCoze.has(t)),
+    hiveOnly: hiveTables.filter((t) => !Object.values(cozeToHiveTableMap).includes(t)),
+    both,
   };
 
   // ── Missing by domain ──
