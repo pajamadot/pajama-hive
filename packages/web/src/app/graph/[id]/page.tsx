@@ -222,7 +222,20 @@ export default function GraphEditorPage() {
     <div className="h-screen flex flex-col">
       <header className="border-b border-border px-4 py-2 flex items-center gap-3 shrink-0">
         <Link href="/" className="text-muted-foreground hover:text-foreground text-sm">Back</Link>
-        <h1 className="text-lg font-semibold">{graphName || 'Graph'}</h1>
+        <h1
+          className="text-lg font-semibold cursor-pointer hover:text-primary"
+          onClick={() => {
+            const newName = prompt('Graph name:', graphName);
+            if (newName && newName !== graphName && token) {
+              fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'https://hive-api.pajamadot.com'}/v1/graphs/${graphId}`, {
+                method: 'PATCH',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName }),
+              }).then(() => setGraphName(newName));
+            }
+          }}
+          title="Click to rename"
+        >{graphName || 'Graph'}</h1>
         <span className={`text-xs px-2 py-0.5 rounded-full ${
           graphStatus === 'running' ? 'bg-yellow-500/20 text-yellow-400' :
           graphStatus === 'completed' ? 'bg-green-500/20 text-green-400' :
