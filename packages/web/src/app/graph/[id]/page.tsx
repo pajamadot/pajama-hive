@@ -13,6 +13,7 @@ import { useGraphStore, type TaskNodeData } from '@/stores/graph-store';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { getLayoutedElements } from '@/lib/layout';
 import { api } from '@/lib/api';
+import { toast } from 'sonner';
 import type { WsMessage, TaskType, GraphUpdatePayload, TaskLogPayload, WorkerStatusPayload } from '@pajamadot/hive-shared';
 import type { Node, Edge } from '@xyflow/react';
 
@@ -86,7 +87,11 @@ export default function GraphEditorPage() {
         const payload = message.payload as GraphUpdatePayload;
         for (const t of payload.tasks) {
           store.updateNodeStatus(t.taskId, t.status, t.assignedWorkerId);
+          if (t.status === 'done') toast.success(`Task ${t.taskId.slice(0, 8)} completed`);
+          else if (t.status === 'failed') toast.error(`Task ${t.taskId.slice(0, 8)} failed`);
         }
+        if ('status' in (message.payload as object) && (message.payload as { status?: string }).status === 'completed') toast.success('Run completed');
+        else if ('status' in (message.payload as object) && (message.payload as { status?: string }).status === 'failed') toast.error('Run failed');
         break;
       }
       case 'task.log': {
