@@ -139,6 +139,54 @@ export const createEdgeSchema = z.object({
   toTaskId: z.string().min(1),
 });
 
+// ── Graph Export/Import ──
+
+export const graphExportTaskSchema = z.object({
+  refId: z.string().min(1),
+  title: z.string().min(1),
+  type: taskTypeSchema,
+  input: z.string().default(''),
+  agentKind: agentKindSchema.default('cc'),
+  priority: z.number().int().default(100),
+  requiredCapabilities: z.array(z.string()).default([]),
+  timeoutMs: z.number().int().default(900000),
+  maxRetries: z.number().int().default(2),
+  positionX: z.number().default(0),
+  positionY: z.number().default(0),
+});
+
+export const graphExportSchema = z.object({
+  version: z.literal('1.0'),
+  graph: z.object({
+    name: z.string().min(1),
+    description: z.string().optional(),
+  }),
+  tasks: z.array(graphExportTaskSchema).min(1),
+  edges: z.array(z.object({ from: z.string(), to: z.string() })),
+});
+
+// ── Batch Operations ──
+
+export const batchTaskActionSchema = z.object({
+  action: z.enum(['approve', 'cancel', 'retry']),
+  taskIds: z.array(z.string().min(1)).min(1),
+});
+
+// ── API Key ──
+
+export const createApiKeySchema = z.object({
+  name: z.string().min(1).max(100),
+  scopes: z.array(z.string()).default(['*']),
+  expiresInDays: z.number().int().min(1).max(365).optional(),
+});
+
+// ── Webhook ──
+
+export const createWebhookSchema = z.object({
+  url: z.string().url(),
+  events: z.array(z.string().min(1)).min(1),
+});
+
 // ── Meta-Thinking Schemas ──
 
 export const metaEventKindSchema = z.enum([

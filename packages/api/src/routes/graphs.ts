@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { nanoid } from 'nanoid';
 import { eq, ilike, and, desc, lt, inArray } from 'drizzle-orm';
-import { createGraphSchema } from '@pajamadot/hive-shared';
+import { createGraphSchema, graphExportSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
 import { graphs, tasks, edges, runs } from '../db/schema.js';
 import { clerkAuth, verifyGraphOwner } from '../lib/auth.js';
@@ -185,19 +185,18 @@ app.get('/:graphId/export', async (c) => {
   });
 });
 
-// Import graph from portable JSON
+// Import graph from portable JSON (Zod-validated)
 app.post('/import', async (c) => {
   const db = createDb(c.env);
   const userId = c.get('userId');
-  const body = await c.req.json() as {
-    graph: { name: string; description?: string };
-    tasks: { refId: string; title: string; type: string; input?: string; agentKind?: string; priority?: number; requiredCapabilities?: string[]; timeoutMs?: number; maxRetries?: number; positionX?: number; positionY?: number }[];
-    edges: { from: string; to: string }[];
-  };
+  const raw = await c.req.json();
 
-  if (!body.graph?.name || !body.tasks?.length) {
-    return c.json({ error: 'Invalid import format' }, 400);
+  const parsed = graphExportSchema.safeParse(raw);
+  if (!parsed.success) {
+    return c.json({ error: 'Invalid import format', details: parsed.error.flatten() }, 400);
   }
+
+  const body = parsed.data;
 
   const graphId = nanoid(12);
   await db.insert(graphs).values({
