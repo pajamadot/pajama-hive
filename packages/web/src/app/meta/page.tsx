@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth, UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
+import { Sparkline } from '@/components/ui/Sparkline';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://hive-api.pajamadot.com';
 
@@ -58,13 +59,17 @@ const kindIcons: Record<string, string> = {
   retrospective: 'T',
 };
 
-function ScoreBar({ label, score }: { label: string; score: number }) {
+function ScoreBar({ label, score, history }: { label: string; score: number; history?: number[] }) {
   const color = score >= 80 ? 'bg-green-500' : score >= 50 ? 'bg-yellow-500' : 'bg-red-500';
+  const sparkColor = score >= 80 ? '#22c55e' : score >= 50 ? '#eab308' : '#ef4444';
   return (
     <div className="space-y-1">
-      <div className="flex justify-between text-sm">
+      <div className="flex justify-between items-center text-sm">
         <span className="text-muted-foreground">{label}</span>
-        <span className="font-mono">{score}</span>
+        <div className="flex items-center gap-2">
+          {history && history.length > 1 && <Sparkline data={history} width={60} height={16} color={sparkColor} />}
+          <span className="font-mono">{score}</span>
+        </div>
       </div>
       <div className="h-2 bg-muted rounded-full overflow-hidden">
         <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${score}%` }} />
@@ -78,6 +83,7 @@ export default function MetaDashboardPage() {
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [events, setEvents] = useState<MetaEvent[]>([]);
   const [retrospectives, setRetrospectives] = useState<Retrospective[]>([]);
+  const [healthHistory, setHealthHistory] = useState<{ scoreExecution: number; scoreScheduling: number; scoreReliability: number }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -86,15 +92,20 @@ export default function MetaDashboardPage() {
 
     const headers = { Authorization: `Bearer ${token}` };
 
-    const [healthRes, eventsRes, retroRes] = await Promise.all([
+    const [healthRes, eventsRes, retroRes, historyRes] = await Promise.all([
       fetch(`${API_URL}/v1/meta/health`, { headers }),
       fetch(`${API_URL}/v1/meta/events?limit=20`, { headers }),
       fetch(`${API_URL}/v1/meta/retrospectives?limit=10`, { headers }),
+      fetch(`${API_URL}/v1/meta/health/history?hours=24&limit=50`, { headers }),
     ]);
 
     if (healthRes.ok) setHealth((await healthRes.json()).health);
     if (eventsRes.ok) setEvents((await eventsRes.json()).events);
     if (retroRes.ok) setRetrospectives((await retroRes.json()).retrospectives);
+    if (historyRes.ok) {
+      const { snapshots } = await historyRes.json();
+      setHealthHistory(snapshots.reverse());
+    }
     setLoading(false);
   }, [getToken]);
 
@@ -168,9 +179,9 @@ export default function MetaDashboardPage() {
 
               {/* Score breakdown */}
               <div className="border border-border rounded-lg p-6 space-y-3 col-span-2">
-                <ScoreBar label="Scheduling" score={health?.scores.scheduling ?? 0} />
-                <ScoreBar label="Execution" score={health?.scores.execution ?? 0} />
-                <ScoreBar label="Reliability" score={health?.scores.reliability ?? 0} />
+                <ScoreBar label="Scheduling" score={health?.scores.scheduling ?? 0} history={healthHistory.map((h) => h.scoreScheduling)} />
+                <ScoreBar label="Execution" score={health?.scores.execution ?? 0} history={healthHistory.map((h) => h.scoreExecution)} />
+                <ScoreBar label="Reliability" score={health?.scores.reliability ?? 0} history={healthHistory.map((h) => h.scoreReliability)} />
                 <ScoreBar label="Planning" score={health?.scores.planning ?? 0} />
                 <ScoreBar label="Evolution" score={health?.scores.evolution ?? 0} />
               </div>
