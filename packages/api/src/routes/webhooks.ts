@@ -81,6 +81,24 @@ app.patch('/:webhookId', async (c) => {
   return c.json({ webhook: updated });
 });
 
+// Send test delivery
+app.post('/:webhookId/test', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const webhookId = c.req.param('webhookId');
+
+  const [hook] = await db.select().from(webhooks).where(and(eq(webhooks.id, webhookId), eq(webhooks.userId, userId)));
+  if (!hook) return c.json({ error: 'Webhook not found' }, 404);
+
+  await fireWebhooks(db, userId, 'test.ping', {
+    message: 'This is a test delivery from Pajama Hive',
+    timestamp: new Date().toISOString(),
+    webhookId: hook.id,
+  });
+
+  return c.json({ ok: true, message: 'Test delivery sent' });
+});
+
 // Get webhook delivery history
 app.get('/:webhookId/deliveries', async (c) => {
   const db = createDb(c.env);
