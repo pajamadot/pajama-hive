@@ -54,6 +54,56 @@ export class Orchestrator extends DurableObject<Env> {
       return new Response(JSON.stringify({ ok: true }));
     }
 
+    // Handle task result from WsRoom
+    if (url.pathname === '/task-result' && request.method === 'POST') {
+      const payload = await request.json() as {
+        taskId: string;
+        leaseId: string;
+        status: 'done' | 'failed';
+        summary?: string;
+        errorMessage?: string;
+        errorKind?: string;
+      };
+
+      const db = this.getDb();
+
+      // Validate lease
+      const [task] = await db.select().from(schema.tasks).where(eq(schema.tasks.id, payload.taskId));
+      if (!task || task.leaseId !== payload.leaseId) {
+        return Response.json({ ok: false, error: 'Invalid lease' }, { status: 400 });
+      }
+
+      // Update task status
+      await db.update(schema.tasks)
+        .set({
+          status: payload.status,
+          outputSummary: payload.summary ?? payload.errorMessage,
+          leaseId: null,
+          leaseExpiresAt: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.tasks.id, payload.taskId));
+
+      // Audit log
+      await db.insert(schema.auditLogs).values({
+        id: `audit-${Date.now()}`,
+        graphId: this.graphId,
+        runId: this.runId,
+        taskId: payload.taskId,
+        workerId: task.assignedWorkerId,
+        action: payload.status === 'done' ? 'task.completed' : 'task.failed',
+        payload: { summary: payload.summary, errorMessage: payload.errorMessage },
+      });
+
+      // Broadcast status to UI
+      await this.broadcast('graph.update', {
+        graphId: this.graphId,
+        tasks: [{ taskId: payload.taskId, status: payload.status }],
+      });
+
+      return Response.json({ ok: true });
+    }
+
     return new Response('Not found', { status: 404 });
   }
 
@@ -220,7 +270,7 @@ export class Orchestrator extends DurableObject<Env> {
       const message = createWsMessage('task.assign', payload);
       await wsRoom.fetch(new Request('http://internal/send-to-worker', {
         method: 'POST',
-        body: JSON.stringify({ workerId: assignment.workerId, message }),
+        body: JSON.stringify({ workerId: assignment.workerId, message, taskId: task.id, graphId }),
       }));
 
       // Broadcast to UI

@@ -55,7 +55,11 @@ export class WsRoom extends DurableObject<Env> {
 
     // Internal API: send task assignment to a specific worker
     if (url.pathname === '/send-to-worker' && request.method === 'POST') {
-      const { workerId, message } = await request.json() as { workerId: string; message: string };
+      const { workerId, message, taskId, graphId } = await request.json() as { workerId: string; message: string; taskId?: string; graphId?: string };
+      // Store task→graph mapping for result routing
+      if (taskId && graphId) {
+        await this.ctx.storage.put(`task:${taskId}`, { graphId });
+      }
       const worker = this.workers.get(workerId);
       if (worker) {
         try { worker.ws.send(message); } catch { this.workers.delete(workerId); }
@@ -136,9 +140,24 @@ export class WsRoom extends DurableObject<Env> {
           workerEntry[1].idle = true;
         }
 
-        // Forward result to orchestrator
-        // The orchestrator DO will handle state updates
+        // Forward result to UI
         this.broadcastToUi('task.result', payload);
+
+        // Forward to Orchestrator DO via internal fetch to update DB + trigger deps
+        try {
+          // Determine which graph this task belongs to by checking storage
+          const taskMeta = await this.ctx.storage.get<{ graphId: string }>(`task:${payload.taskId}`);
+          if (taskMeta?.graphId) {
+            const orchestratorId = this.env.ORCHESTRATOR.idFromName(taskMeta.graphId);
+            const orchestrator = this.env.ORCHESTRATOR.get(orchestratorId);
+            await orchestrator.fetch(new Request('http://internal/task-result', {
+              method: 'POST',
+              body: JSON.stringify(payload),
+            }));
+          }
+        } catch (err) {
+          console.error('Failed to forward result to orchestrator:', err);
+        }
       },
     };
 
