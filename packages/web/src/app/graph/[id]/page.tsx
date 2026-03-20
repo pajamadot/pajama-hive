@@ -14,6 +14,8 @@ import { useWebSocket } from '@/hooks/useWebSocket';
 import { getLayoutedElements } from '@/lib/layout';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { useKeyboardShortcuts, ShortcutHelp } from '@/hooks/useKeyboardShortcuts';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import type { WsMessage, TaskType, GraphUpdatePayload, TaskLogPayload, WorkerStatusPayload } from '@pajamadot/hive-shared';
 import type { Node, Edge } from '@xyflow/react';
 
@@ -179,6 +181,13 @@ export default function GraphEditorPage() {
     store.setEdges(laidEdges);
   }, [store.nodes, store.edges]);
 
+  const shortcutDefs = [
+    { key: 'Enter', ctrl: true, description: 'Start a run', action: handleRunGraph },
+    { key: 'l', ctrl: true, description: 'Auto layout', action: handleAutoLayout },
+    { key: 'Escape', description: 'Deselect node', action: () => store.setSelectedNode(null) },
+  ];
+  const { showHelp, setShowHelp } = useKeyboardShortcuts(shortcutDefs);
+
   const selectedNode = store.nodes.find((n) => n.id === store.selectedNodeId);
   const hasPlanTasks = store.nodes.some((n) => n.id.startsWith('plan-') && n.data.status === 'pending');
 
@@ -284,8 +293,11 @@ export default function GraphEditorPage() {
         >
           {graphStatus === 'running' ? 'Running...' : 'Run'}
         </button>
+        <ThemeToggle />
         <UserButton />
       </header>
+
+      {showHelp && <ShortcutHelp shortcuts={shortcutDefs} onClose={() => setShowHelp(false)} />}
 
       <div className="flex-1 flex overflow-hidden">
         <NodeSidebar />
