@@ -106,7 +106,7 @@ app.post('/graphs/:graphId/tasks', async (c) => {
   return c.json({ task }, 201);
 });
 
-// Update task
+// Update task (only safe fields — blocks overwriting status, leaseId, etc.)
 app.patch('/tasks/:taskId', async (c) => {
   const db = createDb(c.env);
   const taskId = c.req.param('taskId');
@@ -116,8 +116,20 @@ app.patch('/tasks/:taskId', async (c) => {
   if (!check.ok) return c.json({ error: check.error }, check.status);
 
   const body = await c.req.json();
+
+  // Allowlist of user-editable fields
+  const allowed: Record<string, unknown> = {};
+  const safeFields = ['title', 'type', 'input', 'priority', 'agentKind', 'requiredCapabilities', 'timeoutMs', 'maxRetries', 'positionX', 'positionY'];
+  for (const key of safeFields) {
+    if (key in body) allowed[key] = body[key];
+  }
+
+  if (Object.keys(allowed).length === 0) {
+    return c.json({ error: 'No valid fields to update' }, 400);
+  }
+
   const [updated] = await db.update(tasks)
-    .set({ ...body, updatedAt: new Date() })
+    .set({ ...allowed, updatedAt: new Date() })
     .where(eq(tasks.id, taskId))
     .returning();
 

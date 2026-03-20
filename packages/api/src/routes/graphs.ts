@@ -117,8 +117,18 @@ app.patch('/:graphId', async (c) => {
   if (!check.ok) return c.json({ error: check.error }, check.status);
 
   const body = await c.req.json();
+
+  // Allowlist user-editable fields
+  const allowed: Record<string, unknown> = {};
+  if ('name' in body) allowed.name = body.name;
+  if ('description' in body) allowed.description = body.description;
+
+  if (Object.keys(allowed).length === 0) {
+    return c.json({ error: 'No valid fields to update' }, 400);
+  }
+
   const [updated] = await db.update(graphs)
-    .set({ ...body, updatedAt: new Date() })
+    .set({ ...allowed, updatedAt: new Date() })
     .where(eq(graphs.id, graphId))
     .returning();
 
