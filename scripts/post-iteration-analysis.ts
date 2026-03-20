@@ -153,16 +153,16 @@ function analyzeDomainCoverage(): Record<string, { implemented: string[]; missin
       missing: ['NL2SQL', 'query builder UI'],
     },
     prompts: {
-      implemented: ['CRUD', 'versioning', 'auto-version on edit'],
-      missing: ['template variable rendering', 'test with model'],
+      implemented: ['CRUD', 'versioning', 'auto-version on edit', 'template rendering', 'test with model'],
+      missing: [],
     },
     apps: {
-      implemented: ['CRUD', 'versioning', 'publish'],
-      missing: ['actual deployment', 'custom domain', 'embedding widget'],
+      implemented: ['CRUD', 'versioning', 'publish', 'deployment URLs', 'embed widget code'],
+      missing: ['custom domain'],
     },
     marketplace: {
-      implemented: ['browse', 'publish', 'install'],
-      missing: ['reviews', 'ratings', 'categories UI'],
+      implemented: ['browse', 'publish', 'install', 'reviews', 'ratings', 'categories'],
+      missing: ['categories UI page'],
     },
     uploads: {
       implemented: ['R2 bucket', 'multipart upload', 'get/delete/list'],

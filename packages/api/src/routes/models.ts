@@ -5,6 +5,7 @@ import { createModelProviderSchema, createModelConfigSchema } from '@pajamadot/h
 import { createDb } from '../db/client.js';
 import { modelProviders, modelConfigs } from '../db/schema.js';
 import { clerkAuth } from '../lib/auth.js';
+import { chatCompletion } from '../lib/llm.js';
 import type { Env } from '../types/index.js';
 
 type HonoEnv = { Bindings: Env; Variables: { userId: string } };
@@ -92,8 +93,37 @@ app.post('/providers/:id/test', async (c) => {
   const [provider] = await db.select().from(modelProviders).where(eq(modelProviders.id, id));
   if (!provider) return c.json({ error: 'Provider not found' }, 404);
 
-  // TODO: implement actual connection test per provider type
-  return c.json({ ok: true, message: 'Connection test not yet implemented' });
+  if (!provider.apiKeyEncrypted) {
+    return c.json({ ok: false, error: 'No API key configured' }, 400);
+  }
+
+  // Find a model config for this provider
+  const configs = await db.select().from(modelConfigs).where(eq(modelConfigs.providerId, id));
+  const chatConfig = configs.find((c) => c.modelType === 'chat') ?? configs[0];
+
+  if (!chatConfig) {
+    return c.json({ ok: false, error: 'No model config found for this provider' }, 400);
+  }
+
+  try {
+    const startTime = Date.now();
+    const result = await chatCompletion(db, provider.workspaceId, [
+      { role: 'user', content: 'Say "connection successful" in 3 words or fewer.' },
+    ], { modelConfigId: chatConfig.id, temperature: 0, maxTokens: 20 });
+
+    return c.json({
+      ok: true,
+      model: result.model,
+      response: result.content,
+      latencyMs: Date.now() - startTime,
+      usage: result.usage,
+    });
+  } catch (err) {
+    return c.json({
+      ok: false,
+      error: err instanceof Error ? err.message : 'Connection test failed',
+    });
+  }
 });
 
 // ── Model Configs ──

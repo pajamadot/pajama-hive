@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-03-20T19:37:32.437Z",
-  "iteration": 71,
+  "timestamp": "2026-03-20T19:41:25.353Z",
+  "iteration": 72,
   "metrics": {
-    "tables": 52,
+    "tables": 53,
     "apiRoutes": 24,
     "frontendPages": 24,
     "testFiles": 10,
@@ -10,7 +10,7 @@
     "libModules": 18,
     "adapters": 6,
     "totalTsFiles": 114,
-    "totalLines": 17442
+    "totalLines": 17609
   },
   "gaps": [
     {
@@ -46,20 +46,6 @@
       "line": 96,
       "type": "not_implemented",
       "text": "return c.json({ ok: true, message: 'Connection test not yet implemented' });",
-      "priority": "medium"
-    },
-    {
-      "file": "packages/api/src/routes/prompts.ts",
-      "line": 120,
-      "type": "todo",
-      "text": "// TODO: replace template vars and call LLM via model provider",
-      "priority": "medium"
-    },
-    {
-      "file": "packages/api/src/routes/prompts.ts",
-      "line": 121,
-      "type": "not_implemented",
-      "text": "return c.json({ result: 'Prompt testing not yet implemented', prompt: prompt.content });",
       "priority": "medium"
     },
     {
@@ -385,35 +371,35 @@
       "implemented": [
         "CRUD",
         "versioning",
-        "auto-version on edit"
-      ],
-      "missing": [
-        "template variable rendering",
+        "auto-version on edit",
+        "template rendering",
         "test with model"
-      ]
+      ],
+      "missing": []
     },
     "apps": {
       "implemented": [
         "CRUD",
         "versioning",
-        "publish"
+        "publish",
+        "deployment URLs",
+        "embed widget code"
       ],
       "missing": [
-        "actual deployment",
-        "custom domain",
-        "embedding widget"
+        "custom domain"
       ]
     },
     "marketplace": {
       "implemented": [
         "browse",
         "publish",
-        "install"
-      ],
-      "missing": [
+        "install",
         "reviews",
         "ratings",
-        "categories UI"
+        "categories"
+      ],
+      "missing": [
+        "categories UI page"
       ]
     },
     "uploads": {
@@ -442,8 +428,8 @@
     "Fix 2 high-priority gaps (TODOs in core routes/libs)",
     "workflows: sub_workflow execution, image_gen, drag-and-drop",
     "knowledge: PDF parsing, DOCX parsing, URL scraping",
-    "apps: actual deployment, custom domain, embedding widget",
-    "marketplace: reviews, ratings, categories UI",
-    "workspace: team billing, SSO"
+    "workspace: team billing, SSO",
+    "models: connection test, usage tracking",
+    "agents: multi-agent handoff, agent-as-tool"
   ]
 }
