@@ -28,6 +28,7 @@ export default function GraphEditorPage() {
   const [graphName, setGraphName] = useState('');
   const [graphStatus, setGraphStatus] = useState('draft');
   const [showWorkers, setShowWorkers] = useState(false);
+  const [showCriticalPath, setShowCriticalPath] = useState(false);
 
   useEffect(() => { getToken().then(setToken); }, [getToken]);
 
@@ -259,6 +260,12 @@ export default function GraphEditorPage() {
         )}
 
         <button
+          onClick={() => setShowCriticalPath(!showCriticalPath)}
+          className={`px-3 py-1.5 border rounded-md text-xs ${showCriticalPath ? 'border-orange-500 text-orange-400 bg-orange-500/10' : 'border-border hover:bg-accent/50'}`}
+        >
+          Critical Path
+        </button>
+        <button
           onClick={handleAutoLayout}
           className="px-3 py-1.5 border border-border rounded-md text-xs hover:bg-accent/50"
         >
@@ -291,6 +298,7 @@ export default function GraphEditorPage() {
             onNewNode={handleNewNode}
             onNewEdge={handleNewEdge}
             onNodeDragStop={handleNodeDragStop}
+            showCriticalPath={showCriticalPath}
           />
           <LogTerminal logs={logs} />
         </div>
