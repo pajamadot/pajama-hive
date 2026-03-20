@@ -28,6 +28,8 @@ export const api = {
     apiFetch(`/v1/graphs/${graphId}/duplicate`, token, { method: 'POST', body: JSON.stringify({ name }) }),
   saveAsTemplate: (token: string, graphId: string) =>
     apiFetch(`/v1/graphs/${graphId}/save-template`, token, { method: 'POST' }),
+  resetGraph: (token: string, graphId: string) =>
+    apiFetch(`/v1/graphs/${graphId}/reset`, token, { method: 'POST' }),
   listTemplates: (token: string) => apiFetch('/v1/graphs/templates/list', token),
   exportGraph: (token: string, graphId: string) => apiFetch(`/v1/graphs/${graphId}/export`, token),
   importGraph: (token: string, data: unknown) =>

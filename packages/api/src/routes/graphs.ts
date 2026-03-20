@@ -137,6 +137,39 @@ app.patch('/:graphId', async (c) => {
   return c.json({ graph: updated });
 });
 
+// Reset graph — set all tasks back to pending, graph to draft (for re-run)
+app.post('/:graphId/reset', async (c) => {
+  const db = createDb(c.env);
+  const graphId = c.req.param('graphId');
+  const userId = c.get('userId');
+
+  const check = await verifyGraphOwner(db, graphId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
+  const [graph] = await db.select().from(graphs).where(eq(graphs.id, graphId));
+  if (!graph) return c.json({ error: 'Graph not found' }, 404);
+  if (graph.status === 'running') return c.json({ error: 'Cannot reset a running graph' }, 400);
+
+  await db.update(graphs)
+    .set({ status: 'draft', updatedAt: new Date() })
+    .where(eq(graphs.id, graphId));
+
+  await db.update(tasks)
+    .set({
+      status: 'pending',
+      leaseId: null,
+      leaseExpiresAt: null,
+      assignedWorkerId: null,
+      startedAt: null,
+      outputSummary: null,
+      attempt: 0,
+      updatedAt: new Date(),
+    })
+    .where(eq(tasks.graphId, graphId));
+
+  return c.json({ ok: true, status: 'draft' });
+});
+
 // Delete graph
 app.delete('/:graphId', async (c) => {
   const db = createDb(c.env);

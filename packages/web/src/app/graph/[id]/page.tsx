@@ -280,6 +280,26 @@ export default function GraphEditorPage() {
           Run History
         </Link>
 
+        {(graphStatus === 'completed' || graphStatus === 'failed') && (
+          <button
+            onClick={async () => {
+              if (!token) return;
+              await api.resetGraph(token, graphId);
+              setGraphStatus('draft');
+              // Reload tasks to show reset statuses
+              const tasksRes = await api.listTasks(token, graphId);
+              store.setNodes(store.nodes.map((n) => {
+                const t = tasksRes.tasks.find((t: Record<string, unknown>) => t.id === n.id);
+                return t ? { ...n, data: { ...n.data, status: (t.status as TaskNodeData['status']) } } : n;
+              }));
+              toast.success('Graph reset to draft');
+            }}
+            className="px-3 py-1.5 border border-blue-500 text-blue-400 rounded-md text-xs font-medium hover:bg-blue-500/10"
+          >
+            Reset &amp; Re-run
+          </button>
+        )}
+
         {hasPlanTasks && (
           <button
             onClick={handleApprovePlans}
