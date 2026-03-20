@@ -4,12 +4,10 @@ import type { Env } from '../types/index.js';
 type HonoEnv = { Bindings: Env; Variables: { userId: string } };
 
 interface RateLimitConfig {
-  windowMs: number;   // Time window in ms
-  maxRequests: number; // Max requests per window
+  windowMs: number;
+  maxRequests: number;
 }
 
-// In-memory rate limit store (per-isolate, resets on deploy)
-// For production: use Durable Objects or KV for distributed rate limiting
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 
 function checkRateLimit(key: string, config: RateLimitConfig): { allowed: boolean; remaining: number; resetAt: number } {
@@ -30,28 +28,23 @@ function checkRateLimit(key: string, config: RateLimitConfig): { allowed: boolea
   return { allowed: true, remaining: config.maxRequests - entry.count, resetAt: entry.resetAt };
 }
 
-// Lazy cleanup: remove expired entries during checkRateLimit calls
-// (setInterval is not allowed in CF Workers global scope)
 let lastCleanup = 0;
 function maybeCleanup() {
   const now = Date.now();
   if (now - lastCleanup < 60_000) return;
   lastCleanup = now;
   for (const [key, entry] of rateLimitStore) {
-    if (now > entry.resetAt) {
-      rateLimitStore.delete(key);
-    }
+    if (now > entry.resetAt) rateLimitStore.delete(key);
   }
 }
 
-/**
- * Rate limiting middleware.
- * Applies per-user rate limiting based on the authenticated userId.
- */
 export function rateLimit(config: RateLimitConfig = { windowMs: 60_000, maxRequests: 60 }) {
   return createMiddleware<HonoEnv>(async (c, next) => {
     const userId = c.get('userId') ?? c.req.header('CF-Connecting-IP') ?? 'anonymous';
-    const key = `${userId}:${c.req.path}`;
+    const method = c.req.method;
+    // Group rate limits: reads share a pool, writes share a separate pool
+    const pool = method === 'GET' ? 'read' : 'write';
+    const key = `${userId}:${pool}`;
 
     const result = checkRateLimit(key, config);
 
@@ -70,12 +63,11 @@ export function rateLimit(config: RateLimitConfig = { windowMs: 60_000, maxReque
   });
 }
 
-/**
- * Strict rate limit for sensitive operations (e.g., creating runs, approving).
- */
+/** Strict: 10 writes/min (run creation, approvals, mutations) */
 export const strictRateLimit = rateLimit({ windowMs: 60_000, maxRequests: 10 });
 
-/**
- * Standard rate limit for read operations.
- */
+/** Standard: 120 reads + 30 writes/min */
 export const standardRateLimit = rateLimit({ windowMs: 60_000, maxRequests: 120 });
+
+/** Write: 30 writes/min for standard mutation endpoints */
+export const writeRateLimit = rateLimit({ windowMs: 60_000, maxRequests: 30 });
