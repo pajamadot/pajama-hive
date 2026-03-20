@@ -115,9 +115,28 @@ app.post('/:id/documents', async (c) => {
     createdAt: now,
   });
 
-  // Process document if text content provided
+  // Process document
   let chunkCount = 0;
-  const textContent = body.content ?? '';
+  let textContent = body.content ?? '';
+
+  // URL scraping: fetch the page and extract text
+  if (parsed.data.sourceType === 'url' && parsed.data.sourceUrl && !textContent) {
+    try {
+      const res = await fetch(parsed.data.sourceUrl, {
+        headers: { 'User-Agent': 'PajamaHive-KnowledgeBot/1.0' },
+      });
+      if (res.ok) {
+        const html = await res.text();
+        textContent = extractText(html, res.headers.get('content-type') ?? 'text/html', parsed.data.sourceUrl);
+      } else {
+        await db.update(documents).set({ status: 'error', error: `Fetch failed: HTTP ${res.status}` })
+          .where(eq(documents.id, id));
+      }
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'URL fetch failed';
+      await db.update(documents).set({ status: 'error', error: errMsg }).where(eq(documents.id, id));
+    }
+  }
 
   if (textContent) {
     // Get KB chunk settings

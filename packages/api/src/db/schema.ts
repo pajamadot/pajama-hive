@@ -861,3 +861,25 @@ export const marketplaceReviews = pgTable('marketplace_reviews', {
   index('mp_reviews_product_idx').on(t.productId),
   uniqueIndex('mp_reviews_unique_idx').on(t.productId, t.userId),
 ]);
+
+// ── Model Usage Logs ──
+
+export const modelUsageLogs = pgTable('model_usage_logs', {
+  id: text('id').primaryKey(),
+  workspaceId: text('workspace_id').notNull(),
+  userId: text('user_id'),
+  providerId: text('provider_id'),
+  modelId: text('model_id').notNull(),
+  operation: text('operation').notNull().default('chat'), // chat, embedding, completion
+  promptTokens: integer('prompt_tokens').notNull().default(0),
+  completionTokens: integer('completion_tokens').notNull().default(0),
+  totalTokens: integer('total_tokens').notNull().default(0),
+  latencyMs: integer('latency_ms'),
+  success: boolean('success').notNull().default(true),
+  error: text('error'),
+  metadata: jsonb('metadata'), // request context: agentId, conversationId, workflowRunId
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+  index('usage_ws_idx').on(t.workspaceId, t.createdAt),
+  index('usage_model_idx').on(t.modelId, t.createdAt),
+]);

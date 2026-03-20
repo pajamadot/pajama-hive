@@ -3,8 +3,9 @@ import { nanoid } from 'nanoid';
 import { eq, and, desc, lt, isNull } from 'drizzle-orm';
 import { createAgentSchema, updateAgentSchema, agentConfigSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
-import { agents, agentVersions, agentConfigs } from '../db/schema.js';
+import { agents, agentVersions, agentConfigs, conversations, messages } from '../db/schema.js';
 import { clerkAuth } from '../lib/auth.js';
+import { chatCompletion } from '../lib/llm.js';
 import type { Env } from '../types/index.js';
 
 type HonoEnv = { Bindings: Env; Variables: { userId: string } };
@@ -207,6 +208,59 @@ app.delete('/:id', async (c) => {
 
   await db.update(agents).set({ deletedAt: new Date() }).where(eq(agents.id, id));
   return c.json({ ok: true });
+});
+
+// ── Agent-as-Tool: Invoke an agent programmatically ──
+
+app.post('/:id/invoke', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const id = c.req.param('id');
+  const body = await c.req.json();
+  const message = body.message ?? body.input;
+  if (!message) return c.json({ error: 'message required' }, 400);
+
+  const [agent] = await db.select().from(agents).where(eq(agents.id, id));
+  if (!agent) return c.json({ error: 'Agent not found' }, 404);
+
+  const [config] = await db.select().from(agentConfigs).where(eq(agentConfigs.agentId, id));
+
+  const systemPrompt = config?.systemPrompt ?? 'You are a helpful AI assistant.';
+  const temperature = config?.temperature ?? 0.7;
+  const maxTokens = config?.maxTokens ?? undefined;
+  const modelConfigId = config?.modelConfigId ?? null;
+
+  // Build context from prior messages if conversationId provided
+  const chatMessages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
+    { role: 'system', content: systemPrompt },
+  ];
+
+  if (body.context && Array.isArray(body.context)) {
+    for (const msg of body.context) {
+      chatMessages.push({ role: msg.role, content: msg.content });
+    }
+  }
+
+  chatMessages.push({ role: 'user', content: message });
+
+  try {
+    const result = await chatCompletion(db, agent.workspaceId, chatMessages, {
+      modelConfigId, temperature, maxTokens,
+    });
+
+    return c.json({
+      agentId: id,
+      agentName: agent.name,
+      response: result.content,
+      usage: result.usage,
+      model: result.model,
+    });
+  } catch (err) {
+    return c.json({
+      agentId: id,
+      error: err instanceof Error ? err.message : 'Agent invocation failed',
+    }, 500);
+  }
 });
 
 export default app;

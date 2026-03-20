@@ -125,16 +125,16 @@ function analyzeDomainCoverage(): Record<string, { implemented: string[]; missin
       missing: ['team billing', 'SSO'],
     },
     models: {
-      implemented: ['provider CRUD', 'config CRUD', 'settings UI', 'LLM dispatch', 'SSE streaming', 'embedding generation'],
-      missing: ['connection test', 'usage tracking'],
+      implemented: ['provider CRUD', 'config CRUD', 'settings UI', 'LLM dispatch', 'SSE streaming', 'embedding generation', 'connection test'],
+      missing: ['usage tracking'],
     },
     agents: {
       implemented: ['CRUD', 'config', 'versioning', 'publish', 'duplicate', 'builder UI', 'resource attachment'],
       missing: ['multi-agent handoff', 'agent-as-tool'],
     },
     workflows: {
-      implemented: ['CRUD', 'nodes', 'edges', 'versioning', 'publish', 'visual editor', 'execution engine', '18+ node types'],
-      missing: ['sub_workflow execution', 'image_gen', 'drag-and-drop', 'auto-layout', 'real-time trace viewer'],
+      implemented: ['CRUD', 'nodes', 'edges', 'versioning', 'publish', 'React Flow editor', 'drag-and-drop', 'execution engine', '18+ node types', 'connection handles'],
+      missing: ['sub_workflow execution', 'image_gen', 'real-time trace viewer'],
     },
     chat: {
       implemented: ['conversations', 'messages', 'chat runs', 'LLM integration', 'SSE streaming', 'playground UI', 'message editing', 'regenerate'],

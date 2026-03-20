@@ -297,7 +297,18 @@ async function executeNode(ctx: ExecutionContext, node: NodeExec): Promise<Recor
         break;
       }
 
-      case 'sub_workflow':
+      case 'sub_workflow': {
+        const subWorkflowId = config.workflowId as string;
+        if (!subWorkflowId) { result = { output: null, error: 'No sub-workflow ID configured' }; break; }
+        const subInput = (ctx.variables._lastOutput ?? ctx.input) as Record<string, unknown>;
+        // Recursive execution with depth guard
+        const depth = (ctx.variables._subWorkflowDepth as number) ?? 0;
+        if (depth >= 5) { result = { output: null, error: 'Sub-workflow depth limit (5) exceeded' }; break; }
+        const subResult = await executeWorkflow(ctx.db, nanoid(), subWorkflowId, ctx.workspaceId, subInput);
+        result = { output: subResult.output, traces: subResult.traces };
+        break;
+      }
+
       case 'image_gen':
       case 'emitter':
       case 'receiver':

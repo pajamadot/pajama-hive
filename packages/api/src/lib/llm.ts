@@ -5,7 +5,8 @@
 
 import type { Database } from '../db/client.js';
 import { eq } from 'drizzle-orm';
-import { modelProviders, modelConfigs } from '../db/schema.js';
+import { nanoid } from 'nanoid';
+import { modelProviders, modelConfigs, modelUsageLogs } from '../db/schema.js';
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -217,7 +218,34 @@ export async function chatCompletion(
     throw new Error('No model provider configured. Add a model provider in Settings → Models.');
   }
 
-  return callProvider(provider, messages, chatOptions);
+  const startTime = Date.now();
+  let result: ChatResponse;
+  let error: string | undefined;
+
+  try {
+    result = await callProvider(provider, messages, chatOptions);
+  } catch (err) {
+    error = err instanceof Error ? err.message : 'LLM call failed';
+    // Log failure
+    await db.insert(modelUsageLogs).values({
+      id: nanoid(), workspaceId, modelId: provider.modelId,
+      operation: 'chat', promptTokens: 0, completionTokens: 0, totalTokens: 0,
+      latencyMs: Date.now() - startTime, success: false, error, createdAt: new Date(),
+    }).catch(() => {}); // best-effort logging
+    throw err;
+  }
+
+  // Log success (best-effort)
+  await db.insert(modelUsageLogs).values({
+    id: nanoid(), workspaceId, modelId: provider.modelId,
+    operation: 'chat',
+    promptTokens: result.usage?.promptTokens ?? 0,
+    completionTokens: result.usage?.completionTokens ?? 0,
+    totalTokens: result.usage?.totalTokens ?? 0,
+    latencyMs: Date.now() - startTime, success: true, createdAt: new Date(),
+  }).catch(() => {});
+
+  return result;
 }
 
 export type { ChatMessage, ChatOptions, ChatResponse };

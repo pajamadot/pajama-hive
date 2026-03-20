@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-03-20T19:41:25.353Z",
-  "iteration": 72,
+  "timestamp": "2026-03-20T19:44:54.783Z",
+  "iteration": 73,
   "metrics": {
     "tables": 53,
     "apiRoutes": 24,
@@ -10,7 +10,7 @@
     "libModules": 18,
     "adapters": 6,
     "totalTsFiles": 114,
-    "totalLines": 17609
+    "totalLines": 17641
   },
   "gaps": [
     {
@@ -33,20 +33,6 @@
       "type": "not_implemented",
       "text": "result = { output: ctx.variables._lastOutput, _stub: true, message: `Node type '${node.nodeType}' not yet implemented` }",
       "priority": "high"
-    },
-    {
-      "file": "packages/api/src/routes/models.ts",
-      "line": 95,
-      "type": "todo",
-      "text": "// TODO: implement actual connection test per provider type",
-      "priority": "medium"
-    },
-    {
-      "file": "packages/api/src/routes/models.ts",
-      "line": 96,
-      "type": "not_implemented",
-      "text": "return c.json({ ok: true, message: 'Connection test not yet implemented' });",
-      "priority": "medium"
     },
     {
       "file": "packages/api/src/routes/replication.ts",
@@ -196,48 +182,6 @@
       "priority": "low"
     },
     {
-      "file": "packages/web/src/app/(app)/workflows/[id]/page.tsx",
-      "line": 255,
-      "type": "placeholder",
-      "text": "className=\"w-full px-2 py-1 border rounded text-sm bg-background\" placeholder=\"X\" />",
-      "priority": "low"
-    },
-    {
-      "file": "packages/web/src/app/(app)/workflows/[id]/page.tsx",
-      "line": 258,
-      "type": "placeholder",
-      "text": "className=\"w-full px-2 py-1 border rounded text-sm bg-background\" placeholder=\"Y\" />",
-      "priority": "low"
-    },
-    {
-      "file": "packages/web/src/app/(app)/workflows/[id]/page.tsx",
-      "line": 269,
-      "type": "placeholder",
-      "text": "placeholder=\"Enter prompt for this LLM node...\" />",
-      "priority": "low"
-    },
-    {
-      "file": "packages/web/src/app/(app)/workflows/[id]/page.tsx",
-      "line": 280,
-      "type": "placeholder",
-      "text": "placeholder=\"// JavaScript code...\" />",
-      "priority": "low"
-    },
-    {
-      "file": "packages/web/src/app/(app)/workflows/[id]/page.tsx",
-      "line": 291,
-      "type": "placeholder",
-      "text": "className=\"w-full px-2 py-1 border rounded text-sm bg-background\" placeholder=\"https://...\" />",
-      "priority": "low"
-    },
-    {
-      "file": "packages/web/src/app/(app)/workflows/[id]/page.tsx",
-      "line": 312,
-      "type": "placeholder",
-      "text": "placeholder=\"{{input.value}} > 10\" />",
-      "priority": "low"
-    },
-    {
       "file": "packages/web/src/components/dag/NodeDetail.tsx",
       "line": 156,
       "type": "placeholder",
@@ -264,10 +208,10 @@
         "settings UI",
         "LLM dispatch",
         "SSE streaming",
-        "embedding generation"
+        "embedding generation",
+        "connection test"
       ],
       "missing": [
-        "connection test",
         "usage tracking"
       ]
     },
@@ -293,15 +237,15 @@
         "edges",
         "versioning",
         "publish",
-        "visual editor",
+        "React Flow editor",
+        "drag-and-drop",
         "execution engine",
-        "18+ node types"
+        "18+ node types",
+        "connection handles"
       ],
       "missing": [
         "sub_workflow execution",
         "image_gen",
-        "drag-and-drop",
-        "auto-layout",
         "real-time trace viewer"
       ]
     },
@@ -426,10 +370,10 @@
   },
   "nextPriorities": [
     "Fix 2 high-priority gaps (TODOs in core routes/libs)",
-    "workflows: sub_workflow execution, image_gen, drag-and-drop",
+    "workflows: sub_workflow execution, image_gen, real-time trace viewer",
     "knowledge: PDF parsing, DOCX parsing, URL scraping",
     "workspace: team billing, SSO",
-    "models: connection test, usage tracking",
-    "agents: multi-agent handoff, agent-as-tool"
+    "agents: multi-agent handoff, agent-as-tool",
+    "chat: branch conversations, file attachments in chat"
   ]
 }

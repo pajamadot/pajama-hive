@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { nanoid } from 'nanoid';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc, gte } from 'drizzle-orm';
 import { createModelProviderSchema, createModelConfigSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
-import { modelProviders, modelConfigs } from '../db/schema.js';
+import { modelProviders, modelConfigs, modelUsageLogs } from '../db/schema.js';
 import { clerkAuth } from '../lib/auth.js';
 import { chatCompletion } from '../lib/llm.js';
 import type { Env } from '../types/index.js';
@@ -163,6 +163,47 @@ app.delete('/configs/:id', async (c) => {
   const id = c.req.param('id');
   await db.delete(modelConfigs).where(eq(modelConfigs.id, id));
   return c.json({ ok: true });
+});
+
+// ── Usage Tracking ──
+
+app.get('/usage', async (c) => {
+  const db = createDb(c.env);
+  const workspaceId = c.req.query('workspaceId') ?? 'default';
+  const days = parseInt(c.req.query('days') ?? '7', 10);
+  const since = new Date(Date.now() - days * 86400000);
+
+  const logs = await db.select().from(modelUsageLogs)
+    .where(and(
+      eq(modelUsageLogs.workspaceId, workspaceId),
+      gte(modelUsageLogs.createdAt, since),
+    ))
+    .orderBy(desc(modelUsageLogs.createdAt))
+    .limit(500);
+
+  // Aggregate
+  const totalTokens = logs.reduce((sum, l) => sum + l.totalTokens, 0);
+  const totalCalls = logs.length;
+  const successCalls = logs.filter((l) => l.success).length;
+  const avgLatency = logs.length > 0
+    ? Math.round(logs.reduce((sum, l) => sum + (l.latencyMs ?? 0), 0) / logs.length)
+    : 0;
+
+  // Per-model breakdown
+  const byModel = new Map<string, { calls: number; tokens: number }>();
+  for (const log of logs) {
+    const existing = byModel.get(log.modelId) ?? { calls: 0, tokens: 0 };
+    existing.calls++;
+    existing.tokens += log.totalTokens;
+    byModel.set(log.modelId, existing);
+  }
+
+  return c.json({
+    period: { days, since: since.toISOString() },
+    summary: { totalCalls, successCalls, failedCalls: totalCalls - successCalls, totalTokens, avgLatencyMs: avgLatency },
+    byModel: Object.fromEntries(byModel),
+    recentLogs: logs.slice(0, 50),
+  });
 });
 
 export default app;

@@ -105,4 +105,63 @@ app.get('/', async (c) => {
   });
 });
 
+// Generate a time-limited download token
+app.post('/sign', async (c) => {
+  const body = await c.req.json();
+  const key = body.key;
+  if (!key) return c.json({ error: 'key required' }, 400);
+
+  const expiresIn = body.expiresIn ?? 3600; // default 1 hour
+  const expiresAt = Date.now() + expiresIn * 1000;
+
+  // Simple HMAC-based signed URL (since R2 Workers doesn't support native presigned URLs)
+  const encoder = new TextEncoder();
+  const data = encoder.encode(`${key}:${expiresAt}`);
+  const hmacKey = await crypto.subtle.importKey(
+    'raw', encoder.encode(c.env.CLERK_SECRET_KEY),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+  );
+  const signature = await crypto.subtle.sign('HMAC', hmacKey, data);
+  const token = btoa(String.fromCharCode(...new Uint8Array(signature))).replace(/=/g, '');
+
+  return c.json({
+    url: `https://hive-api.pajamadot.com/v1/uploads/download?key=${encodeURIComponent(key)}&expires=${expiresAt}&token=${token}`,
+    expiresAt: new Date(expiresAt).toISOString(),
+  });
+});
+
+// Serve file via signed token (no auth required)
+app.get('/download', async (c) => {
+  const key = c.req.query('key');
+  const expires = c.req.query('expires');
+  const token = c.req.query('token');
+
+  if (!key || !expires || !token) return c.json({ error: 'Missing parameters' }, 400);
+
+  const expiresAt = parseInt(expires, 10);
+  if (Date.now() > expiresAt) return c.json({ error: 'Link expired' }, 403);
+
+  // Verify HMAC signature
+  const encoder = new TextEncoder();
+  const data = encoder.encode(`${key}:${expiresAt}`);
+  const hmacKey = await crypto.subtle.importKey(
+    'raw', encoder.encode(c.env.CLERK_SECRET_KEY),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['verify'],
+  );
+  const sigBytes = Uint8Array.from(atob(token), (c) => c.charCodeAt(0));
+  const valid = await crypto.subtle.verify('HMAC', hmacKey, sigBytes, data);
+  if (!valid) return c.json({ error: 'Invalid signature' }, 403);
+
+  const object = await c.env.UPLOADS_BUCKET.get(key);
+  if (!object) return c.json({ error: 'File not found' }, 404);
+
+  return new Response(object.body, {
+    headers: {
+      'Content-Type': object.httpMetadata?.contentType ?? 'application/octet-stream',
+      'Content-Length': String(object.size),
+      'Cache-Control': 'private, max-age=3600',
+    },
+  });
+});
+
 export default app;
