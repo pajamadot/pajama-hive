@@ -106,11 +106,13 @@ export const apiKeys = pgTable('api_keys', {
   userId: text('user_id').notNull(),
   name: text('name').notNull(),
   keyHash: text('key_hash').notNull(),
-  prefix: text('prefix').notNull(), // first 8 chars for display
+  prefix: text('prefix').notNull(),
   scopes: text('scopes').array().notNull(),
+  status: text('status').notNull().default('active'), // Coze: active, revoked
   lastUsedAt: timestamp('last_used_at'),
   expiresAt: timestamp('expires_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (t) => [
   index('api_keys_user_idx').on(t.userId),
   index('api_keys_hash_idx').on(t.keyHash),
@@ -271,10 +273,13 @@ export const workspaceMembers = pgTable('workspace_members', {
 export const userProfiles = pgTable('user_profiles', {
   id: text('id').primaryKey(), // same as Clerk user ID
   displayName: text('display_name'),
+  uniqueName: text('unique_name'),               // Coze: unique username
   avatarUrl: text('avatar_url'),
   bio: text('bio'),
+  locale: text('locale'),                         // Coze: user locale
   defaultWorkspaceId: text('default_workspace_id'),
-  preferences: jsonb('preferences'), // UI prefs, theme, etc.
+  preferences: jsonb('preferences'),
+  deletedAt: timestamp('deleted_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
@@ -596,11 +601,13 @@ export const pluginTools = pgTable('plugin_tools', {
   pluginId: text('plugin_id').notNull().references(() => plugins.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   description: text('description'),
-  method: text('method').notNull().default('POST'), // GET, POST, PUT, DELETE
-  path: text('path').notNull(), // relative to plugin baseUrl
-  inputSchema: jsonb('input_schema'), // JSON Schema for parameters
-  outputSchema: jsonb('output_schema'), // JSON Schema for response
+  method: text('method').notNull().default('POST'),
+  path: text('path').notNull(),
+  inputSchema: jsonb('input_schema'),
+  outputSchema: jsonb('output_schema'),
   isEnabled: boolean('is_enabled').notNull().default(true),
+  version: text('version'),                       // Coze: tool version string
+  debugStatus: integer('debug_status').default(0), // Coze: 0=not tested, 1=passed
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (t) => [
@@ -630,8 +637,12 @@ export const knowledgeBases = pgTable('knowledge_bases', {
   chunkOverlap: integer('chunk_overlap').notNull().default(50),
   documentCount: integer('document_count').notNull().default(0),
   totalChunks: integer('total_chunks').notNull().default(0),
-  status: text('status').notNull().default('active'), // active, processing, error
+  status: text('status').notNull().default('active'),
   createdBy: text('created_by').notNull(),
+  // Coze parity fields
+  iconUrl: text('icon_url'),                     // Coze: dataset icon
+  formatType: integer('format_type').default(0),  // Coze: 0=auto, 1=custom
+  allFileCount: integer('all_file_count').default(0), // Coze: total files
   deletedAt: timestamp('deleted_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
