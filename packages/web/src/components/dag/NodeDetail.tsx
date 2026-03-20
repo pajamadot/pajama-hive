@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { TaskNodeData } from '@/stores/graph-store';
 import type { TaskType, AgentKind } from '@pajamadot/hive-shared';
 
@@ -12,17 +12,27 @@ interface NodeDetailProps {
   onRetry?: (taskId: string) => void;
   onDelete?: (taskId: string) => void;
   onUpdate?: (taskId: string, updates: Record<string, unknown>) => void;
+  onLoadLogs?: (taskId: string) => Promise<{ logs: { chunk: string }[] }>;
   onClose: () => void;
 }
 
 const taskTypes: TaskType[] = ['plan', 'code', 'review', 'test', 'lint', 'docs', 'custom'];
 const agentKinds: AgentKind[] = ['cc', 'cx', 'generic'];
 
-export function NodeDetail({ nodeId, data, onApprove, onCancel, onRetry, onDelete, onUpdate, onClose }: NodeDetailProps) {
+export function NodeDetail({ nodeId, data, onApprove, onCancel, onRetry, onDelete, onUpdate, onLoadLogs, onClose }: NodeDetailProps) {
   const [editingInput, setEditingInput] = useState(false);
   const [inputDraft, setInputDraft] = useState(data.input);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(data.title);
+  const [showLogs, setShowLogs] = useState(false);
+  const [logContent, setLogContent] = useState<string | null>(null);
+
+  const loadLogs = useCallback(async () => {
+    if (!onLoadLogs) return;
+    setShowLogs(true);
+    const res = await onLoadLogs(nodeId);
+    setLogContent(res.logs.map((l: { chunk: string }) => l.chunk).join(''));
+  }, [nodeId, onLoadLogs]);
 
   const isEditable = data.status === 'pending' || data.status === 'ready' || data.status === 'draft' as string;
 
@@ -176,6 +186,24 @@ export function NodeDetail({ nodeId, data, onApprove, onCancel, onRetry, onDelet
             <pre className="text-xs bg-muted p-2 rounded mt-1 whitespace-pre-wrap max-h-40 overflow-y-auto">
               {data.outputSummary}
             </pre>
+          </div>
+        )}
+
+        {/* Task logs */}
+        {(data.status === 'done' || data.status === 'failed' || data.status === 'running') && (
+          <div>
+            {!showLogs ? (
+              <button onClick={loadLogs} className="text-xs text-primary hover:underline">
+                View Execution Logs
+              </button>
+            ) : (
+              <div>
+                <label className="text-xs text-muted-foreground uppercase">Execution Logs</label>
+                <pre className="text-xs bg-[#0a0a0f] text-green-400 p-2 rounded mt-1 whitespace-pre-wrap max-h-60 overflow-y-auto font-mono">
+                  {logContent ?? 'Loading...'}
+                </pre>
+              </div>
+            )}
           </div>
         )}
 

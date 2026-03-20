@@ -346,6 +346,10 @@ export default function GraphEditorPage() {
               await api.retryTask(token, id);
               store.updateNodeStatus(id, 'pending');
             }}
+            onLoadLogs={async (id) => {
+              if (!token) return { logs: [] };
+              return api.getTaskLogs(token, id);
+            }}
             onDelete={async (id) => {
               if (!token) return;
               await api.deleteTask(token, id);
