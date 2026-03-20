@@ -83,6 +83,9 @@ export default function DashboardPage() {
           <Link href="/meta" className="text-sm text-muted-foreground hover:text-foreground">
             Meta Observatory
           </Link>
+          <Link href="/workers" className="text-sm text-muted-foreground hover:text-foreground">
+            Workers
+          </Link>
           <Link href="/audit" className="text-sm text-muted-foreground hover:text-foreground">
             Audit Log
           </Link>

@@ -307,14 +307,21 @@ export class MetaObserver {
     );
 
     if (ghostWorkers.length > 0) {
+      // Auto-mark stale workers as offline
+      for (const w of ghostWorkers) {
+        await this.db.update(schema.workers)
+          .set({ status: 'offline' })
+          .where(eq(schema.workers.id, w.id));
+      }
+
       await this.emit({
         kind: 'anomaly',
         severity: 'warning',
         domain: 'reliability',
-        title: `${ghostWorkers.length} worker(s) marked online but haven't heartbeated in 2+ minutes`,
+        title: `${ghostWorkers.length} stale worker(s) marked offline (no heartbeat in 2+ min)`,
         body: `Workers: ${ghostWorkers.map((w) => w.id).join(', ')}`,
         evidence: { workerIds: ghostWorkers.map((w) => w.id) },
-        suggestions: ['Mark stale workers as offline', 'Check network connectivity'],
+        suggestions: ['Check worker connectivity', 'Restart affected workers'],
       });
     }
   }

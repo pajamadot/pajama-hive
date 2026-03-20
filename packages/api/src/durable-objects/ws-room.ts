@@ -130,6 +130,8 @@ export class WsRoom extends DurableObject<Env> {
         if (worker) {
           worker.ws = _ws; // Update WS reference in case of reconnect
         }
+        // Persist heartbeat to durable storage (MetaObserver reads from DB)
+        await this.ctx.storage.put(`heartbeat:${payload.workerId}`, Date.now());
       },
 
       onTaskPull: async (_ws, payload: TaskPullPayload, requestId) => {
