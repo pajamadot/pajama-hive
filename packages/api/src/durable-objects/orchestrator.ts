@@ -88,7 +88,16 @@ export class Orchestrator extends DurableObject<Env> {
 
       // Validate lease
       const [task] = await db.select().from(schema.tasks).where(eq(schema.tasks.id, payload.taskId));
-      if (!task || task.leaseId !== payload.leaseId) {
+      if (!task) {
+        return Response.json({ ok: false, error: 'Task not found' }, { status: 404 });
+      }
+
+      // Idempotency: if task is already done/failed, accept silently
+      if (task.status === 'done' || task.status === 'failed' || task.status === 'canceled') {
+        return Response.json({ ok: true, idempotent: true });
+      }
+
+      if (task.leaseId !== payload.leaseId) {
         return Response.json({ ok: false, error: 'Invalid lease' }, { status: 400 });
       }
 
@@ -102,6 +111,17 @@ export class Orchestrator extends DurableObject<Env> {
           updatedAt: new Date(),
         })
         .where(eq(schema.tasks.id, payload.taskId));
+
+      // On failure: cascade-cancel downstream dependent tasks
+      if (payload.status === 'failed' && payload.errorKind !== 'retryable') {
+        const allEdges = await db.select().from(schema.edges).where(eq(schema.edges.graphId, this.graphId!));
+        const downstream = this.findAllDownstream(payload.taskId, allEdges);
+        for (const depId of downstream) {
+          await db.update(schema.tasks)
+            .set({ status: 'canceled', updatedAt: new Date() })
+            .where(eq(schema.tasks.id, depId));
+        }
+      }
 
       // Audit log
       await db.insert(schema.auditLogs).values({
@@ -299,6 +319,21 @@ export class Orchestrator extends DurableObject<Env> {
         tasks: [{ taskId: task.id, status: 'leased', assignedWorkerId: assignment.workerId }],
       });
     }
+  }
+
+  private findAllDownstream(taskId: string, edges: { fromTaskId: string; toTaskId: string }[]): string[] {
+    const deps = new Set<string>();
+    const queue = [taskId];
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      for (const e of edges) {
+        if (e.fromTaskId === current && !deps.has(e.toTaskId)) {
+          deps.add(e.toTaskId);
+          queue.push(e.toTaskId);
+        }
+      }
+    }
+    return [...deps];
   }
 
   private async broadcast(type: string, payload: unknown): Promise<void> {
