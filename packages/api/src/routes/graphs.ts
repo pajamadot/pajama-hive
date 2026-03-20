@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { nanoid } from 'nanoid';
-import { eq, ilike, and, desc, lt } from 'drizzle-orm';
+import { eq, ilike, and, desc, lt, inArray } from 'drizzle-orm';
 import { createGraphSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
-import { graphs, tasks, edges } from '../db/schema.js';
+import { graphs, tasks, edges, runs } from '../db/schema.js';
 import { clerkAuth, verifyGraphOwner } from '../lib/auth.js';
 import type { Env } from '../types/index.js';
 
@@ -37,6 +37,39 @@ app.get('/', async (c) => {
   return c.json({
     graphs: result,
     nextCursor: result.length === limit ? result[result.length - 1].updatedAt?.toISOString() : null,
+  });
+});
+
+// Dashboard stats
+app.get('/stats', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+
+  const userGraphs = await db.select().from(graphs).where(eq(graphs.ownerId, userId));
+  const graphIds = userGraphs.map((g) => g.id);
+
+  const totalTasks = graphIds.length > 0
+    ? await db.select().from(tasks).where(inArray(tasks.graphId, graphIds))
+    : [];
+
+  const totalRuns = graphIds.length > 0
+    ? await db.select().from(runs).where(inArray(runs.graphId, graphIds))
+    : [];
+
+  const done = totalTasks.filter((t) => t.status === 'done').length;
+  const failed = totalTasks.filter((t) => t.status === 'failed').length;
+  const running = userGraphs.filter((g) => g.status === 'running').length;
+
+  return c.json({
+    stats: {
+      totalGraphs: userGraphs.length,
+      runningGraphs: running,
+      totalTasks: totalTasks.length,
+      completedTasks: done,
+      failedTasks: failed,
+      totalRuns: totalRuns.length,
+      completedRuns: totalRuns.filter((r) => r.status === 'completed').length,
+    },
   });
 });
 

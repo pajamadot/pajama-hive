@@ -24,6 +24,7 @@ export default function DashboardPage() {
   const [createName, setCreateName] = useState('');
   const [createDesc, setCreateDesc] = useState('');
   const [creating, setCreating] = useState(false);
+  const [stats, setStats] = useState<Record<string, number> | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
@@ -43,6 +44,20 @@ export default function DashboardPage() {
   }, [getToken, search, statusFilter]);
 
   useEffect(() => { loadGraphs(); }, [loadGraphs]);
+
+  useEffect(() => {
+    async function loadStats() {
+      const token = await getToken();
+      const res = await fetch(`${API_URL}/v1/graphs/stats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data.stats);
+      }
+    }
+    loadStats();
+  }, [getToken]);
 
   const handleCreate = async () => {
     if (!createName.trim()) return;
@@ -124,6 +139,28 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* Stats */}
+        {stats && (
+          <div className="grid grid-cols-4 gap-3 mb-6">
+            <div className="bg-card border border-border rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold">{stats.totalGraphs}</div>
+              <div className="text-xs text-muted-foreground">Graphs</div>
+            </div>
+            <div className="bg-card border border-border rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-yellow-400">{stats.runningGraphs}</div>
+              <div className="text-xs text-muted-foreground">Running</div>
+            </div>
+            <div className="bg-card border border-border rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-green-400">{stats.completedTasks}</div>
+              <div className="text-xs text-muted-foreground">Tasks Done</div>
+            </div>
+            <div className="bg-card border border-border rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold">{stats.totalRuns}</div>
+              <div className="text-xs text-muted-foreground">Total Runs</div>
+            </div>
+          </div>
+        )}
 
         {/* Search and filter */}
         <div className="flex gap-2 mb-4">
