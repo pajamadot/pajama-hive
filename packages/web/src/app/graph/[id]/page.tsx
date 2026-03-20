@@ -279,6 +279,11 @@ export default function GraphEditorPage() {
             data={selectedNode.data}
             onApprove={async (id) => { if (token) await api.approveTask(token, id); }}
             onCancel={async (id) => { if (token) await api.cancelTask(token, id); }}
+            onRetry={async (id) => {
+              if (!token) return;
+              await api.retryTask(token, id);
+              store.updateNodeStatus(id, 'pending');
+            }}
             onUpdate={handleUpdateTask}
             onClose={() => store.setSelectedNode(null)}
           />

@@ -97,7 +97,38 @@ app.post('/tasks/:taskId/approve', async (c) => {
   return c.json({ task: updated });
 });
 
-// Cancel task
+// Retry failed task (reset to pending, increment attempt)
+app.post('/tasks/:taskId/retry', async (c) => {
+  const db = createDb(c.env);
+  const taskId = c.req.param('taskId');
+  const userId = c.get('userId');
+
+  const check = await verifyTaskOwner(db, taskId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
+  const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId));
+  if (!task) return c.json({ error: 'Task not found' }, 404);
+  if (task.status !== 'failed' && task.status !== 'canceled') {
+    return c.json({ error: 'Can only retry failed or canceled tasks' }, 400);
+  }
+
+  const [updated] = await db.update(tasks)
+    .set({
+      status: 'pending',
+      leaseId: null,
+      leaseExpiresAt: null,
+      assignedWorkerId: null,
+      outputSummary: null,
+      attempt: task.attempt + 1,
+      updatedAt: new Date(),
+    })
+    .where(eq(tasks.id, taskId))
+    .returning();
+
+  return c.json({ task: updated });
+});
+
+// Cancel task — also notify worker via orchestrator if task is running
 app.post('/tasks/:taskId/cancel', async (c) => {
   const db = createDb(c.env);
   const taskId = c.req.param('taskId');
@@ -106,12 +137,28 @@ app.post('/tasks/:taskId/cancel', async (c) => {
   const check = await verifyTaskOwner(db, taskId, userId);
   if (!check.ok) return c.json({ error: check.error }, check.status);
 
+  const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId));
+  if (!task) return c.json({ error: 'Task not found' }, 404);
+
   const [updated] = await db.update(tasks)
-    .set({ status: 'canceled', updatedAt: new Date() })
+    .set({ status: 'canceled', leaseId: null, leaseExpiresAt: null, updatedAt: new Date() })
     .where(eq(tasks.id, taskId))
     .returning();
 
-  if (!updated) return c.json({ error: 'Task not found' }, 404);
+  // If task was running/leased and assigned to a worker, notify them via orchestrator
+  if ((task.status === 'running' || task.status === 'leased') && task.assignedWorkerId && task.leaseId) {
+    try {
+      const orchestratorId = c.env.ORCHESTRATOR.idFromName(task.graphId);
+      const orchestrator = c.env.ORCHESTRATOR.get(orchestratorId);
+      await orchestrator.fetch(new Request('http://internal/cancel-task', {
+        method: 'POST',
+        body: JSON.stringify({ taskId, leaseId: task.leaseId, workerId: task.assignedWorkerId }),
+      }));
+    } catch {
+      // Best-effort cancellation notification
+    }
+  }
+
   return c.json({ task: updated });
 });
 

@@ -67,6 +67,16 @@ export class WsRoom extends DurableObject<Env> {
       return new Response('ok');
     }
 
+    // Internal API: send task cancellation to a worker
+    if (url.pathname === '/cancel-task' && request.method === 'POST') {
+      const { workerId, message } = await request.json() as { workerId: string; message: string };
+      const worker = this.workers.get(workerId);
+      if (worker) {
+        try { worker.ws.send(message); } catch { this.workers.delete(workerId); }
+      }
+      return new Response('ok');
+    }
+
     // Internal API: get idle workers
     if (url.pathname === '/idle-workers') {
       const idle = [...this.workers.values()]
@@ -145,7 +155,6 @@ export class WsRoom extends DurableObject<Env> {
 
         // Forward to Orchestrator DO via internal fetch to update DB + trigger deps
         try {
-          // Determine which graph this task belongs to by checking storage
           const taskMeta = await this.ctx.storage.get<{ graphId: string }>(`task:${payload.taskId}`);
           if (taskMeta?.graphId) {
             const orchestratorId = this.env.ORCHESTRATOR.idFromName(taskMeta.graphId);
@@ -155,6 +164,8 @@ export class WsRoom extends DurableObject<Env> {
               body: JSON.stringify(payload),
             }));
           }
+          // Clean up task→graph mapping after result is processed
+          await this.ctx.storage.delete(`task:${payload.taskId}`);
         } catch (err) {
           console.error('Failed to forward result to orchestrator:', err);
         }
@@ -165,10 +176,11 @@ export class WsRoom extends DurableObject<Env> {
   }
 
   async webSocketClose(ws: WebSocket, code: number, reason: string): Promise<void> {
-    // Remove worker if it was connected
+    // Remove worker if it was connected + clean up storage
     for (const [id, worker] of this.workers) {
       if (worker.ws === ws) {
         this.workers.delete(id);
+        await this.ctx.storage.delete(`worker:${id}`);
         this.broadcastToUi('worker.status', { workerId: id, status: 'offline' });
         break;
       }

@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 import { eq } from 'drizzle-orm';
 import { createGraphSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
-import { graphs } from '../db/schema.js';
+import { graphs, tasks, edges } from '../db/schema.js';
 import { clerkAuth, verifyGraphOwner } from '../lib/auth.js';
 import type { Env } from '../types/index.js';
 
@@ -86,6 +86,72 @@ app.delete('/:graphId', async (c) => {
 
   await db.delete(graphs).where(eq(graphs.id, graphId));
   return c.json({ ok: true });
+});
+
+/**
+ * Seed a test graph — a pre-built DAG that validates the hive system.
+ * Creates parallel lint + typecheck tasks, then a test task, then a code review via cx (Codex).
+ */
+app.post('/seed-test', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const graphId = `test-${nanoid(8)}`;
+
+  await db.insert(graphs).values({
+    id: graphId,
+    name: 'System Self-Test',
+    description: 'Automated test graph: lint, typecheck, vitest, and Codex code review in parallel then sequentially.',
+    ownerId: userId,
+  });
+
+  const taskDefs = [
+    { id: `${graphId}-lint`, title: 'Lint Check', type: 'lint', agentKind: 'generic', input: 'cd /repo && pnpm lint 2>&1; echo "EXIT:$?"', priority: 100, x: 0, y: 0 },
+    { id: `${graphId}-typecheck`, title: 'Type Check', type: 'test', agentKind: 'generic', input: 'cd /repo && pnpm typecheck 2>&1; echo "EXIT:$?"', priority: 100, x: 250, y: 0 },
+    { id: `${graphId}-test`, title: 'Run Vitest', type: 'test', agentKind: 'generic', input: 'cd /repo/packages/api && npx vitest run 2>&1; echo "EXIT:$?"', priority: 200, x: 125, y: 150 },
+    { id: `${graphId}-review`, title: 'Codex Code Review', type: 'review', agentKind: 'cx', input: 'Review the packages/api/src/lib/ directory for correctness, security issues, and potential bugs. Output a summary of findings.', priority: 50, x: 125, y: 300 },
+  ];
+
+  for (const t of taskDefs) {
+    await db.insert(tasks).values({
+      id: t.id,
+      graphId,
+      title: t.title,
+      type: t.type,
+      status: 'pending',
+      input: t.input,
+      agentKind: t.agentKind,
+      priority: t.priority,
+      positionX: t.x,
+      positionY: t.y,
+      timeoutMs: 600_000,
+      maxRetries: 1,
+      attempt: 0,
+      version: 1,
+    });
+  }
+
+  // Edges: lint + typecheck → test → review
+  const edgeDefs = [
+    { from: `${graphId}-lint`, to: `${graphId}-test` },
+    { from: `${graphId}-typecheck`, to: `${graphId}-test` },
+    { from: `${graphId}-test`, to: `${graphId}-review` },
+  ];
+
+  for (const e of edgeDefs) {
+    await db.insert(edges).values({
+      id: nanoid(12),
+      graphId,
+      fromTaskId: e.from,
+      toTaskId: e.to,
+    });
+  }
+
+  return c.json({
+    graph: { id: graphId },
+    tasks: taskDefs.length,
+    edges: edgeDefs.length,
+    message: 'Test graph created. Lint and typecheck run in parallel, then vitest, then Codex review.',
+  }, 201);
 });
 
 export default app;

@@ -54,6 +54,25 @@ export class Orchestrator extends DurableObject<Env> {
       return new Response(JSON.stringify({ ok: true }));
     }
 
+    // Handle task cancellation — notify the assigned worker
+    if (url.pathname === '/cancel-task' && request.method === 'POST') {
+      const { taskId, leaseId, workerId } = await request.json() as {
+        taskId: string;
+        leaseId: string;
+        workerId: string;
+      };
+
+      const message = createWsMessage('task.cancel', { taskId, leaseId, reason: 'Canceled by user' });
+      const wsRoomId = this.env.WS_ROOM.idFromName('global');
+      const wsRoom = this.env.WS_ROOM.get(wsRoomId);
+      await wsRoom.fetch(new Request('http://internal/cancel-task', {
+        method: 'POST',
+        body: JSON.stringify({ workerId, message }),
+      }));
+
+      return Response.json({ ok: true });
+    }
+
     // Handle task result from WsRoom
     if (url.pathname === '/task-result' && request.method === 'POST') {
       const payload = await request.json() as {

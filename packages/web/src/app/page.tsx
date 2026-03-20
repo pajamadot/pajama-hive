@@ -85,12 +85,30 @@ export default function DashboardPage() {
       <main className="max-w-5xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-semibold">Graphs</h2>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:opacity-90"
-          >
-            New Graph
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={async () => {
+                const token = await getToken();
+                const res = await fetch(`${API_URL}/v1/graphs/seed-test`, {
+                  method: 'POST',
+                  headers: { Authorization: `Bearer ${token}` },
+                });
+                if (res.ok) {
+                  const data = await res.json();
+                  router.push(`/graph/${data.graph.id}`);
+                }
+              }}
+              className="px-4 py-2 border border-amber-600 text-amber-400 rounded-md text-sm font-medium hover:bg-amber-600/10"
+            >
+              Seed Test Graph
+            </button>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:opacity-90"
+            >
+              New Graph
+            </button>
+          </div>
         </div>
 
         {/* Create modal */}

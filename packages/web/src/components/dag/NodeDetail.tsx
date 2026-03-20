@@ -9,6 +9,7 @@ interface NodeDetailProps {
   data: TaskNodeData;
   onApprove?: (taskId: string) => void;
   onCancel?: (taskId: string) => void;
+  onRetry?: (taskId: string) => void;
   onUpdate?: (taskId: string, updates: Record<string, unknown>) => void;
   onClose: () => void;
 }
@@ -16,7 +17,7 @@ interface NodeDetailProps {
 const taskTypes: TaskType[] = ['plan', 'code', 'review', 'test', 'lint', 'docs', 'custom'];
 const agentKinds: AgentKind[] = ['cc', 'cx', 'generic'];
 
-export function NodeDetail({ nodeId, data, onApprove, onCancel, onUpdate, onClose }: NodeDetailProps) {
+export function NodeDetail({ nodeId, data, onApprove, onCancel, onRetry, onUpdate, onClose }: NodeDetailProps) {
   const [editingInput, setEditingInput] = useState(false);
   const [inputDraft, setInputDraft] = useState(data.input);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -184,6 +185,14 @@ export function NodeDetail({ nodeId, data, onApprove, onCancel, onUpdate, onClos
               className="flex-1 px-3 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:opacity-90"
             >
               Approve
+            </button>
+          )}
+          {(data.status === 'failed' || data.status === 'canceled') && (
+            <button
+              onClick={() => onRetry?.(nodeId)}
+              className="flex-1 px-3 py-2 bg-amber-600 text-white rounded-md text-sm font-medium hover:bg-amber-700"
+            >
+              Retry
             </button>
           )}
           {data.status !== 'done' && data.status !== 'failed' && data.status !== 'canceled' && (

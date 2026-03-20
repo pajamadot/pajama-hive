@@ -33,6 +33,8 @@ export const api = {
     apiFetch(`/v1/tasks/${taskId}/approve`, token, { method: 'POST' }),
   cancelTask: (token: string, taskId: string) =>
     apiFetch(`/v1/tasks/${taskId}/cancel`, token, { method: 'POST' }),
+  retryTask: (token: string, taskId: string) =>
+    apiFetch(`/v1/tasks/${taskId}/retry`, token, { method: 'POST' }),
 
   // Edges
   listEdges: (token: string, graphId: string) => apiFetch(`/v1/graphs/${graphId}/edges`, token),
@@ -46,6 +48,10 @@ export const api = {
     apiFetch(`/v1/graphs/${graphId}/runs`, token),
   getRunDetail: (token: string, runId: string) =>
     apiFetch(`/v1/runs/${runId}/detail`, token),
+
+  // Seed
+  seedTestGraph: (token: string) =>
+    apiFetch('/v1/graphs/seed-test', token, { method: 'POST' }),
 
   // Workers
   listWorkers: (token: string) => apiFetch('/v1/workers', token),
