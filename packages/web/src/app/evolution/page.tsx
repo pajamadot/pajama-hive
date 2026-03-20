@@ -154,6 +154,28 @@ export default function EvolutionPage() {
           </div>
         )}
 
+        {/* Evolution stats */}
+        {graphs.length > 0 && (
+          <div className="grid grid-cols-4 gap-3 mb-6">
+            <div className="bg-card border border-border rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold">{graphs.length}</div>
+              <div className="text-xs text-muted-foreground">Total</div>
+            </div>
+            <div className="bg-card border border-border rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-green-400">{graphs.filter((g) => g.status === 'completed').length}</div>
+              <div className="text-xs text-muted-foreground">Completed</div>
+            </div>
+            <div className="bg-card border border-border rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-yellow-400">{graphs.filter((g) => g.status === 'running').length}</div>
+              <div className="text-xs text-muted-foreground">Running</div>
+            </div>
+            <div className="bg-card border border-border rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-red-400">{graphs.filter((g) => g.status === 'failed').length}</div>
+              <div className="text-xs text-muted-foreground">Failed</div>
+            </div>
+          </div>
+        )}
+
         {/* List */}
         <h3 className="text-lg font-semibold mb-4">Improvement History</h3>
         {loading ? (
