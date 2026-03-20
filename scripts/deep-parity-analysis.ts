@@ -444,9 +444,9 @@ function analyzeIntegrationFlows(): IntegrationFlow[] {
     },
     {
       name: 'Conversation Branching',
-      steps: ['Chat with agent', 'Branch conversation at message N', 'Continue on branch', 'Switch between branches'],
-      status: 'partial',
-      missingStep: 'Branch/fork conversation (Coze uses sections, we only have clear)',
+      steps: ['Chat with agent', 'Create section boundary', 'Fork conversation at message N', 'Continue on branch', 'Switch between branches'],
+      status: 'working',
+      missingStep: null,
     },
   ];
 }

@@ -570,6 +570,11 @@ export const plugins = pgTable('plugins', {
   baseUrl: text('base_url'),
   openapiSpec: jsonb('openapi_spec'), // imported OpenAPI 3.0 spec
   createdBy: text('created_by').notNull(),
+  // Coze parity fields
+  appId: text('app_id'),                         // Coze: marketplace app ID
+  apiHost: text('api_host'),                     // Coze: API host for plugin
+  runtimeVersion: text('runtime_version'),       // Coze: runtime version
+  extraInfo: jsonb('extra_info'),                // Coze: extra metadata
   publishedAt: timestamp('published_at'),
   deletedAt: timestamp('deleted_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
