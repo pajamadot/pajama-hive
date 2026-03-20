@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { nanoid } from 'nanoid';
-import { eq, and, asc, gt } from 'drizzle-orm';
+import { eq, and, asc, gt, inArray } from 'drizzle-orm';
 import { createTaskSchema, createEdgeSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
 import { tasks, edges, taskLogs } from '../db/schema.js';
@@ -24,6 +24,52 @@ app.get('/graphs/:graphId/tasks', async (c) => {
 
   const result = await db.select().from(tasks).where(eq(tasks.graphId, graphId));
   return c.json({ tasks: result });
+});
+
+// Batch task operations
+app.post('/graphs/:graphId/tasks/batch', async (c) => {
+  const db = createDb(c.env);
+  const graphId = c.req.param('graphId');
+  const userId = c.get('userId');
+
+  const check = await verifyGraphOwner(db, graphId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
+  const body = await c.req.json() as { action: string; taskIds: string[] };
+  if (!body.taskIds?.length) return c.json({ error: 'No task IDs provided' }, 400);
+
+  const graphTasks = await db.select().from(tasks)
+    .where(and(eq(tasks.graphId, graphId), inArray(tasks.id, body.taskIds)));
+
+  let affected = 0;
+  for (const task of graphTasks) {
+    let newStatus: string | null = null;
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+
+    switch (body.action) {
+      case 'approve':
+        if (task.status === 'pending') { newStatus = 'ready'; }
+        break;
+      case 'cancel':
+        if (task.status !== 'done' && task.status !== 'canceled') { newStatus = 'canceled'; }
+        break;
+      case 'retry':
+        if (task.status === 'failed' || task.status === 'canceled') {
+          newStatus = 'pending';
+          Object.assign(updates, { leaseId: null, leaseExpiresAt: null, assignedWorkerId: null, outputSummary: null, attempt: task.attempt + 1 });
+        }
+        break;
+      default:
+        return c.json({ error: `Unknown action: ${body.action}` }, 400);
+    }
+
+    if (newStatus) {
+      await db.update(tasks).set({ ...updates, status: newStatus }).where(eq(tasks.id, task.id));
+      affected++;
+    }
+  }
+
+  return c.json({ affected, total: body.taskIds.length });
 });
 
 // Create task in a graph
