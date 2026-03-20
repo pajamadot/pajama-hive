@@ -106,6 +106,101 @@ app.delete('/:graphId', async (c) => {
   return c.json({ ok: true });
 });
 
+// Export graph as portable JSON
+app.get('/:graphId/export', async (c) => {
+  const db = createDb(c.env);
+  const graphId = c.req.param('graphId');
+  const userId = c.get('userId');
+
+  const check = await verifyGraphOwner(db, graphId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
+  const [graph] = await db.select().from(graphs).where(eq(graphs.id, graphId));
+  if (!graph) return c.json({ error: 'Graph not found' }, 404);
+
+  const graphTasks = await db.select().from(tasks).where(eq(tasks.graphId, graphId));
+  const graphEdges = await db.select().from(edges).where(eq(edges.graphId, graphId));
+
+  return c.json({
+    version: '1.0',
+    graph: { name: graph.name, description: graph.description },
+    tasks: graphTasks.map((t) => ({
+      refId: t.id,
+      title: t.title,
+      type: t.type,
+      input: t.input,
+      agentKind: t.agentKind,
+      priority: t.priority,
+      requiredCapabilities: t.requiredCapabilities,
+      timeoutMs: t.timeoutMs,
+      maxRetries: t.maxRetries,
+      positionX: t.positionX,
+      positionY: t.positionY,
+    })),
+    edges: graphEdges.map((e) => ({ from: e.fromTaskId, to: e.toTaskId })),
+  });
+});
+
+// Import graph from portable JSON
+app.post('/import', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const body = await c.req.json() as {
+    graph: { name: string; description?: string };
+    tasks: { refId: string; title: string; type: string; input?: string; agentKind?: string; priority?: number; requiredCapabilities?: string[]; timeoutMs?: number; maxRetries?: number; positionX?: number; positionY?: number }[];
+    edges: { from: string; to: string }[];
+  };
+
+  if (!body.graph?.name || !body.tasks?.length) {
+    return c.json({ error: 'Invalid import format' }, 400);
+  }
+
+  const graphId = nanoid(12);
+  await db.insert(graphs).values({
+    id: graphId,
+    name: body.graph.name,
+    description: body.graph.description,
+    ownerId: userId,
+  });
+
+  const idMap = new Map<string, string>();
+  for (const t of body.tasks) {
+    const newId = nanoid(12);
+    idMap.set(t.refId, newId);
+    await db.insert(tasks).values({
+      id: newId,
+      graphId,
+      title: t.title,
+      type: t.type,
+      input: t.input ?? '',
+      agentKind: t.agentKind ?? 'cc',
+      priority: t.priority ?? 100,
+      requiredCapabilities: t.requiredCapabilities ?? [],
+      timeoutMs: t.timeoutMs ?? 900000,
+      maxRetries: t.maxRetries ?? 2,
+      positionX: t.positionX ?? 0,
+      positionY: t.positionY ?? 0,
+      version: 1,
+      attempt: 0,
+    });
+  }
+
+  for (const e of body.edges) {
+    const from = idMap.get(e.from);
+    const to = idMap.get(e.to);
+    if (from && to) {
+      await db.insert(edges).values({
+        id: nanoid(12),
+        graphId,
+        fromTaskId: from,
+        toTaskId: to,
+      });
+    }
+  }
+
+  return c.json({ graph: { id: graphId } }, 201);
+});
+
 // Duplicate a graph (deep clone tasks + edges)
 app.post('/:graphId/duplicate', async (c) => {
   const db = createDb(c.env);

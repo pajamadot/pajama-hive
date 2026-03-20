@@ -97,6 +97,19 @@ export const auditLogs = pgTable('audit_logs', {
   index('audit_worker_idx').on(t.workerId),
 ]);
 
+// ── Graph Snapshots (pre-run state) ──
+
+export const graphSnapshots = pgTable('graph_snapshots', {
+  id: text('id').primaryKey(),
+  graphId: text('graph_id').notNull().references(() => graphs.id, { onDelete: 'cascade' }),
+  runId: text('run_id').notNull().references(() => runs.id, { onDelete: 'cascade' }),
+  snapshotData: jsonb('snapshot_data').notNull(), // { tasks: [...], edges: [...] }
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+  index('snapshots_graph_idx').on(t.graphId),
+  index('snapshots_run_idx').on(t.runId),
+]);
+
 // ── Task Logs (persisted execution output) ──
 
 export const taskLogs = pgTable('task_logs', {

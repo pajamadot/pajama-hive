@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { nanoid } from 'nanoid';
 import { eq, desc } from 'drizzle-orm';
 import { createDb } from '../db/client.js';
-import { runs, tasks, graphs, runRetrospectives } from '../db/schema.js';
+import { runs, tasks, edges, graphs, runRetrospectives, graphSnapshots } from '../db/schema.js';
 import { clerkAuth, verifyGraphOwner, verifyRunOwner } from '../lib/auth.js';
 import type { Env } from '../types/index.js';
 
@@ -34,6 +34,19 @@ app.post('/graphs/:graphId/runs', async (c) => {
     status: 'running',
     startedAt: new Date(),
   }).returning();
+
+  // Capture pre-run snapshot
+  const snapTasks = await db.select().from(tasks).where(eq(tasks.graphId, graphId));
+  const snapEdges = await db.select().from(edges).where(eq(edges.graphId, graphId));
+  await db.insert(graphSnapshots).values({
+    id: `snap-${nanoid(10)}`,
+    graphId,
+    runId: id,
+    snapshotData: {
+      tasks: snapTasks.map((t) => ({ id: t.id, title: t.title, type: t.type, status: t.status, input: t.input, agentKind: t.agentKind, priority: t.priority, positionX: t.positionX, positionY: t.positionY })),
+      edges: snapEdges.map((e) => ({ from: e.fromTaskId, to: e.toTaskId })),
+    },
+  });
 
   // Notify orchestrator DO to start scheduling
   const orchestratorId = c.env.ORCHESTRATOR.idFromName(graphId);
@@ -87,6 +100,7 @@ app.get('/runs/:runId/detail', async (c) => {
 
   const runTasks = await db.select().from(tasks).where(eq(tasks.graphId, run.graphId));
   const [retro] = await db.select().from(runRetrospectives).where(eq(runRetrospectives.runId, runId));
+  const [snapshot] = await db.select().from(graphSnapshots).where(eq(graphSnapshots.runId, runId));
 
   return c.json({
     run,
@@ -103,6 +117,7 @@ app.get('/runs/:runId/detail', async (c) => {
       updatedAt: t.updatedAt,
     })),
     retrospective: retro ?? null,
+    snapshot: snapshot?.snapshotData ?? null,
   });
 });
 

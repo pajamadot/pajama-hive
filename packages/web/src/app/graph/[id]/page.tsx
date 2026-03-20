@@ -225,6 +225,23 @@ export default function GraphEditorPage() {
 
         <div className="flex-1" />
 
+        <button
+          onClick={async () => {
+            if (!token) return;
+            const data = await api.exportGraph(token, graphId);
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${graphName || 'graph'}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            toast.success('Graph exported');
+          }}
+          className="px-3 py-1.5 border border-border rounded-md text-xs hover:bg-accent/50"
+        >
+          Export
+        </button>
         <Link
           href={`/graph/${graphId}/runs`}
           className="px-3 py-1.5 border border-border rounded-md text-xs hover:bg-accent/50"
