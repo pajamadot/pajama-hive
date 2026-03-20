@@ -125,16 +125,16 @@ function analyzeDomainCoverage(): Record<string, { implemented: string[]; missin
       missing: ['team billing', 'SSO'],
     },
     models: {
-      implemented: ['provider CRUD', 'config CRUD', 'settings UI', 'LLM dispatch', 'SSE streaming', 'embedding generation', 'connection test'],
-      missing: ['usage tracking'],
+      implemented: ['provider CRUD', 'config CRUD', 'settings UI', 'LLM dispatch', 'SSE streaming', 'embedding generation', 'connection test', 'usage tracking'],
+      missing: [],
     },
     agents: {
-      implemented: ['CRUD', 'config', 'versioning', 'publish', 'duplicate', 'builder UI', 'resource attachment'],
-      missing: ['multi-agent handoff', 'agent-as-tool'],
+      implemented: ['CRUD', 'config', 'versioning', 'publish', 'duplicate', 'builder UI', 'resource attachment', 'agent-as-tool invoke'],
+      missing: ['multi-agent handoff'],
     },
     workflows: {
-      implemented: ['CRUD', 'nodes', 'edges', 'versioning', 'publish', 'React Flow editor', 'drag-and-drop', 'execution engine', '18+ node types', 'connection handles'],
-      missing: ['sub_workflow execution', 'image_gen', 'real-time trace viewer'],
+      implemented: ['CRUD', 'nodes', 'edges', 'versioning', 'publish', 'React Flow editor', 'drag-and-drop', 'execution engine', '18+ node types', 'connection handles', 'sub_workflow execution', 'trace viewer'],
+      missing: ['image_gen'],
     },
     chat: {
       implemented: ['conversations', 'messages', 'chat runs', 'LLM integration', 'SSE streaming', 'playground UI', 'message editing', 'regenerate'],
@@ -145,8 +145,8 @@ function analyzeDomainCoverage(): Record<string, { implemented: string[]; missin
       missing: ['OAuth flow', 'marketplace integration'],
     },
     knowledge: {
-      implemented: ['CRUD', 'documents', 'chunking', 'keyword search', 'pgvector embeddings', 'vector search', 'detail UI', 'file upload', 'text extraction'],
-      missing: ['PDF parsing', 'DOCX parsing', 'URL scraping'],
+      implemented: ['CRUD', 'documents', 'chunking', 'keyword search', 'pgvector embeddings', 'vector search', 'detail UI', 'file upload', 'text extraction', 'URL scraping'],
+      missing: ['PDF parsing', 'DOCX parsing'],
     },
     data: {
       implemented: ['databases', 'tables', 'rows', 'variables', 'agent memory'],
@@ -165,8 +165,8 @@ function analyzeDomainCoverage(): Record<string, { implemented: string[]; missin
       missing: ['categories UI page'],
     },
     uploads: {
-      implemented: ['R2 bucket', 'multipart upload', 'get/delete/list'],
-      missing: ['presigned URLs', 'image thumbnails'],
+      implemented: ['R2 bucket', 'multipart upload', 'get/delete/list', 'signed download URLs'],
+      missing: ['image thumbnails'],
     },
     replication: {
       implemented: ['status analysis', 'snapshot', 'gap detection', 'history', 'dashboard UI'],

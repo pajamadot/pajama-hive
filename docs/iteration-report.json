@@ -1,16 +1,16 @@
 {
-  "timestamp": "2026-03-20T19:44:54.783Z",
-  "iteration": 73,
+  "timestamp": "2026-03-20T19:51:22.340Z",
+  "iteration": 74,
   "metrics": {
-    "tables": 53,
+    "tables": 54,
     "apiRoutes": 24,
-    "frontendPages": 24,
+    "frontendPages": 25,
     "testFiles": 10,
     "totalTests": 165,
     "libModules": 18,
     "adapters": 6,
-    "totalTsFiles": 114,
-    "totalLines": 17641
+    "totalTsFiles": 115,
+    "totalLines": 18077
   },
   "gaps": [
     {
@@ -22,14 +22,14 @@
     },
     {
       "file": "packages/api/src/lib/workflow-executor.ts",
-      "line": 304,
+      "line": 315,
       "type": "stub",
       "text": "result = { output: ctx.variables._lastOutput, _stub: true, message: `Node type '${node.nodeType}' not yet implemented` }",
       "priority": "medium"
     },
     {
       "file": "packages/api/src/lib/workflow-executor.ts",
-      "line": 304,
+      "line": 315,
       "type": "not_implemented",
       "text": "result = { output: ctx.variables._lastOutput, _stub: true, message: `Node type '${node.nodeType}' not yet implemented` }",
       "priority": "high"
@@ -209,11 +209,10 @@
         "LLM dispatch",
         "SSE streaming",
         "embedding generation",
-        "connection test"
-      ],
-      "missing": [
+        "connection test",
         "usage tracking"
-      ]
+      ],
+      "missing": []
     },
     "agents": {
       "implemented": [
@@ -223,11 +222,11 @@
         "publish",
         "duplicate",
         "builder UI",
-        "resource attachment"
+        "resource attachment",
+        "agent-as-tool invoke"
       ],
       "missing": [
-        "multi-agent handoff",
-        "agent-as-tool"
+        "multi-agent handoff"
       ]
     },
     "workflows": {
@@ -241,12 +240,12 @@
         "drag-and-drop",
         "execution engine",
         "18+ node types",
-        "connection handles"
+        "connection handles",
+        "sub_workflow execution",
+        "trace viewer"
       ],
       "missing": [
-        "sub_workflow execution",
-        "image_gen",
-        "real-time trace viewer"
+        "image_gen"
       ]
     },
     "chat": {
@@ -290,12 +289,12 @@
         "vector search",
         "detail UI",
         "file upload",
-        "text extraction"
+        "text extraction",
+        "URL scraping"
       ],
       "missing": [
         "PDF parsing",
-        "DOCX parsing",
-        "URL scraping"
+        "DOCX parsing"
       ]
     },
     "data": {
@@ -350,10 +349,10 @@
       "implemented": [
         "R2 bucket",
         "multipart upload",
-        "get/delete/list"
+        "get/delete/list",
+        "signed download URLs"
       ],
       "missing": [
-        "presigned URLs",
         "image thumbnails"
       ]
     },
@@ -370,10 +369,10 @@
   },
   "nextPriorities": [
     "Fix 2 high-priority gaps (TODOs in core routes/libs)",
-    "workflows: sub_workflow execution, image_gen, real-time trace viewer",
-    "knowledge: PDF parsing, DOCX parsing, URL scraping",
     "workspace: team billing, SSO",
-    "agents: multi-agent handoff, agent-as-tool",
-    "chat: branch conversations, file attachments in chat"
+    "chat: branch conversations, file attachments in chat",
+    "plugins: OAuth flow, marketplace integration",
+    "knowledge: PDF parsing, DOCX parsing",
+    "data: NL2SQL, query builder UI"
   ]
 }
