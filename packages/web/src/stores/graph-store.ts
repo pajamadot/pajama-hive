@@ -13,6 +13,7 @@ export interface TaskNodeData {
   priority: number;
   timeoutMs?: number;
   maxRetries?: number;
+  requiredCapabilities?: string[];
   [key: string]: unknown;
 }
 

@@ -146,6 +146,21 @@ export function NodeDetail({ nodeId, data, onApprove, onCancel, onRetry, onDelet
           )}
         </div>
 
+        {/* Required capabilities */}
+        <div>
+          <label className="text-xs text-muted-foreground uppercase">Capabilities</label>
+          {isEditable ? (
+            <input
+              value={(data.requiredCapabilities ?? []).join(', ')}
+              onChange={(e) => onUpdate?.(nodeId, { requiredCapabilities: e.target.value.split(',').map((s) => s.trim()).filter(Boolean) })}
+              placeholder="git, docker, k8s..."
+              className="w-full mt-1 px-2 py-1.5 bg-background border border-border rounded-md text-sm"
+            />
+          ) : (
+            <p className="text-sm font-medium">{(data.requiredCapabilities ?? []).join(', ') || 'none'}</p>
+          )}
+        </div>
+
         {data.assignedWorkerId && (
           <div>
             <label className="text-xs text-muted-foreground uppercase">Worker</label>
