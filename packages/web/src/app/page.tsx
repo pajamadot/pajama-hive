@@ -24,10 +24,15 @@ export default function DashboardPage() {
   const [createName, setCreateName] = useState('');
   const [createDesc, setCreateDesc] = useState('');
   const [creating, setCreating] = useState(false);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const loadGraphs = useCallback(async () => {
     const token = await getToken();
-    const res = await fetch(`${API_URL}/v1/graphs`, {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (statusFilter) params.set('status', statusFilter);
+    const res = await fetch(`${API_URL}/v1/graphs?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
@@ -35,7 +40,7 @@ export default function DashboardPage() {
       setGraphs(data.graphs);
     }
     setLoading(false);
-  }, [getToken]);
+  }, [getToken, search, statusFilter]);
 
   useEffect(() => { loadGraphs(); }, [loadGraphs]);
 
@@ -109,6 +114,27 @@ export default function DashboardPage() {
               New Graph
             </button>
           </div>
+        </div>
+
+        {/* Search and filter */}
+        <div className="flex gap-2 mb-4">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search graphs..."
+            className="flex-1 px-3 py-2 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 bg-background border border-border rounded-md text-sm"
+          >
+            <option value="">All statuses</option>
+            <option value="draft">Draft</option>
+            <option value="running">Running</option>
+            <option value="completed">Completed</option>
+            <option value="failed">Failed</option>
+          </select>
         </div>
 
         {/* Create modal */}
@@ -189,6 +215,22 @@ export default function DashboardPage() {
                     }`}>
                       {graph.status}
                     </span>
+                    <button
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const token = await getToken();
+                        const res = await fetch(`${API_URL}/v1/graphs/${graph.id}/duplicate`, {
+                          method: 'POST',
+                          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                          body: '{}',
+                        });
+                        if (res.ok) loadGraphs();
+                      }}
+                      className="text-xs text-muted-foreground hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      Duplicate
+                    </button>
                     <button
                       onClick={(e) => handleDelete(e, graph.id)}
                       className="text-xs text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"

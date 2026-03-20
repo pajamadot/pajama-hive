@@ -6,10 +6,12 @@ export const graphs = pgTable('graphs', {
   description: text('description'),
   ownerId: text('owner_id').notNull(),
   status: text('status').notNull().default('draft'),
+  isTemplate: integer('is_template').notNull().default(0),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (t) => [
   index('graphs_owner_id_idx').on(t.ownerId),
+  index('graphs_template_idx').on(t.isTemplate),
 ]);
 
 export const tasks = pgTable('tasks', {

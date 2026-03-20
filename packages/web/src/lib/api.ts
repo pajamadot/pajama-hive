@@ -24,6 +24,11 @@ export const api = {
   createGraph: (token: string, data: { name: string; description?: string }) =>
     apiFetch('/v1/graphs', token, { method: 'POST', body: JSON.stringify(data) }),
   getGraph: (token: string, graphId: string) => apiFetch(`/v1/graphs/${graphId}`, token),
+  duplicateGraph: (token: string, graphId: string, name?: string) =>
+    apiFetch(`/v1/graphs/${graphId}/duplicate`, token, { method: 'POST', body: JSON.stringify({ name }) }),
+  saveAsTemplate: (token: string, graphId: string) =>
+    apiFetch(`/v1/graphs/${graphId}/save-template`, token, { method: 'POST' }),
+  listTemplates: (token: string) => apiFetch('/v1/graphs/templates/list', token),
 
   // Tasks
   listTasks: (token: string, graphId: string) => apiFetch(`/v1/graphs/${graphId}/tasks`, token),

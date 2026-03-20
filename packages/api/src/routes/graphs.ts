@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { nanoid } from 'nanoid';
-import { eq } from 'drizzle-orm';
+import { eq, ilike, and, desc } from 'drizzle-orm';
 import { createGraphSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
 import { graphs, tasks, edges } from '../db/schema.js';
@@ -14,11 +14,20 @@ const app = new Hono<HonoEnv>();
 // All graph routes require auth
 app.use('/*', clerkAuth);
 
-// List graphs for current user
+// List graphs for current user (with optional search and status filter)
 app.get('/', async (c) => {
   const db = createDb(c.env);
   const userId = c.get('userId');
-  const result = await db.select().from(graphs).where(eq(graphs.ownerId, userId));
+  const search = c.req.query('search');
+  const status = c.req.query('status');
+
+  const conditions = [eq(graphs.ownerId, userId)];
+  if (search) conditions.push(ilike(graphs.name, `%${search}%`));
+  if (status) conditions.push(eq(graphs.status, status));
+
+  const result = await db.select().from(graphs)
+    .where(and(...conditions))
+    .orderBy(desc(graphs.updatedAt));
   return c.json({ graphs: result });
 });
 
@@ -86,6 +95,94 @@ app.delete('/:graphId', async (c) => {
 
   await db.delete(graphs).where(eq(graphs.id, graphId));
   return c.json({ ok: true });
+});
+
+// Duplicate a graph (deep clone tasks + edges)
+app.post('/:graphId/duplicate', async (c) => {
+  const db = createDb(c.env);
+  const graphId = c.req.param('graphId');
+  const userId = c.get('userId');
+
+  const check = await verifyGraphOwner(db, graphId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
+  const [source] = await db.select().from(graphs).where(eq(graphs.id, graphId));
+  if (!source) return c.json({ error: 'Graph not found' }, 404);
+
+  const body = await c.req.json().catch(() => ({})) as { name?: string };
+  const newGraphId = nanoid(12);
+
+  await db.insert(graphs).values({
+    id: newGraphId,
+    name: body.name ?? `${source.name} (copy)`,
+    description: source.description,
+    ownerId: userId,
+    status: 'draft',
+  });
+
+  const sourceTasks = await db.select().from(tasks).where(eq(tasks.graphId, graphId));
+  const sourceEdges = await db.select().from(edges).where(eq(edges.graphId, graphId));
+
+  const idMap = new Map<string, string>();
+  for (const t of sourceTasks) {
+    const newId = nanoid(12);
+    idMap.set(t.id, newId);
+    await db.insert(tasks).values({
+      id: newId,
+      graphId: newGraphId,
+      title: t.title,
+      type: t.type,
+      status: 'pending',
+      input: t.input,
+      priority: t.priority,
+      agentKind: t.agentKind,
+      requiredCapabilities: t.requiredCapabilities,
+      timeoutMs: t.timeoutMs,
+      maxRetries: t.maxRetries,
+      positionX: t.positionX,
+      positionY: t.positionY,
+      version: 1,
+      attempt: 0,
+    });
+  }
+
+  for (const e of sourceEdges) {
+    const from = idMap.get(e.fromTaskId);
+    const to = idMap.get(e.toTaskId);
+    if (from && to) {
+      await db.insert(edges).values({
+        id: nanoid(12),
+        graphId: newGraphId,
+        fromTaskId: from,
+        toTaskId: to,
+      });
+    }
+  }
+
+  return c.json({ graph: { id: newGraphId, name: body.name ?? `${source.name} (copy)` } }, 201);
+});
+
+// Save graph as template
+app.post('/:graphId/save-template', async (c) => {
+  const db = createDb(c.env);
+  const graphId = c.req.param('graphId');
+  const userId = c.get('userId');
+
+  const check = await verifyGraphOwner(db, graphId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
+  await db.update(graphs)
+    .set({ isTemplate: 1, updatedAt: new Date() })
+    .where(eq(graphs.id, graphId));
+
+  return c.json({ ok: true });
+});
+
+// List templates
+app.get('/templates/list', async (c) => {
+  const db = createDb(c.env);
+  const result = await db.select().from(graphs).where(eq(graphs.isTemplate, 1)).orderBy(desc(graphs.updatedAt));
+  return c.json({ templates: result });
 });
 
 /**
