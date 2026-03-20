@@ -191,11 +191,25 @@ export default function GraphEditorPage() {
     store.setEdges(laidEdges);
   }, [store.nodes, store.edges]);
 
+  const handleDeleteSelected = useCallback(async () => {
+    const id = store.selectedNodeId;
+    if (!id || !token) return;
+    const node = store.nodes.find((n) => n.id === id);
+    if (!node || node.data.status === 'running' || node.data.status === 'leased') return;
+    if (!confirm(`Delete task "${node.data.title}"?`)) return;
+    await api.deleteTask(token, id);
+    store.setNodes(store.nodes.filter((n) => n.id !== id));
+    store.setEdges(store.edges.filter((e) => e.source !== id && e.target !== id));
+    store.setSelectedNode(null);
+  }, [store.selectedNodeId, store.nodes, store.edges, token]);
+
   const shortcutDefs = [
     { key: 'Enter', ctrl: true, description: 'Start a run', action: handleRunGraph },
     { key: 'l', ctrl: true, description: 'Auto layout', action: handleAutoLayout },
     { key: 'z', ctrl: true, description: 'Undo', action: () => store.undo() },
     { key: 'y', ctrl: true, description: 'Redo', action: () => store.redo() },
+    { key: 'Delete', description: 'Delete selected node', action: handleDeleteSelected },
+    { key: 'Backspace', description: 'Delete selected node', action: handleDeleteSelected },
     { key: 'Escape', description: 'Deselect node', action: () => store.setSelectedNode(null) },
   ];
   const { showHelp, setShowHelp } = useKeyboardShortcuts(shortcutDefs);
