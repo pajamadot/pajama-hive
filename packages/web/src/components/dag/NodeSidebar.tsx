@@ -1,6 +1,7 @@
 'use client';
 
 import type { TaskType } from '@pajamadot/hive-shared';
+import { useGraphStore } from '@/stores/graph-store';
 
 interface NodeTypeConfig {
   type: TaskType;
@@ -20,6 +21,8 @@ const nodeTypes: NodeTypeConfig[] = [
 ];
 
 export function NodeSidebar() {
+  const nodes = useGraphStore((s) => s.nodes);
+
   const onDragStart = (event: React.DragEvent, nodeType: TaskType) => {
     event.dataTransfer.setData('application/hive-node-type', nodeType);
     event.dataTransfer.effectAllowed = 'move';
@@ -30,22 +33,28 @@ export function NodeSidebar() {
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
         Task Types
       </h3>
-      {nodeTypes.map((nt) => (
-        <div
-          key={nt.type}
-          draggable
-          onDragStart={(e) => onDragStart(e, nt.type)}
-          className="flex items-center gap-3 p-2 rounded-md border border-border cursor-grab hover:bg-accent/50 transition-colors active:cursor-grabbing"
-        >
-          <span className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-sm font-bold">
-            {nt.icon}
-          </span>
-          <div>
-            <div className="text-sm font-medium">{nt.label}</div>
-            <div className="text-xs text-muted-foreground">{nt.description}</div>
+      {nodeTypes.map((nt) => {
+        const count = nodes.filter((n) => n.data.type === nt.type).length;
+        return (
+          <div
+            key={nt.type}
+            draggable
+            onDragStart={(e) => onDragStart(e, nt.type)}
+            className="flex items-center gap-3 p-2 rounded-md border border-border cursor-grab hover:bg-accent/50 transition-colors active:cursor-grabbing"
+          >
+            <span className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-sm font-bold">
+              {nt.icon}
+            </span>
+            <div className="flex-1">
+              <div className="text-sm font-medium">{nt.label}</div>
+              <div className="text-xs text-muted-foreground">{nt.description}</div>
+            </div>
+            {count > 0 && (
+              <span className="text-xs bg-muted px-1.5 py-0.5 rounded-full font-mono">{count}</span>
+            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
