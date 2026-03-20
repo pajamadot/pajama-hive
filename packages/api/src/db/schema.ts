@@ -129,6 +129,20 @@ export const webhooks = pgTable('webhooks', {
   index('webhooks_user_idx').on(t.userId),
 ]);
 
+// ── Webhook Deliveries ──
+
+export const webhookDeliveries = pgTable('webhook_deliveries', {
+  id: text('id').primaryKey(),
+  webhookId: text('webhook_id').notNull().references(() => webhooks.id, { onDelete: 'cascade' }),
+  event: text('event').notNull(),
+  statusCode: integer('status_code'),
+  success: integer('success').notNull().default(0),
+  error: text('error'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+  index('deliveries_webhook_idx').on(t.webhookId),
+]);
+
 // ── Graph Snapshots (pre-run state) ──
 
 export const graphSnapshots = pgTable('graph_snapshots', {

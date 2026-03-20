@@ -7,6 +7,7 @@ import { findReadyNodes, type Edge } from '../lib/dag.js';
 import { scheduleAssignments } from '../lib/scheduler.js';
 import { createLease, isLeaseExpired } from '../lib/lease.js';
 import { createWsMessage } from '../ws/protocol.js';
+import { fireWebhooks } from '../routes/webhooks.js';
 import type { AgentKind, TaskAssignPayload } from '@pajamadot/hive-shared';
 import type { Env } from '../types/index.js';
 
@@ -205,6 +206,16 @@ export class Orchestrator extends DurableObject<Env> {
         }));
       } catch (err) {
         console.error('Failed to trigger retrospective:', err);
+      }
+
+      // Fire webhooks
+      try {
+        const [graph] = await db.select({ ownerId: schema.graphs.ownerId }).from(schema.graphs).where(eq(schema.graphs.id, graphId));
+        if (graph) {
+          await fireWebhooks(db, graph.ownerId, `run.${finalStatus}`, { runId, graphId, status: finalStatus });
+        }
+      } catch {
+        // Best-effort webhook delivery
       }
 
       this.graphId = null;

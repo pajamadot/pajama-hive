@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { nanoid } from 'nanoid';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { createDb } from '../db/client.js';
-import { webhooks } from '../db/schema.js';
+import { webhooks, webhookDeliveries } from '../db/schema.js';
 import { clerkAuth } from '../lib/auth.js';
 import type { Env } from '../types/index.js';
 
@@ -81,6 +81,24 @@ app.patch('/:webhookId', async (c) => {
   return c.json({ webhook: updated });
 });
 
+// Get webhook delivery history
+app.get('/:webhookId/deliveries', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const webhookId = c.req.param('webhookId');
+
+  // Verify ownership
+  const [hook] = await db.select().from(webhooks).where(and(eq(webhooks.id, webhookId), eq(webhooks.userId, userId)));
+  if (!hook) return c.json({ error: 'Webhook not found' }, 404);
+
+  const result = await db.select().from(webhookDeliveries)
+    .where(eq(webhookDeliveries.webhookId, webhookId))
+    .orderBy(desc(webhookDeliveries.createdAt))
+    .limit(50);
+
+  return c.json({ deliveries: result });
+});
+
 export default app;
 
 /**
@@ -106,15 +124,32 @@ export async function fireWebhooks(
     const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(body));
     const signature = Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, '0')).join('');
 
-    // Best-effort delivery
-    fetch(hook.url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Hive-Signature': signature,
-        'X-Hive-Event': event,
-      },
-      body,
-    }).catch(() => {});
+    // Deliver and track
+    try {
+      const res = await fetch(hook.url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Hive-Signature': signature,
+          'X-Hive-Event': event,
+        },
+        body,
+      });
+      await db.insert(webhookDeliveries).values({
+        id: `del-${nanoid(10)}`,
+        webhookId: hook.id,
+        event,
+        statusCode: res.status,
+        success: res.ok ? 1 : 0,
+      });
+    } catch (err) {
+      await db.insert(webhookDeliveries).values({
+        id: `del-${nanoid(10)}`,
+        webhookId: hook.id,
+        event,
+        success: 0,
+        error: err instanceof Error ? err.message : 'Delivery failed',
+      });
+    }
   }
 }
