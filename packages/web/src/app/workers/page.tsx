@@ -59,7 +59,10 @@ export default function WorkersPage() {
   }, [load]);
 
   const online = workers.filter((w) => w.status === 'online' || w.status === 'busy');
+  const busy = workers.filter((w) => w.status === 'busy');
   const offline = workers.filter((w) => w.status === 'offline');
+  const totalCap = workers.reduce((a, w) => a + w.maxConcurrency, 0);
+  const utilization = totalCap > 0 ? Math.round((busy.length / totalCap) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -73,7 +76,7 @@ export default function WorkersPage() {
 
       <main className="max-w-5xl mx-auto px-6 py-6">
         {/* Summary cards */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-4 gap-4 mb-6">
           <div className="bg-card border border-border rounded-lg p-4">
             <div className="text-3xl font-bold text-green-400">{online.length}</div>
             <div className="text-sm text-muted-foreground">Online / Busy</div>
@@ -83,8 +86,12 @@ export default function WorkersPage() {
             <div className="text-sm text-muted-foreground">Offline</div>
           </div>
           <div className="bg-card border border-border rounded-lg p-4">
-            <div className="text-3xl font-bold">{workers.reduce((a, w) => a + w.maxConcurrency, 0)}</div>
+            <div className="text-3xl font-bold">{totalCap}</div>
             <div className="text-sm text-muted-foreground">Total Capacity</div>
+          </div>
+          <div className="bg-card border border-border rounded-lg p-4">
+            <div className={`text-3xl font-bold ${utilization > 80 ? 'text-red-400' : utilization > 50 ? 'text-yellow-400' : 'text-green-400'}`}>{utilization}%</div>
+            <div className="text-sm text-muted-foreground">Utilization</div>
           </div>
         </div>
 
