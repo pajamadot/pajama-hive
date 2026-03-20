@@ -1,6 +1,6 @@
 {
-  "framework": null,
+  "framework": "nextjs",
   "installCommand": "pnpm install --no-frozen-lockfile",
-  "buildCommand": "pnpm --filter @pajamadot/hive-shared build && pnpm --filter @pajamadot/hive-web build",
+  "buildCommand": "pnpm --filter @pajamadot/hive-shared build && cd packages/web && next build",
   "outputDirectory": "packages/web/.next"
 }
