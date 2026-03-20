@@ -1,7 +1,7 @@
 import { createMiddleware } from 'hono/factory';
 import { eq } from 'drizzle-orm';
 import { createDb, type Database } from '../db/client.js';
-import { graphs, tasks as tasksTable, runs as runsTable, edges as edgesTable } from '../db/schema.js';
+import { graphs, tasks as tasksTable, runs as runsTable, edges as edgesTable, apiKeys as apiKeysTable } from '../db/schema.js';
 import type { Env } from '../types/index.js';
 
 interface ClerkJWKS {
@@ -96,6 +96,34 @@ export const clerkAuth = createMiddleware<HonoEnv>(async (c, next) => {
 
   const token = authHeader.slice(7);
 
+  // API key auth: tokens starting with hive_
+  if (token.startsWith('hive_')) {
+    try {
+      const db = createDb(c.env);
+      const keyHash = await hashApiKey(token);
+      const [apiKey] = await db.select()
+        .from(apiKeysTable)
+        .where(eq(apiKeysTable.keyHash, keyHash));
+
+      if (!apiKey) return c.json({ error: 'Invalid API key' }, 401);
+      if (apiKey.expiresAt && apiKey.expiresAt.getTime() < Date.now()) {
+        return c.json({ error: 'API key expired' }, 401);
+      }
+
+      c.set('userId', apiKey.userId);
+      c.set('claims', { sub: apiKey.userId, scopes: apiKey.scopes });
+
+      // Update last used timestamp (best-effort)
+      db.update(apiKeysTable).set({ lastUsedAt: new Date() }).where(eq(apiKeysTable.id, apiKey.id)).catch(() => {});
+
+      await next();
+      return;
+    } catch {
+      return c.json({ error: 'API key authentication failed' }, 401);
+    }
+  }
+
+  // Clerk JWT auth
   try {
     const claims = await verifyClerkToken(token, c.env.CLERK_PUBLISHABLE_KEY);
     c.set('userId', claims.sub);
@@ -106,6 +134,15 @@ export const clerkAuth = createMiddleware<HonoEnv>(async (c, next) => {
     return c.json({ error: message }, 401);
   }
 });
+
+async function hashApiKey(key: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(key);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+export { hashApiKey };
 
 type OwnershipResult = { ok: true } | { ok: false; status: 404 | 403; error: string };
 

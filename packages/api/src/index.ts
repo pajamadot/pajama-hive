@@ -9,6 +9,8 @@ import auditRouter from './routes/audit.js';
 import metaRouter from './routes/meta.js';
 import plansRouter from './routes/plans.js';
 import evolutionRouter from './routes/evolution.js';
+import apiKeysRouter from './routes/api-keys.js';
+import webhooksRouter from './routes/webhooks.js';
 import { standardRateLimit } from './lib/rate-limiter.js';
 import { maxPayloadSize, requestId, securityHeaders } from './lib/validation.js';
 import type { Env } from './types/index.js';
@@ -50,6 +52,8 @@ app.route('/v1/audit', auditRouter);
 app.route('/v1/meta', metaRouter);
 app.route('/v1', plansRouter);
 app.route('/v1', evolutionRouter);
+app.route('/v1/api-keys', apiKeysRouter);
+app.route('/v1/webhooks', webhooksRouter);
 
 // WebSocket upgrade endpoint — delegates to WsRoom Durable Object
 app.get('/v1/ws', async (c) => {

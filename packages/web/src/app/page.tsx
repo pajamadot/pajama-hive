@@ -89,6 +89,9 @@ export default function DashboardPage() {
           <Link href="/audit" className="text-sm text-muted-foreground hover:text-foreground">
             Audit Log
           </Link>
+          <Link href="/settings" className="text-sm text-muted-foreground hover:text-foreground">
+            Settings
+          </Link>
           <UserButton />
         </div>
       </header>

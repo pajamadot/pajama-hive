@@ -97,6 +97,37 @@ export const auditLogs = pgTable('audit_logs', {
   index('audit_worker_idx').on(t.workerId),
 ]);
 
+// ── API Keys ──
+
+export const apiKeys = pgTable('api_keys', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  name: text('name').notNull(),
+  keyHash: text('key_hash').notNull(),
+  prefix: text('prefix').notNull(), // first 8 chars for display
+  scopes: text('scopes').array().notNull(),
+  lastUsedAt: timestamp('last_used_at'),
+  expiresAt: timestamp('expires_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+  index('api_keys_user_idx').on(t.userId),
+  index('api_keys_hash_idx').on(t.keyHash),
+]);
+
+// ── Webhooks ──
+
+export const webhooks = pgTable('webhooks', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  url: text('url').notNull(),
+  events: text('events').array().notNull(), // run.completed, run.failed, task.completed, task.failed
+  secret: text('secret').notNull(),
+  active: integer('active').notNull().default(1),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+  index('webhooks_user_idx').on(t.userId),
+]);
+
 // ── Graph Snapshots (pre-run state) ──
 
 export const graphSnapshots = pgTable('graph_snapshots', {
