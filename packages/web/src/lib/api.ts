@@ -43,6 +43,8 @@ export const api = {
     apiFetch(`/v1/tasks/${taskId}/cancel`, token, { method: 'POST' }),
   retryTask: (token: string, taskId: string) =>
     apiFetch(`/v1/tasks/${taskId}/retry`, token, { method: 'POST' }),
+  deleteTask: (token: string, taskId: string) =>
+    apiFetch(`/v1/tasks/${taskId}`, token, { method: 'DELETE' }),
 
   // Edges
   listEdges: (token: string, graphId: string) => apiFetch(`/v1/graphs/${graphId}/edges`, token),

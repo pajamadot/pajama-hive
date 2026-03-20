@@ -328,6 +328,14 @@ export default function GraphEditorPage() {
               await api.retryTask(token, id);
               store.updateNodeStatus(id, 'pending');
             }}
+            onDelete={async (id) => {
+              if (!token) return;
+              await api.deleteTask(token, id);
+              store.setNodes(store.nodes.filter((n) => n.id !== id));
+              store.setEdges(store.edges.filter((e) => e.source !== id && e.target !== id));
+              store.setSelectedNode(null);
+              toast.success('Task deleted');
+            }}
             onUpdate={handleUpdateTask}
             onClose={() => store.setSelectedNode(null)}
           />

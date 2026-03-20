@@ -24,35 +24,47 @@ const typeIcons: Record<string, string> = {
   custom: '*',
 };
 
+const agentColors: Record<string, string> = {
+  cc: 'bg-violet-500/20 text-violet-400',
+  cx: 'bg-emerald-500/20 text-emerald-400',
+  generic: 'bg-gray-500/20 text-gray-400',
+};
+
 function TaskNodeComponent({ data, selected }: NodeProps & { data: TaskNodeData }) {
   const colorClass = statusColors[data.status] ?? statusColors.pending;
   const icon = typeIcons[data.type] ?? '*';
 
   return (
     <div className={`
-      min-w-[160px] rounded-lg border-2 p-3 shadow-md transition-all
+      min-w-[180px] rounded-lg border-2 p-3 shadow-md transition-all
       ${colorClass}
       ${selected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}
     `}>
       <Handle type="target" position={Position.Top} className="!bg-muted-foreground !w-3 !h-3" />
 
       <div className="flex items-center gap-2">
-        <span className="w-6 h-6 rounded-md bg-muted flex items-center justify-center text-xs font-bold">
+        <span className="w-6 h-6 rounded-md bg-muted flex items-center justify-center text-xs font-bold shrink-0">
           {icon}
         </span>
         <div className="flex-1 min-w-0">
           <div className="text-sm font-medium truncate">{data.title}</div>
-          <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+          <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
             <span>{data.status}</span>
-            {data.assignedWorkerId && (
-              <>
-                <span className="text-muted-foreground/50">|</span>
-                <span className="truncate">{data.assignedWorkerId}</span>
-              </>
+            <span className={`px-1 rounded text-[10px] ${agentColors[data.agentKind] ?? agentColors.generic}`}>
+              {data.agentKind}
+            </span>
+            {data.priority > 100 && (
+              <span className="text-amber-400 text-[10px]">P{data.priority}</span>
             )}
           </div>
         </div>
       </div>
+
+      {data.assignedWorkerId && (
+        <div className="text-[10px] text-muted-foreground/70 mt-1 truncate font-mono">
+          {data.assignedWorkerId.slice(0, 12)}
+        </div>
+      )}
 
       <Handle type="source" position={Position.Bottom} className="!bg-muted-foreground !w-3 !h-3" />
     </div>

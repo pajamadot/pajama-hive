@@ -208,6 +208,29 @@ app.post('/tasks/:taskId/cancel', async (c) => {
   return c.json({ task: updated });
 });
 
+// Delete task (only pending/canceled/failed tasks)
+app.delete('/tasks/:taskId', async (c) => {
+  const db = createDb(c.env);
+  const taskId = c.req.param('taskId');
+  const userId = c.get('userId');
+
+  const check = await verifyTaskOwner(db, taskId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
+  const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId));
+  if (!task) return c.json({ error: 'Task not found' }, 404);
+  if (task.status === 'running' || task.status === 'leased') {
+    return c.json({ error: 'Cannot delete a running task — cancel it first' }, 400);
+  }
+
+  // Delete associated edges first
+  await db.delete(edges).where(eq(edges.fromTaskId, taskId));
+  await db.delete(edges).where(eq(edges.toTaskId, taskId));
+  await db.delete(tasks).where(eq(tasks.id, taskId));
+
+  return c.json({ ok: true });
+});
+
 // ── Edges ──
 
 // List edges for a graph

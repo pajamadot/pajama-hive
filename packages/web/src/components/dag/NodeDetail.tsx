@@ -10,6 +10,7 @@ interface NodeDetailProps {
   onApprove?: (taskId: string) => void;
   onCancel?: (taskId: string) => void;
   onRetry?: (taskId: string) => void;
+  onDelete?: (taskId: string) => void;
   onUpdate?: (taskId: string, updates: Record<string, unknown>) => void;
   onClose: () => void;
 }
@@ -17,7 +18,7 @@ interface NodeDetailProps {
 const taskTypes: TaskType[] = ['plan', 'code', 'review', 'test', 'lint', 'docs', 'custom'];
 const agentKinds: AgentKind[] = ['cc', 'cx', 'generic'];
 
-export function NodeDetail({ nodeId, data, onApprove, onCancel, onRetry, onUpdate, onClose }: NodeDetailProps) {
+export function NodeDetail({ nodeId, data, onApprove, onCancel, onRetry, onDelete, onUpdate, onClose }: NodeDetailProps) {
   const [editingInput, setEditingInput] = useState(false);
   const [inputDraft, setInputDraft] = useState(data.input);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -201,6 +202,14 @@ export function NodeDetail({ nodeId, data, onApprove, onCancel, onRetry, onUpdat
               className="flex-1 px-3 py-2 bg-destructive text-destructive-foreground rounded-md text-sm font-medium hover:opacity-90"
             >
               Cancel
+            </button>
+          )}
+          {data.status !== 'running' && data.status !== 'leased' && (
+            <button
+              onClick={() => { if (confirm('Delete this task?')) onDelete?.(nodeId); }}
+              className="px-3 py-2 border border-red-500/30 text-red-400 rounded-md text-sm hover:bg-red-500/10"
+            >
+              Delete
             </button>
           )}
         </div>
