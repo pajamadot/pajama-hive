@@ -5,6 +5,7 @@ import { createUserDatabaseSchema, createUserTableSchema } from '@pajamadot/hive
 import { createDb } from '../db/client.js';
 import { userDatabases, userTables, userTableRows } from '../db/schema.js';
 import { clerkAuth } from '../lib/auth.js';
+import { chatCompletion } from '../lib/llm.js';
 import type { Env } from '../types/index.js';
 
 type HonoEnv = { Bindings: Env; Variables: { userId: string } };
@@ -131,6 +132,80 @@ app.delete('/rows/:rowId', async (c) => {
   const rowId = c.req.param('rowId');
   await db.delete(userTableRows).where(eq(userTableRows.id, rowId));
   return c.json({ ok: true });
+});
+
+// ── NL2SQL: Natural language query ──
+
+app.post('/tables/:tableId/query', async (c) => {
+  const db = createDb(c.env);
+  const tableId = c.req.param('tableId');
+  const body = await c.req.json();
+  const query = body.query;
+  if (!query) return c.json({ error: 'query required' }, 400);
+
+  // Get table schema
+  const [table] = await db.select().from(userTables).where(eq(userTables.id, tableId));
+  if (!table) return c.json({ error: 'Table not found' }, 404);
+
+  // Get sample rows
+  const sampleRows = await db.select().from(userTableRows)
+    .where(eq(userTableRows.tableId, tableId))
+    .limit(5);
+
+  // Get workspace ID from database
+  const [userDb] = await db.select().from(userDatabases).where(eq(userDatabases.id, table.databaseId));
+  const workspaceId = userDb?.workspaceId ?? 'default';
+
+  // Use LLM to generate a filter function
+  const schemaDesc = JSON.stringify(table.schema);
+  const sampleData = JSON.stringify(sampleRows.map((r) => r.data).slice(0, 3));
+
+  try {
+    const result = await chatCompletion(db, workspaceId, [
+      {
+        role: 'system',
+        content: `You are a data query assistant. Given a table schema and a natural language query, generate a JavaScript filter function.
+
+Table schema: ${schemaDesc}
+Sample data: ${sampleData}
+
+Respond with ONLY a valid JavaScript arrow function that takes a row object and returns true/false.
+Example: (row) => row.name === "John" && row.age > 25
+Do not include any explanation, just the function.`,
+      },
+      { role: 'user', content: query },
+    ], { temperature: 0 });
+
+    const filterExpr = result.content.trim();
+
+    // Get all rows and apply filter
+    const allRows = await db.select().from(userTableRows)
+      .where(eq(userTableRows.tableId, tableId));
+
+    let filtered;
+    try {
+      const filterFn = new Function('row', `'use strict'; return (${filterExpr})(row)`);
+      filtered = allRows.filter((r) => {
+        try { return filterFn(r.data); } catch { return false; }
+      });
+    } catch {
+      // If filter compilation fails, return all rows with the generated filter for debugging
+      filtered = allRows;
+    }
+
+    return c.json({
+      query,
+      generatedFilter: filterExpr,
+      results: filtered.map((r) => r.data),
+      totalMatched: filtered.length,
+      totalRows: allRows.length,
+    });
+  } catch (err) {
+    return c.json({
+      query,
+      error: err instanceof Error ? err.message : 'NL2SQL failed',
+    }, 500);
+  }
 });
 
 export default app;

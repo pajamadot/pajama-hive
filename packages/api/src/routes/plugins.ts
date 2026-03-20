@@ -187,6 +187,117 @@ app.post('/:id/publish', async (c) => {
   return c.json({ version: nextVersion });
 });
 
+// ── OAuth2 Flow ──
+
+// Get OAuth authorize URL
+app.post('/:id/oauth/authorize', async (c) => {
+  const db = createDb(c.env);
+  const pluginId = c.req.param('id');
+
+  const [plugin] = await db.select().from(plugins).where(eq(plugins.id, pluginId));
+  if (!plugin) return c.json({ error: 'Plugin not found' }, 404);
+  if (plugin.authType !== 'oauth2') return c.json({ error: 'Plugin does not use OAuth2' }, 400);
+
+  const authConfig = plugin.authConfig as Record<string, string> | null;
+  if (!authConfig?.clientId || !authConfig?.authorizationUrl) {
+    return c.json({ error: 'OAuth config incomplete — need clientId and authorizationUrl' }, 400);
+  }
+
+  const state = nanoid();
+  const redirectUri = `https://hive-api.pajamadot.com/v1/plugins/${pluginId}/oauth/callback`;
+
+  const params = new URLSearchParams({
+    client_id: authConfig.clientId,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: authConfig.scope ?? '',
+    state,
+  });
+
+  return c.json({
+    authorizeUrl: `${authConfig.authorizationUrl}?${params}`,
+    state,
+    redirectUri,
+  });
+});
+
+// OAuth callback — exchange code for token
+app.get('/:id/oauth/callback', async (c) => {
+  const db = createDb(c.env);
+  const pluginId = c.req.param('id');
+  const code = c.req.query('code');
+
+  if (!code) return c.json({ error: 'No authorization code' }, 400);
+
+  const [plugin] = await db.select().from(plugins).where(eq(plugins.id, pluginId));
+  if (!plugin) return c.json({ error: 'Plugin not found' }, 404);
+
+  const authConfig = plugin.authConfig as Record<string, string> | null;
+  if (!authConfig?.clientId || !authConfig?.clientSecret || !authConfig?.tokenUrl) {
+    return c.json({ error: 'OAuth config incomplete' }, 400);
+  }
+
+  const redirectUri = `https://hive-api.pajamadot.com/v1/plugins/${pluginId}/oauth/callback`;
+
+  // Exchange code for token
+  const res = await fetch(authConfig.tokenUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: redirectUri,
+      client_id: authConfig.clientId,
+      client_secret: authConfig.clientSecret,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    return c.json({ error: `Token exchange failed: ${err}` }, 400);
+  }
+
+  const tokenData = await res.json() as Record<string, unknown>;
+
+  // Store tokens in auth config
+  await db.update(plugins).set({
+    authConfig: {
+      ...authConfig,
+      accessToken: tokenData.access_token as string,
+      refreshToken: tokenData.refresh_token as string,
+      expiresAt: tokenData.expires_in
+        ? new Date(Date.now() + (tokenData.expires_in as number) * 1000).toISOString()
+        : undefined,
+    },
+    updatedAt: new Date(),
+  }).where(eq(plugins.id, pluginId));
+
+  // Redirect back to plugin page
+  return c.redirect(`https://hive.pajamadot.com/plugins/${pluginId}?oauth=success`);
+});
+
+// Revoke OAuth token
+app.post('/:id/oauth/revoke', async (c) => {
+  const db = createDb(c.env);
+  const pluginId = c.req.param('id');
+
+  const [plugin] = await db.select().from(plugins).where(eq(plugins.id, pluginId));
+  if (!plugin) return c.json({ error: 'Plugin not found' }, 404);
+
+  const authConfig = plugin.authConfig as Record<string, string> | null;
+  await db.update(plugins).set({
+    authConfig: {
+      ...authConfig,
+      accessToken: undefined,
+      refreshToken: undefined,
+      expiresAt: undefined,
+    },
+    updatedAt: new Date(),
+  }).where(eq(plugins.id, pluginId));
+
+  return c.json({ ok: true });
+});
+
 // ── Import OpenAPI Spec ──
 
 app.post('/:id/import-openapi', async (c) => {

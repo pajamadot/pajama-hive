@@ -127,6 +127,48 @@ app.post('/:id/messages', async (c) => {
   return c.json({ message: { id: msgId, role: 'user', content: body.content } }, 201);
 });
 
+// Send message with file attachment
+app.post('/:id/messages/upload', async (c) => {
+  const db = createDb(c.env);
+  const convId = c.req.param('id');
+  const formData = await c.req.formData();
+  const raw = formData.get('file');
+  const text = formData.get('message') as string ?? '';
+
+  if (!raw || typeof raw === 'string') {
+    return c.json({ error: 'No file provided' }, 400);
+  }
+
+  const file = raw as unknown as { name: string; size: number; type: string; arrayBuffer(): Promise<ArrayBuffer> };
+  const buffer = await file.arrayBuffer();
+
+  // Store in R2
+  const storageKey = `chat/${convId}/${nanoid()}/${file.name}`;
+  await c.env.UPLOADS_BUCKET.put(storageKey, buffer, {
+    httpMetadata: { contentType: file.type },
+  });
+
+  const msgId = nanoid();
+  const now = new Date();
+  const contentType = file.type.startsWith('image/') ? 'image' : 'file';
+
+  await db.insert(messages).values({
+    id: msgId,
+    conversationId: convId,
+    role: 'user',
+    contentType,
+    content: text || file.name,
+    metadata: { fileName: file.name, fileSize: file.size, mimeType: file.type, storageKey },
+    createdAt: now,
+  });
+
+  await db.update(conversations).set({ updatedAt: now }).where(eq(conversations.id, convId));
+
+  return c.json({
+    message: { id: msgId, role: 'user', contentType, content: text || file.name, metadata: { fileName: file.name, storageKey } },
+  }, 201);
+});
+
 // Clear conversation
 app.post('/:id/clear', async (c) => {
   const db = createDb(c.env);
