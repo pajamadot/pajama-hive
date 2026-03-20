@@ -245,6 +245,15 @@ export default function GraphEditorPage() {
           {wsStatus === 'connected' ? 'Live' : wsStatus}
         </span>
 
+        {/* Task summary */}
+        <span className="text-xs text-muted-foreground">
+          {store.nodes.length} tasks
+          {store.nodes.filter((n) => n.data.status === 'done').length > 0 &&
+            ` · ${store.nodes.filter((n) => n.data.status === 'done').length} done`}
+          {store.nodes.filter((n) => n.data.status === 'failed').length > 0 &&
+            ` · ${store.nodes.filter((n) => n.data.status === 'failed').length} failed`}
+        </span>
+
         <div className="flex-1" />
 
         <button
