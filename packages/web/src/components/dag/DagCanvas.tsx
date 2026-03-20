@@ -34,6 +34,7 @@ interface DagCanvasProps {
   onDeleteEdge?: (edgeId: string) => void;
   onNodeDragStop?: (nodeId: string, position: { x: number; y: number }) => void;
   showCriticalPath?: boolean;
+  highlightedNodeId?: string | null;
 }
 
 function computeCriticalPath(nodes: Node<TaskNodeData>[], edges: Edge[]): Set<string> {
@@ -74,6 +75,7 @@ export function DagCanvas({
   onDeleteEdge,
   onNodeDragStop,
   showCriticalPath = false,
+  highlightedNodeId = null,
 }: DagCanvasProps) {
   const [nodes, setNodes, onNodesChangeFn] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChangeFn] = useEdgesState(initialEdges);
@@ -85,6 +87,36 @@ export function DagCanvas({
     [showCriticalPath, nodes, edges],
   );
 
+  // Compute upstream + downstream deps for highlighted node
+  const depNodes = useMemo(() => {
+    if (!highlightedNodeId) return new Set<string>();
+    const deps = new Set<string>();
+    // Upstream BFS
+    const upQueue = [highlightedNodeId];
+    while (upQueue.length > 0) {
+      const cur = upQueue.shift()!;
+      for (const e of edges) {
+        if (e.target === cur && !deps.has(e.source)) {
+          deps.add(e.source);
+          upQueue.push(e.source);
+        }
+      }
+    }
+    // Downstream BFS
+    const downQueue = [highlightedNodeId];
+    while (downQueue.length > 0) {
+      const cur = downQueue.shift()!;
+      for (const e of edges) {
+        if (e.source === cur && !deps.has(e.target)) {
+          deps.add(e.target);
+          downQueue.push(e.target);
+        }
+      }
+    }
+    deps.add(highlightedNodeId);
+    return deps;
+  }, [highlightedNodeId, edges]);
+
   // Apply animated edges based on task statuses
   const styledEdges = useMemo(() => {
     return edges.map((e) => {
@@ -94,6 +126,7 @@ export function DagCanvas({
       const targetStatus = targetNode?.data?.status;
 
       const isCritical = showCriticalPath && criticalPathNodes.has(e.source) && criticalPathNodes.has(e.target);
+      const isDep = highlightedNodeId && depNodes.has(e.source) && depNodes.has(e.target);
 
       // Animate edges where source is done and target is running
       const isActive = sourceStatus === 'done' && (targetStatus === 'running' || targetStatus === 'leased');
@@ -102,8 +135,9 @@ export function DagCanvas({
         ...e,
         animated: isActive,
         style: {
-          stroke: isCritical ? '#f97316' : isActive ? '#eab308' : '#6b7280',
-          strokeWidth: isCritical ? 3 : isActive ? 2 : 1,
+          stroke: isCritical ? '#f97316' : isDep ? '#8b5cf6' : isActive ? '#eab308' : '#6b7280',
+          strokeWidth: isCritical ? 3 : isDep ? 2.5 : isActive ? 2 : 1,
+          opacity: highlightedNodeId && !isDep ? 0.2 : 1,
         },
       };
     });

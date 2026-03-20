@@ -343,6 +343,7 @@ export default function GraphEditorPage() {
             }}
             onNodeDragStop={handleNodeDragStop}
             showCriticalPath={showCriticalPath}
+            highlightedNodeId={store.selectedNodeId}
           />
           <LogTerminal logs={logs} />
         </div>
