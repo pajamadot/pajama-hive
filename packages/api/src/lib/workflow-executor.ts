@@ -309,6 +309,28 @@ async function executeNode(ctx: ExecutionContext, node: NodeExec): Promise<Recor
         break;
       }
 
+      case 'agent_call': {
+        // Multi-agent handoff: invoke another agent and get response
+        const targetAgentId = config.agentId as string;
+        if (!targetAgentId) { result = { output: null, error: 'No target agent ID configured' }; break; }
+        const agentInput = String(ctx.variables._lastOutput ?? config.message ?? '');
+
+        // Load target agent config
+        const { agentConfigs: agentConfigsTable } = await import('../db/schema.js');
+        const [targetConfig] = await ctx.db.select().from(agentConfigsTable).where(eq(agentConfigsTable.agentId, targetAgentId));
+        const targetPrompt = targetConfig?.systemPrompt ?? 'You are a helpful assistant.';
+
+        const agentResp = await chatCompletion(ctx.db, ctx.workspaceId, [
+          { role: 'system', content: targetPrompt },
+          { role: 'user', content: agentInput },
+        ], {
+          modelConfigId: targetConfig?.modelConfigId ?? null,
+          temperature: targetConfig?.temperature ?? 0.7,
+        });
+        result = { output: agentResp.content, agentId: targetAgentId, usage: agentResp.usage };
+        break;
+      }
+
       case 'image_gen':
       case 'emitter':
       case 'receiver':

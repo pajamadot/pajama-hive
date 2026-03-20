@@ -389,6 +389,10 @@ export const workflowDefinitions = pgTable('workflow_definitions', {
   status: text('status').notNull().default('draft'), // draft, published, archived
   isChatFlow: boolean('is_chat_flow').notNull().default(false),
   createdBy: text('created_by').notNull(),
+  // Coze parity fields
+  testRunSuccess: boolean('test_run_success'),     // Coze: last test run passed
+  commitId: text('commit_id'),                     // Coze: last commit/save ID
+  modified: boolean('modified').notNull().default(false), // Coze: has unsaved changes
   publishedAt: timestamp('published_at'),
   deletedAt: timestamp('deleted_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -432,6 +436,9 @@ export const workflowVersions = pgTable('workflow_versions', {
   snapshot: jsonb('snapshot').notNull(), // full workflow state: nodes, edges, config
   changelog: text('changelog'),
   publishedBy: text('published_by').notNull(),
+  // Coze parity fields
+  versionDescription: text('version_description'), // Coze: version desc
+  commitId: text('commit_id'),                     // Coze: commit ID
   createdAt: timestamp('created_at').notNull().defaultNow(),
 }, (t) => [
   index('wf_versions_workflow_idx').on(t.workflowId),

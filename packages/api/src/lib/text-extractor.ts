@@ -17,6 +17,11 @@
 export function extractText(content: string | ArrayBuffer, mimeType: string, fileName: string): string {
   const text = typeof content === 'string' ? content : new TextDecoder().decode(content);
 
+  // HTML — strip tags (check before generic text/ mime)
+  if (mimeType === 'text/html' || fileName.endsWith('.html') || fileName.endsWith('.htm')) {
+    return stripHtml(text);
+  }
+
   // Plain text formats — pass through
   if (
     mimeType.startsWith('text/') ||
@@ -27,11 +32,6 @@ export function extractText(content: string | ArrayBuffer, mimeType: string, fil
     fileName.endsWith('.log')
   ) {
     return text;
-  }
-
-  // HTML — strip tags
-  if (mimeType === 'text/html' || fileName.endsWith('.html') || fileName.endsWith('.htm')) {
-    return stripHtml(text);
   }
 
   // JSON — pretty format

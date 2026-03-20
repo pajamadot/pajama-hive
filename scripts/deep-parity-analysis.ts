@@ -432,9 +432,9 @@ function analyzeIntegrationFlows(): IntegrationFlow[] {
     },
     {
       name: 'Multi-Agent Orchestration',
-      steps: ['Create agent A', 'Create agent B', 'Agent A invokes Agent B', 'Context passes between agents', 'Combined response'],
-      status: 'partial',
-      missingStep: 'Agent-to-agent handoff with context propagation in workflow',
+      steps: ['Create agent A', 'Create agent B', 'agent_call workflow node invokes Agent B', 'Context passes between agents', 'Combined response'],
+      status: 'working',
+      missingStep: null,
     },
     {
       name: 'PDF Document Pipeline',
