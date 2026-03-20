@@ -42,3 +42,14 @@ export function securityHeaders() {
     c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   });
 }
+
+/**
+ * Response time tracking.
+ */
+export function responseTime() {
+  return createMiddleware<HonoEnv>(async (c, next) => {
+    const start = Date.now();
+    await next();
+    c.header('X-Response-Time', `${Date.now() - start}ms`);
+  });
+}

@@ -12,7 +12,7 @@ import evolutionRouter from './routes/evolution.js';
 import apiKeysRouter from './routes/api-keys.js';
 import webhooksRouter from './routes/webhooks.js';
 import { standardRateLimit } from './lib/rate-limiter.js';
-import { maxPayloadSize, requestId, securityHeaders } from './lib/validation.js';
+import { maxPayloadSize, requestId, securityHeaders, responseTime } from './lib/validation.js';
 import type { Env } from './types/index.js';
 
 export { WsRoom } from './durable-objects/ws-room.js';
@@ -25,6 +25,7 @@ const app = new Hono<HonoEnv>();
 
 // Global middleware stack
 app.use('/*', requestId());
+app.use('/*', responseTime());
 app.use('/*', securityHeaders());
 app.use('/*', cors({
   origin: ['https://hive.pajamadot.com', 'http://localhost:3000'],
@@ -39,8 +40,11 @@ app.use('/v1/*', standardRateLimit);
 // Health check
 app.get('/', (c) => c.json({
   name: 'pajama-hive-api',
-  version: '0.1.0',
+  version: '0.2.0',
   status: 'ok',
+  iteration: 31,
+  uptime: Date.now(),
+  features: ['dag-orchestrator', 'meta-observer', 'webhooks', 'api-keys', 'gep-bridge'],
 }));
 
 // REST API routes
