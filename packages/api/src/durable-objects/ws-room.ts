@@ -25,6 +25,7 @@ interface ConnectedWorker {
 export class WsRoom extends DurableObject<Env> {
   private workers = new Map<string, ConnectedWorker>();
   private uiClients = new Set<WebSocket>();
+  private logSeqCounters = new Map<string, number>();
 
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
@@ -142,6 +143,19 @@ export class WsRoom extends DurableObject<Env> {
       onTaskLog: async (_ws, payload: TaskLogPayload) => {
         // Forward log to UI clients
         this.broadcastToUi('task.log', payload);
+
+        // Persist log chunk to DB via internal API
+        const seq = (this.logSeqCounters.get(payload.taskId) ?? 0) + 1;
+        this.logSeqCounters.set(payload.taskId, seq);
+        try {
+          await fetch(`https://hive-api.pajamadot.com/v1/tasks/${payload.taskId}/logs/internal`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stream: payload.stream, chunk: payload.chunk, seq }),
+          });
+        } catch {
+          // Best-effort persistence
+        }
       },
 
       onTaskResult: async (_ws, payload: TaskResultPayload) => {

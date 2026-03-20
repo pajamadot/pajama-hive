@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { nanoid } from 'nanoid';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, asc, gt } from 'drizzle-orm';
 import { createTaskSchema, createEdgeSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
-import { tasks, edges } from '../db/schema.js';
+import { tasks, edges, taskLogs } from '../db/schema.js';
 import { detectCycle } from '../lib/dag.js';
 import { clerkAuth, verifyGraphOwner, verifyTaskOwner, verifyEdgeOwner } from '../lib/auth.js';
 import type { Env } from '../types/index.js';
@@ -232,6 +232,50 @@ app.delete('/edges/:edgeId', async (c) => {
   if (!check.ok) return c.json({ error: check.error }, check.status);
 
   await db.delete(edges).where(eq(edges.id, edgeId));
+  return c.json({ ok: true });
+});
+
+// ── Task Logs ──
+
+// Get persisted logs for a task (with optional cursor)
+app.get('/tasks/:taskId/logs', async (c) => {
+  const db = createDb(c.env);
+  const taskId = c.req.param('taskId');
+  const userId = c.get('userId');
+
+  const check = await verifyTaskOwner(db, taskId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
+  const afterSeq = parseInt(c.req.query('after') ?? '0', 10);
+  const limit = Math.min(parseInt(c.req.query('limit') ?? '500', 10), 1000);
+
+  const logs = await db.select()
+    .from(taskLogs)
+    .where(and(eq(taskLogs.taskId, taskId), gt(taskLogs.seq, afterSeq)))
+    .orderBy(asc(taskLogs.seq))
+    .limit(limit);
+
+  return c.json({
+    logs,
+    hasMore: logs.length === limit,
+    nextCursor: logs.length > 0 ? logs[logs.length - 1].seq : afterSeq,
+  });
+});
+
+// Internal: persist a log chunk (called from WsRoom, no auth)
+app.post('/tasks/:taskId/logs/internal', async (c) => {
+  const db = createDb(c.env);
+  const taskId = c.req.param('taskId');
+  const body = await c.req.json() as { stream: string; chunk: string; seq: number };
+
+  await db.insert(taskLogs).values({
+    id: `log-${nanoid(12)}`,
+    taskId,
+    stream: body.stream,
+    chunk: body.chunk,
+    seq: body.seq,
+  });
+
   return c.json({ ok: true });
 });
 

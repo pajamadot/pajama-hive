@@ -271,6 +271,7 @@ export class Orchestrator extends DurableObject<Env> {
           assignedWorkerId: assignment.workerId,
           leaseId: lease.leaseId,
           leaseExpiresAt: lease.expiresAt,
+          startedAt: now,
           updatedAt: now,
         })
         .where(eq(schema.tasks.id, task.id));

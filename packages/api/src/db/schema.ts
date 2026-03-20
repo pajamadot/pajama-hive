@@ -30,6 +30,7 @@ export const tasks = pgTable('tasks', {
   assignedWorkerId: text('assigned_worker_id'),
   leaseId: text('lease_id'),
   leaseExpiresAt: timestamp('lease_expires_at'),
+  startedAt: timestamp('started_at'),
   positionX: real('position_x').notNull().default(0),
   positionY: real('position_y').notNull().default(0),
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -92,6 +93,19 @@ export const auditLogs = pgTable('audit_logs', {
   index('audit_graph_created_idx').on(t.graphId, t.createdAt),
   index('audit_task_idx').on(t.taskId),
   index('audit_worker_idx').on(t.workerId),
+]);
+
+// ── Task Logs (persisted execution output) ──
+
+export const taskLogs = pgTable('task_logs', {
+  id: text('id').primaryKey(),
+  taskId: text('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
+  stream: text('stream').notNull().default('stdout'), // stdout | stderr
+  chunk: text('chunk').notNull(),
+  seq: integer('seq').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+  index('task_logs_task_seq_idx').on(t.taskId, t.seq),
 ]);
 
 // ── Meta-Thinking Tables ──

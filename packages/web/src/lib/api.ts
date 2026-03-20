@@ -49,6 +49,10 @@ export const api = {
   getRunDetail: (token: string, runId: string) =>
     apiFetch(`/v1/runs/${runId}/detail`, token),
 
+  // Task Logs
+  getTaskLogs: (token: string, taskId: string, after = 0) =>
+    apiFetch(`/v1/tasks/${taskId}/logs?after=${after}`, token),
+
   // Seed
   seedTestGraph: (token: string) =>
     apiFetch('/v1/graphs/seed-test', token, { method: 'POST' }),
