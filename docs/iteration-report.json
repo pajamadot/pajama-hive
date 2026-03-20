@@ -1,16 +1,16 @@
 {
-  "timestamp": "2026-03-20T19:32:54.774Z",
-  "iteration": 70,
+  "timestamp": "2026-03-20T19:37:32.437Z",
+  "iteration": 71,
   "metrics": {
     "tables": 52,
     "apiRoutes": 24,
     "frontendPages": 24,
     "testFiles": 10,
     "totalTests": 165,
-    "libModules": 17,
+    "libModules": 18,
     "adapters": 6,
-    "totalTsFiles": 113,
-    "totalLines": 17099
+    "totalTsFiles": 114,
+    "totalLines": 17442
   },
   "gaps": [
     {
@@ -326,11 +326,11 @@
         "chat runs",
         "LLM integration",
         "SSE streaming",
-        "playground UI"
+        "playground UI",
+        "message editing",
+        "regenerate"
       ],
       "missing": [
-        "message editing",
-        "regenerate",
         "branch conversations",
         "file attachments in chat"
       ]
@@ -342,11 +342,11 @@
         "versioning",
         "publish",
         "HTTP execution",
-        "debug endpoint"
+        "debug endpoint",
+        "OpenAPI import"
       ],
       "missing": [
         "OAuth flow",
-        "OpenAPI import",
         "marketplace integration"
       ]
     },
@@ -358,14 +358,14 @@
         "keyword search",
         "pgvector embeddings",
         "vector search",
-        "detail UI"
+        "detail UI",
+        "file upload",
+        "text extraction"
       ],
       "missing": [
         "PDF parsing",
         "DOCX parsing",
-        "image OCR",
-        "URL scraping",
-        "resegment"
+        "URL scraping"
       ]
     },
     "data": {
@@ -441,9 +441,9 @@
   "nextPriorities": [
     "Fix 2 high-priority gaps (TODOs in core routes/libs)",
     "workflows: sub_workflow execution, image_gen, drag-and-drop",
-    "knowledge: PDF parsing, DOCX parsing, image OCR",
-    "chat: message editing, regenerate, branch conversations",
-    "plugins: OAuth flow, OpenAPI import, marketplace integration",
-    "apps: actual deployment, custom domain, embedding widget"
+    "knowledge: PDF parsing, DOCX parsing, URL scraping",
+    "apps: actual deployment, custom domain, embedding widget",
+    "marketplace: reviews, ratings, categories UI",
+    "workspace: team billing, SSO"
   ]
 }

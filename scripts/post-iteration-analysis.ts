@@ -137,16 +137,16 @@ function analyzeDomainCoverage(): Record<string, { implemented: string[]; missin
       missing: ['sub_workflow execution', 'image_gen', 'drag-and-drop', 'auto-layout', 'real-time trace viewer'],
     },
     chat: {
-      implemented: ['conversations', 'messages', 'chat runs', 'LLM integration', 'SSE streaming', 'playground UI'],
-      missing: ['message editing', 'regenerate', 'branch conversations', 'file attachments in chat'],
+      implemented: ['conversations', 'messages', 'chat runs', 'LLM integration', 'SSE streaming', 'playground UI', 'message editing', 'regenerate'],
+      missing: ['branch conversations', 'file attachments in chat'],
     },
     plugins: {
-      implemented: ['CRUD', 'tools', 'versioning', 'publish', 'HTTP execution', 'debug endpoint'],
-      missing: ['OAuth flow', 'OpenAPI import', 'marketplace integration'],
+      implemented: ['CRUD', 'tools', 'versioning', 'publish', 'HTTP execution', 'debug endpoint', 'OpenAPI import'],
+      missing: ['OAuth flow', 'marketplace integration'],
     },
     knowledge: {
-      implemented: ['CRUD', 'documents', 'chunking', 'keyword search', 'pgvector embeddings', 'vector search', 'detail UI'],
-      missing: ['PDF parsing', 'DOCX parsing', 'image OCR', 'URL scraping', 'resegment'],
+      implemented: ['CRUD', 'documents', 'chunking', 'keyword search', 'pgvector embeddings', 'vector search', 'detail UI', 'file upload', 'text extraction'],
+      missing: ['PDF parsing', 'DOCX parsing', 'URL scraping'],
     },
     data: {
       implemented: ['databases', 'tables', 'rows', 'variables', 'agent memory'],

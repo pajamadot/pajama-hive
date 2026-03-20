@@ -10,7 +10,7 @@
     "test": "turbo test",
     "typecheck": "turbo typecheck",
     "clean": "turbo clean",
-    "analyze": "tsx scripts/post-iteration-analysis.ts"
+    "analyze": "npx tsx scripts/post-iteration-analysis.ts"
   },
   "devDependencies": {
     "turbo": "^2.4.0",

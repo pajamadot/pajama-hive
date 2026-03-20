@@ -5,6 +5,7 @@ import { createPromptSchema, updatePromptSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
 import { prompts, promptVersions } from '../db/schema.js';
 import { clerkAuth } from '../lib/auth.js';
+import { chatCompletion } from '../lib/llm.js';
 import type { Env } from '../types/index.js';
 
 type HonoEnv = { Bindings: Env; Variables: { userId: string } };
@@ -108,17 +109,63 @@ app.delete('/:id', async (c) => {
   return c.json({ ok: true });
 });
 
-// Test prompt with model
-app.post('/:id/test', async (c) => {
+// Render prompt template with variables
+app.post('/:id/render', async (c) => {
   const db = createDb(c.env);
   const id = c.req.param('id');
   const body = await c.req.json();
+  const vars = (body.variables ?? body) as Record<string, string>;
 
   const [prompt] = await db.select().from(prompts).where(eq(prompts.id, id));
   if (!prompt) return c.json({ error: 'Prompt not found' }, 404);
 
-  // TODO: replace template vars and call LLM via model provider
-  return c.json({ result: 'Prompt testing not yet implemented', prompt: prompt.content });
+  let rendered = prompt.content;
+  for (const [key, value] of Object.entries(vars)) {
+    rendered = rendered.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), String(value));
+  }
+
+  // Report any unresolved variables
+  const unresolved = [...rendered.matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]);
+
+  return c.json({ rendered, unresolved });
+});
+
+// Test prompt with model — renders template then calls LLM
+app.post('/:id/test', async (c) => {
+  const db = createDb(c.env);
+  const id = c.req.param('id');
+  const body = await c.req.json();
+  const vars = (body.variables ?? {}) as Record<string, string>;
+  const userMessage = body.message ?? body.input ?? 'Hello';
+
+  const [prompt] = await db.select().from(prompts).where(eq(prompts.id, id));
+  if (!prompt) return c.json({ error: 'Prompt not found' }, 404);
+
+  // Render template
+  let rendered = prompt.content;
+  for (const [key, value] of Object.entries(vars)) {
+    rendered = rendered.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), String(value));
+  }
+
+  // Call LLM
+  try {
+    const result = await chatCompletion(db, prompt.workspaceId, [
+      { role: 'system', content: rendered },
+      { role: 'user', content: userMessage },
+    ]);
+
+    return c.json({
+      rendered,
+      response: result.content,
+      usage: result.usage,
+      model: result.model,
+    });
+  } catch (err) {
+    return c.json({
+      rendered,
+      error: err instanceof Error ? err.message : 'LLM call failed',
+    });
+  }
 });
 
 export default app;

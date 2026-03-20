@@ -847,3 +847,17 @@ export const resources = pgTable('resources', {
   index('resources_type_idx').on(t.resourceType),
   uniqueIndex('resources_unique_idx').on(t.workspaceId, t.resourceType, t.resourceId),
 ]);
+
+// ── Marketplace Reviews ──
+
+export const marketplaceReviews = pgTable('marketplace_reviews', {
+  id: text('id').primaryKey(),
+  productId: text('product_id').notNull().references(() => marketplaceProducts.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull(),
+  rating: integer('rating').notNull(), // 1-5
+  comment: text('comment'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+  index('mp_reviews_product_idx').on(t.productId),
+  uniqueIndex('mp_reviews_unique_idx').on(t.productId, t.userId),
+]);

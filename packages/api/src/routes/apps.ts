@@ -108,7 +108,50 @@ app.post('/:id/publish', async (c) => {
   await db.update(apps).set({ status: 'published', publishedAt: now, updatedAt: now })
     .where(eq(apps.id, id));
 
-  return c.json({ version: nextVersion, versionId });
+  // Create deployment record
+  await db.insert(appDeployments).values({
+    id: nanoid(),
+    appId: id,
+    versionId,
+    environment: 'production',
+    url: `https://hive.pajamadot.com/embed/${id}`,
+    status: 'active',
+    createdAt: now,
+  });
+
+  return c.json({ version: nextVersion, versionId, url: `https://hive.pajamadot.com/embed/${id}` });
+});
+
+// Get deployment info
+app.get('/:id/deployment', async (c) => {
+  const db = createDb(c.env);
+  const id = c.req.param('id');
+
+  const deployments = await db.select().from(appDeployments)
+    .where(eq(appDeployments.appId, id))
+    .orderBy(desc(appDeployments.createdAt));
+
+  return c.json({ deployments });
+});
+
+// Get embeddable widget code
+app.get('/:id/embed', async (c) => {
+  const id = c.req.param('id');
+
+  const embedCode = `<!-- Pajama Hive Chat Widget -->
+<div id="hive-chat-widget"></div>
+<script>
+  (function() {
+    var s = document.createElement('script');
+    s.src = 'https://hive.pajamadot.com/widget.js';
+    s.async = true;
+    s.dataset.appId = '${id}';
+    s.dataset.theme = 'dark';
+    document.head.appendChild(s);
+  })();
+</script>`;
+
+  return c.json({ appId: id, embedCode, url: `https://hive.pajamadot.com/embed/${id}` });
 });
 
 export default app;

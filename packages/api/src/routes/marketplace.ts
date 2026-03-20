@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 import { eq, and, desc, ilike } from 'drizzle-orm';
 import { publishToMarketplaceSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
-import { marketplaceProducts, marketplaceInstalls } from '../db/schema.js';
+import { marketplaceProducts, marketplaceInstalls, marketplaceReviews } from '../db/schema.js';
 import { clerkAuth } from '../lib/auth.js';
 import type { Env } from '../types/index.js';
 
@@ -96,6 +96,69 @@ app.post('/:id/install', async (c) => {
   }
 
   return c.json({ ok: true }, 201);
+});
+
+// ── Reviews ──
+
+// Get reviews for a product
+app.get('/:id/reviews', async (c) => {
+  const db = createDb(c.env);
+  const productId = c.req.param('id');
+
+  const reviews = await db.select().from(marketplaceReviews)
+    .where(eq(marketplaceReviews.productId, productId))
+    .orderBy(desc(marketplaceReviews.createdAt));
+
+  return c.json({ reviews });
+});
+
+// Post a review
+app.post('/:id/reviews', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const productId = c.req.param('id');
+  const body = await c.req.json();
+
+  const rating = body.rating;
+  if (!rating || rating < 1 || rating > 5) return c.json({ error: 'rating must be 1-5' }, 400);
+
+  const id = nanoid();
+  await db.insert(marketplaceReviews).values({
+    id, productId, userId, rating, comment: body.comment ?? null, createdAt: new Date(),
+  });
+
+  // Update product average rating
+  const allReviews = await db.select().from(marketplaceReviews)
+    .where(eq(marketplaceReviews.productId, productId));
+  const avgRating = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
+
+  await db.update(marketplaceProducts).set({
+    rating: Math.round(avgRating * 10) / 10,
+    ratingCount: allReviews.length,
+    updatedAt: new Date(),
+  }).where(eq(marketplaceProducts.id, productId));
+
+  return c.json({ review: { id, rating, comment: body.comment } }, 201);
+});
+
+// ── Categories ──
+
+app.get('/categories/list', async (c) => {
+  const db = createDb(c.env);
+
+  const products = await db.select().from(marketplaceProducts)
+    .where(eq(marketplaceProducts.status, 'approved'));
+
+  const categoryMap = new Map<string, number>();
+  for (const p of products) {
+    const cat = p.category ?? 'uncategorized';
+    categoryMap.set(cat, (categoryMap.get(cat) ?? 0) + 1);
+  }
+
+  const categories = [...categoryMap.entries()].map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+
+  return c.json({ categories });
 });
 
 export default app;
