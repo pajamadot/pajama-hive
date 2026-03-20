@@ -7,6 +7,7 @@ import { knowledgeBases, documents, documentChunks } from '../db/schema.js';
 import { clerkAuth } from '../lib/auth.js';
 import { processDocument } from '../lib/chunker.js';
 import { generateEmbeddings, vectorSearch } from '../lib/embeddings.js';
+import { extractText, canExtractText } from '../lib/text-extractor.js';
 import type { Env } from '../types/index.js';
 
 type HonoEnv = { Bindings: Env; Variables: { userId: string } };
@@ -174,6 +175,88 @@ app.post('/:id/documents', async (c) => {
 
   return c.json({
     document: { id, knowledgeBaseId: kbId, ...parsed.data, status: textContent ? 'completed' : 'pending', chunkCount },
+  }, 201);
+});
+
+// Upload file as document (multipart)
+app.post('/:id/documents/upload', async (c) => {
+  const db = createDb(c.env);
+  const kbId = c.req.param('id');
+  const formData = await c.req.formData();
+  const raw = formData.get('file');
+
+  if (!raw || typeof raw === 'string') {
+    return c.json({ error: 'No file provided' }, 400);
+  }
+
+  const file = raw as unknown as { name: string; size: number; type: string; arrayBuffer(): Promise<ArrayBuffer> };
+  const buffer = await file.arrayBuffer();
+
+  // Store in R2
+  const storageKey = `knowledge/${kbId}/${nanoid()}/${file.name}`;
+  await c.env.UPLOADS_BUCKET.put(storageKey, buffer, {
+    httpMetadata: { contentType: file.type },
+  });
+
+  const id = nanoid();
+  const now = new Date();
+
+  await db.insert(documents).values({
+    id,
+    knowledgeBaseId: kbId,
+    name: file.name,
+    sourceType: 'file',
+    mimeType: file.type,
+    fileSize: file.size,
+    storageKey,
+    status: 'pending',
+    createdAt: now,
+  });
+
+  // Try to extract text and process
+  let chunkCount = 0;
+  if (canExtractText(file.type, file.name)) {
+    const text = extractText(buffer, file.type, file.name);
+    if (text && !text.startsWith('[')) {
+      const [kb] = await db.select().from(knowledgeBases).where(eq(knowledgeBases.id, kbId));
+      const chunks = processDocument(text, id, kb?.chunkSize ?? 500, kb?.chunkOverlap ?? 50);
+      chunkCount = chunks.length;
+
+      if (chunks.length > 0) {
+        await db.insert(documentChunks).values(
+          chunks.map((chunk) => ({
+            id: chunk.id, documentId: id, knowledgeBaseId: kbId,
+            content: chunk.content, chunkIndex: chunk.chunkIndex,
+            metadata: chunk.metadata, tokenCount: chunk.tokenCount, createdAt: now,
+          })),
+        );
+
+        // Generate embeddings (best-effort)
+        try {
+          const embeds = await generateEmbeddings(db, kb?.workspaceId ?? 'default', chunks.map((c) => c.content), kb?.embeddingModelId);
+          if (embeds && embeds.length === chunks.length) {
+            const { sql } = await import('drizzle-orm');
+            for (let i = 0; i < chunks.length; i++) {
+              const vec = `[${embeds[i].embedding.join(',')}]`;
+              await db.execute(sql`UPDATE document_chunks SET embedding_vec = ${vec}::vector WHERE id = ${chunks[i].id}`);
+            }
+          }
+        } catch { /* */ }
+      }
+
+      await db.update(documents).set({ status: 'completed', chunkCount, processedAt: now }).where(eq(documents.id, id));
+    }
+  }
+
+  // Update KB counts
+  const allDocs = await db.select().from(documents).where(eq(documents.knowledgeBaseId, kbId));
+  const allChunks = await db.select().from(documentChunks).where(eq(documentChunks.knowledgeBaseId, kbId));
+  await db.update(knowledgeBases).set({
+    documentCount: allDocs.length, totalChunks: allChunks.length, updatedAt: now,
+  }).where(eq(knowledgeBases.id, kbId));
+
+  return c.json({
+    document: { id, knowledgeBaseId: kbId, name: file.name, storageKey, chunkCount, status: chunkCount > 0 ? 'completed' : 'pending' },
   }, 201);
 });
 

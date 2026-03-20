@@ -136,6 +136,70 @@ app.post('/:id/clear', async (c) => {
   return c.json({ ok: true });
 });
 
+// Edit message content
+app.patch('/messages/:msgId', async (c) => {
+  const db = createDb(c.env);
+  const msgId = c.req.param('msgId');
+  const body = await c.req.json();
+  if (!body.content) return c.json({ error: 'content required' }, 400);
+
+  const [msg] = await db.select().from(messages).where(eq(messages.id, msgId));
+  if (!msg) return c.json({ error: 'Message not found' }, 404);
+
+  await db.update(messages).set({ content: body.content }).where(eq(messages.id, msgId));
+  return c.json({ ok: true, message: { id: msgId, content: body.content } });
+});
+
+// Regenerate assistant message (re-run LLM from that point)
+app.post('/messages/:msgId/regenerate', async (c) => {
+  const db = createDb(c.env);
+  const msgId = c.req.param('msgId');
+
+  const [msg] = await db.select().from(messages).where(eq(messages.id, msgId));
+  if (!msg || msg.role !== 'assistant') return c.json({ error: 'Can only regenerate assistant messages' }, 400);
+
+  // Get conversation and all messages up to (but not including) this one
+  const [conv] = await db.select().from(conversations).where(eq(conversations.id, msg.conversationId));
+  if (!conv) return c.json({ error: 'Conversation not found' }, 404);
+
+  const history = await db.select().from(messages)
+    .where(eq(messages.conversationId, msg.conversationId))
+    .orderBy(messages.createdAt);
+
+  const msgIndex = history.findIndex((m) => m.id === msgId);
+  const priorMessages = history.slice(0, msgIndex);
+
+  // Resolve agent config
+  let systemPrompt = 'You are a helpful AI assistant.';
+  let modelConfigId: string | null = null;
+  let temperature = 0.7;
+  let maxTokens: number | undefined;
+
+  if (conv.agentId) {
+    const [config] = await db.select().from(agentConfigs).where(eq(agentConfigs.agentId, conv.agentId));
+    if (config) {
+      if (config.systemPrompt) systemPrompt = config.systemPrompt;
+      modelConfigId = config.modelConfigId;
+      if (config.temperature != null) temperature = config.temperature;
+      if (config.maxTokens != null) maxTokens = config.maxTokens;
+    }
+  }
+
+  const chatMessages: ChatMessage[] = [
+    { role: 'system', content: systemPrompt },
+    ...priorMessages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+  ];
+
+  try {
+    const result = await chatCompletion(db, conv.workspaceId, chatMessages, { modelConfigId, temperature, maxTokens });
+    await db.update(messages).set({ content: result.content, tokenCount: result.usage?.totalTokens ?? null })
+      .where(eq(messages.id, msgId));
+    return c.json({ ok: true, message: { id: msgId, content: result.content } });
+  } catch (err) {
+    return c.json({ error: err instanceof Error ? err.message : 'Regeneration failed' }, 500);
+  }
+});
+
 // Delete conversation (soft)
 app.delete('/:id', async (c) => {
   const db = createDb(c.env);

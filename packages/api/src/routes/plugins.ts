@@ -187,6 +187,83 @@ app.post('/:id/publish', async (c) => {
   return c.json({ version: nextVersion });
 });
 
+// ── Import OpenAPI Spec ──
+
+app.post('/:id/import-openapi', async (c) => {
+  const db = createDb(c.env);
+  const pluginId = c.req.param('id');
+  const body = await c.req.json();
+  const spec = body.spec ?? body;
+
+  if (!spec || !spec.paths) return c.json({ error: 'Invalid OpenAPI spec — missing paths' }, 400);
+
+  const [plugin] = await db.select().from(plugins).where(eq(plugins.id, pluginId));
+  if (!plugin) return c.json({ error: 'Plugin not found' }, 404);
+
+  // Extract base URL from servers
+  const baseUrl = spec.servers?.[0]?.url ?? plugin.baseUrl;
+  if (baseUrl && baseUrl !== plugin.baseUrl) {
+    await db.update(plugins).set({ baseUrl, updatedAt: new Date() }).where(eq(plugins.id, pluginId));
+  }
+
+  // Store the spec
+  await db.update(plugins).set({ openapiSpec: spec, updatedAt: new Date() }).where(eq(plugins.id, pluginId));
+
+  // Create tools from paths
+  const created: string[] = [];
+  for (const [path, methods] of Object.entries(spec.paths as Record<string, Record<string, unknown>>)) {
+    for (const [method, operation] of Object.entries(methods)) {
+      if (!['get', 'post', 'put', 'delete', 'patch'].includes(method)) continue;
+      const op = operation as Record<string, unknown>;
+      const name = (op.operationId as string) ?? `${method}_${path.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      const description = (op.summary as string) ?? (op.description as string) ?? '';
+
+      // Extract input schema from parameters + requestBody
+      const inputSchema: Record<string, unknown> = { type: 'object', properties: {} };
+      const params = (op.parameters ?? []) as { name: string; in: string; schema?: Record<string, unknown>; required?: boolean }[];
+      const properties = inputSchema.properties as Record<string, unknown>;
+      for (const param of params) {
+        properties[param.name] = param.schema ?? { type: 'string' };
+      }
+      const reqBody = op.requestBody as Record<string, unknown> | undefined;
+      if (reqBody?.content) {
+        const jsonContent = (reqBody.content as Record<string, unknown>)['application/json'] as Record<string, unknown> | undefined;
+        if (jsonContent?.schema) {
+          inputSchema.properties = { ...(inputSchema.properties as Record<string, unknown>), body: jsonContent.schema };
+        }
+      }
+
+      // Extract output schema
+      const responses = op.responses as Record<string, Record<string, unknown>> | undefined;
+      const okResponse = responses?.['200'] ?? responses?.['201'];
+      let outputSchema: Record<string, unknown> | undefined;
+      if (okResponse?.content) {
+        const jsonResp = (okResponse.content as Record<string, unknown>)['application/json'] as Record<string, unknown> | undefined;
+        outputSchema = jsonResp?.schema as Record<string, unknown> | undefined;
+      }
+
+      const toolId = nanoid();
+      const now = new Date();
+      await db.insert(pluginTools).values({
+        id: toolId,
+        pluginId,
+        name,
+        description,
+        method: method.toUpperCase(),
+        path,
+        inputSchema: Object.keys(properties).length > 0 ? inputSchema : undefined,
+        outputSchema,
+        isEnabled: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      created.push(name);
+    }
+  }
+
+  return c.json({ imported: created.length, tools: created });
+});
+
 // ── Execute / Debug Tool ──
 
 app.post('/tools/:toolId/execute', async (c) => {

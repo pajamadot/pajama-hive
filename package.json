@@ -9,7 +9,8 @@
     "lint": "turbo lint",
     "test": "turbo test",
     "typecheck": "turbo typecheck",
-    "clean": "turbo clean"
+    "clean": "turbo clean",
+    "analyze": "tsx scripts/post-iteration-analysis.ts"
   },
   "devDependencies": {
     "turbo": "^2.4.0",

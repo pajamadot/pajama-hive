@@ -1,0 +1,449 @@
+{
+  "timestamp": "2026-03-20T19:32:54.774Z",
+  "iteration": 70,
+  "metrics": {
+    "tables": 52,
+    "apiRoutes": 24,
+    "frontendPages": 24,
+    "testFiles": 10,
+    "totalTests": 165,
+    "libModules": 17,
+    "adapters": 6,
+    "totalTsFiles": 113,
+    "totalLines": 17099
+  },
+  "gaps": [
+    {
+      "file": "packages/api/src/lib/workflow-executor.ts",
+      "line": 223,
+      "type": "not_implemented",
+      "text": "result = { output: null, message: `Database ${operation} not yet implemented in workflow` };",
+      "priority": "high"
+    },
+    {
+      "file": "packages/api/src/lib/workflow-executor.ts",
+      "line": 304,
+      "type": "stub",
+      "text": "result = { output: ctx.variables._lastOutput, _stub: true, message: `Node type '${node.nodeType}' not yet implemented` }",
+      "priority": "medium"
+    },
+    {
+      "file": "packages/api/src/lib/workflow-executor.ts",
+      "line": 304,
+      "type": "not_implemented",
+      "text": "result = { output: ctx.variables._lastOutput, _stub: true, message: `Node type '${node.nodeType}' not yet implemented` }",
+      "priority": "high"
+    },
+    {
+      "file": "packages/api/src/routes/models.ts",
+      "line": 95,
+      "type": "todo",
+      "text": "// TODO: implement actual connection test per provider type",
+      "priority": "medium"
+    },
+    {
+      "file": "packages/api/src/routes/models.ts",
+      "line": 96,
+      "type": "not_implemented",
+      "text": "return c.json({ ok: true, message: 'Connection test not yet implemented' });",
+      "priority": "medium"
+    },
+    {
+      "file": "packages/api/src/routes/prompts.ts",
+      "line": 120,
+      "type": "todo",
+      "text": "// TODO: replace template vars and call LLM via model provider",
+      "priority": "medium"
+    },
+    {
+      "file": "packages/api/src/routes/prompts.ts",
+      "line": 121,
+      "type": "not_implemented",
+      "text": "return c.json({ result: 'Prompt testing not yet implemented', prompt: prompt.content });",
+      "priority": "medium"
+    },
+    {
+      "file": "packages/api/src/routes/replication.ts",
+      "line": 143,
+      "type": "not_implemented",
+      "text": "status: 'partial', detail: 'Keyword search works. pgvector embeddings not yet implemented.',",
+      "priority": "medium"
+    },
+    {
+      "file": "packages/web/src/app/(app)/agents/page.tsx",
+      "line": 27,
+      "type": "todo",
+      "text": "// TODO: get workspace ID from context",
+      "priority": "medium"
+    },
+    {
+      "file": "packages/web/src/app/(app)/agents/[id]/page.tsx",
+      "line": 189,
+      "type": "placeholder",
+      "text": "placeholder=\"You are a helpful AI assistant...\"",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/agents/[id]/page.tsx",
+      "line": 210,
+      "type": "placeholder",
+      "text": "placeholder=\"Default\"",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/agents/[id]/page.tsx",
+      "line": 222,
+      "type": "placeholder",
+      "text": "placeholder=\"Hello! How can I help you today?\"",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/agents/[id]/page.tsx",
+      "line": 377,
+      "type": "placeholder",
+      "text": "placeholder=\"Test your agent...\"",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/evolution/page.tsx",
+      "line": 110,
+      "type": "placeholder",
+      "text": "placeholder=\"e.g., Add comprehensive error handling to all API routes with structured error responses\"",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/knowledge/[id]/page.tsx",
+      "line": 168,
+      "type": "placeholder",
+      "text": "placeholder=\"Document name\"",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/knowledge/[id]/page.tsx",
+      "line": 172,
+      "type": "placeholder",
+      "text": "placeholder=\"Paste document content...\"",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/knowledge/[id]/page.tsx",
+      "line": 214,
+      "type": "placeholder",
+      "text": "placeholder=\"Enter search query...\"",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/page.tsx",
+      "line": 176,
+      "type": "placeholder",
+      "text": "placeholder=\"Search graphs...\"",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/page.tsx",
+      "line": 205,
+      "type": "placeholder",
+      "text": "placeholder=\"My workflow\"",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/page.tsx",
+      "line": 214,
+      "type": "placeholder",
+      "text": "placeholder=\"What this graph does...\"",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/playground/page.tsx",
+      "line": 155,
+      "type": "placeholder",
+      "text": "placeholder=\"Type a message...\"",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/settings/models/page.tsx",
+      "line": 209,
+      "type": "placeholder",
+      "text": "placeholder={selectedProviderInfo?.name ?? 'Provider name'}",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/settings/models/page.tsx",
+      "line": 216,
+      "type": "placeholder",
+      "text": "placeholder={addProvider === 'ollama' ? 'Not required for Ollama' : 'sk-...'}",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/settings/models/page.tsx",
+      "line": 224,
+      "type": "placeholder",
+      "text": "placeholder=\"http://localhost:11434/v1\"",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/settings/models/page.tsx",
+      "line": 240,
+      "type": "placeholder",
+      "text": "placeholder=\"model-name\"",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/settings/page.tsx",
+      "line": 126,
+      "type": "placeholder",
+      "text": "placeholder=\"Key name (e.g. CI Pipeline)\"",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/settings/page.tsx",
+      "line": 167,
+      "type": "placeholder",
+      "text": "placeholder=\"https://example.com/webhook\"",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/settings/page.tsx",
+      "line": 173,
+      "type": "placeholder",
+      "text": "placeholder=\"Events (comma-separated)\"",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/workflows/[id]/page.tsx",
+      "line": 255,
+      "type": "placeholder",
+      "text": "className=\"w-full px-2 py-1 border rounded text-sm bg-background\" placeholder=\"X\" />",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/workflows/[id]/page.tsx",
+      "line": 258,
+      "type": "placeholder",
+      "text": "className=\"w-full px-2 py-1 border rounded text-sm bg-background\" placeholder=\"Y\" />",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/workflows/[id]/page.tsx",
+      "line": 269,
+      "type": "placeholder",
+      "text": "placeholder=\"Enter prompt for this LLM node...\" />",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/workflows/[id]/page.tsx",
+      "line": 280,
+      "type": "placeholder",
+      "text": "placeholder=\"// JavaScript code...\" />",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/workflows/[id]/page.tsx",
+      "line": 291,
+      "type": "placeholder",
+      "text": "className=\"w-full px-2 py-1 border rounded text-sm bg-background\" placeholder=\"https://...\" />",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/app/(app)/workflows/[id]/page.tsx",
+      "line": 312,
+      "type": "placeholder",
+      "text": "placeholder=\"{{input.value}} > 10\" />",
+      "priority": "low"
+    },
+    {
+      "file": "packages/web/src/components/dag/NodeDetail.tsx",
+      "line": 156,
+      "type": "placeholder",
+      "text": "placeholder=\"git, docker, k8s...\"",
+      "priority": "low"
+    }
+  ],
+  "domainCoverage": {
+    "workspace": {
+      "implemented": [
+        "CRUD",
+        "members",
+        "roles"
+      ],
+      "missing": [
+        "team billing",
+        "SSO"
+      ]
+    },
+    "models": {
+      "implemented": [
+        "provider CRUD",
+        "config CRUD",
+        "settings UI",
+        "LLM dispatch",
+        "SSE streaming",
+        "embedding generation"
+      ],
+      "missing": [
+        "connection test",
+        "usage tracking"
+      ]
+    },
+    "agents": {
+      "implemented": [
+        "CRUD",
+        "config",
+        "versioning",
+        "publish",
+        "duplicate",
+        "builder UI",
+        "resource attachment"
+      ],
+      "missing": [
+        "multi-agent handoff",
+        "agent-as-tool"
+      ]
+    },
+    "workflows": {
+      "implemented": [
+        "CRUD",
+        "nodes",
+        "edges",
+        "versioning",
+        "publish",
+        "visual editor",
+        "execution engine",
+        "18+ node types"
+      ],
+      "missing": [
+        "sub_workflow execution",
+        "image_gen",
+        "drag-and-drop",
+        "auto-layout",
+        "real-time trace viewer"
+      ]
+    },
+    "chat": {
+      "implemented": [
+        "conversations",
+        "messages",
+        "chat runs",
+        "LLM integration",
+        "SSE streaming",
+        "playground UI"
+      ],
+      "missing": [
+        "message editing",
+        "regenerate",
+        "branch conversations",
+        "file attachments in chat"
+      ]
+    },
+    "plugins": {
+      "implemented": [
+        "CRUD",
+        "tools",
+        "versioning",
+        "publish",
+        "HTTP execution",
+        "debug endpoint"
+      ],
+      "missing": [
+        "OAuth flow",
+        "OpenAPI import",
+        "marketplace integration"
+      ]
+    },
+    "knowledge": {
+      "implemented": [
+        "CRUD",
+        "documents",
+        "chunking",
+        "keyword search",
+        "pgvector embeddings",
+        "vector search",
+        "detail UI"
+      ],
+      "missing": [
+        "PDF parsing",
+        "DOCX parsing",
+        "image OCR",
+        "URL scraping",
+        "resegment"
+      ]
+    },
+    "data": {
+      "implemented": [
+        "databases",
+        "tables",
+        "rows",
+        "variables",
+        "agent memory"
+      ],
+      "missing": [
+        "NL2SQL",
+        "query builder UI"
+      ]
+    },
+    "prompts": {
+      "implemented": [
+        "CRUD",
+        "versioning",
+        "auto-version on edit"
+      ],
+      "missing": [
+        "template variable rendering",
+        "test with model"
+      ]
+    },
+    "apps": {
+      "implemented": [
+        "CRUD",
+        "versioning",
+        "publish"
+      ],
+      "missing": [
+        "actual deployment",
+        "custom domain",
+        "embedding widget"
+      ]
+    },
+    "marketplace": {
+      "implemented": [
+        "browse",
+        "publish",
+        "install"
+      ],
+      "missing": [
+        "reviews",
+        "ratings",
+        "categories UI"
+      ]
+    },
+    "uploads": {
+      "implemented": [
+        "R2 bucket",
+        "multipart upload",
+        "get/delete/list"
+      ],
+      "missing": [
+        "presigned URLs",
+        "image thumbnails"
+      ]
+    },
+    "replication": {
+      "implemented": [
+        "status analysis",
+        "snapshot",
+        "gap detection",
+        "history",
+        "dashboard UI"
+      ],
+      "missing": []
+    }
+  },
+  "nextPriorities": [
+    "Fix 2 high-priority gaps (TODOs in core routes/libs)",
+    "workflows: sub_workflow execution, image_gen, drag-and-drop",
+    "knowledge: PDF parsing, DOCX parsing, image OCR",
+    "chat: message editing, regenerate, branch conversations",
+    "plugins: OAuth flow, OpenAPI import, marketplace integration",
+    "apps: actual deployment, custom domain, embedding widget"
+  ]
+}
