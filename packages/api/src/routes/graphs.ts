@@ -365,6 +365,52 @@ app.get('/templates/list', async (c) => {
   return c.json({ templates: result });
 });
 
+// Create graph from template (same as duplicate but from any template)
+app.post('/from-template/:templateId', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const templateId = c.req.param('templateId');
+
+  const [tmpl] = await db.select().from(graphs).where(eq(graphs.id, templateId));
+  if (!tmpl || !tmpl.isTemplate) return c.json({ error: 'Template not found' }, 404);
+
+  const body = await c.req.json().catch(() => ({})) as { name?: string };
+  const newGraphId = nanoid(12);
+
+  await db.insert(graphs).values({
+    id: newGraphId,
+    name: body.name ?? tmpl.name,
+    description: tmpl.description,
+    ownerId: userId,
+    status: 'draft',
+  });
+
+  const tmplTasks = await db.select().from(tasks).where(eq(tasks.graphId, templateId));
+  const tmplEdges = await db.select().from(edges).where(eq(edges.graphId, templateId));
+
+  const idMap = new Map<string, string>();
+  for (const t of tmplTasks) {
+    const newId = nanoid(12);
+    idMap.set(t.id, newId);
+    await db.insert(tasks).values({
+      id: newId, graphId: newGraphId, title: t.title, type: t.type, status: 'pending',
+      input: t.input, priority: t.priority, agentKind: t.agentKind,
+      requiredCapabilities: t.requiredCapabilities, timeoutMs: t.timeoutMs, maxRetries: t.maxRetries,
+      positionX: t.positionX, positionY: t.positionY, version: 1, attempt: 0,
+    });
+  }
+
+  for (const e of tmplEdges) {
+    const from = idMap.get(e.fromTaskId);
+    const to = idMap.get(e.toTaskId);
+    if (from && to) {
+      await db.insert(edges).values({ id: nanoid(12), graphId: newGraphId, fromTaskId: from, toTaskId: to });
+    }
+  }
+
+  return c.json({ graph: { id: newGraphId } }, 201);
+});
+
 /**
  * Seed a test graph — a pre-built DAG that validates the hive system.
  * Creates parallel lint + typecheck tasks, then a test task, then a code review via cx (Codex).
