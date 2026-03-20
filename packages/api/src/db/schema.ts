@@ -6,6 +6,7 @@ export const graphs = pgTable('graphs', {
   description: text('description'),
   ownerId: text('owner_id').notNull(),
   status: text('status').notNull().default('draft'),
+  tags: text('tags').array(),
   isTemplate: integer('is_template').notNull().default(0),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),

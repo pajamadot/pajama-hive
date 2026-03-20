@@ -10,6 +10,7 @@ interface Graph {
   name: string;
   description: string | null;
   status: string;
+  tags: string[] | null;
   createdAt: string;
 }
 
@@ -257,6 +258,13 @@ export default function DashboardPage() {
                     <h3 className="font-medium">{graph.name}</h3>
                     {graph.description && (
                       <p className="text-sm text-muted-foreground mt-1 truncate">{graph.description}</p>
+                    )}
+                    {graph.tags && graph.tags.length > 0 && (
+                      <div className="flex gap-1 mt-1">
+                        {graph.tags.map((tag) => (
+                          <span key={tag} className="text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded-full">{tag}</span>
+                        ))}
+                      </div>
                     )}
                   </div>
                   <div className="flex items-center gap-3 shrink-0">

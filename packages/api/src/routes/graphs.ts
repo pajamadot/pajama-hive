@@ -122,6 +122,7 @@ app.patch('/:graphId', async (c) => {
   const allowed: Record<string, unknown> = {};
   if ('name' in body) allowed.name = body.name;
   if ('description' in body) allowed.description = body.description;
+  if ('tags' in body && Array.isArray(body.tags)) allowed.tags = body.tags;
 
   if (Object.keys(allowed).length === 0) {
     return c.json({ error: 'No valid fields to update' }, 400);
