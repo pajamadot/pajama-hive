@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { nanoid } from 'nanoid';
-import { eq, ilike, and, desc, lt, inArray } from 'drizzle-orm';
+import { eq, ilike, and, desc, lt, inArray, isNull } from 'drizzle-orm';
 import { createGraphSchema, graphExportSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
 import { graphs, tasks, edges, runs } from '../db/schema.js';
@@ -24,7 +24,7 @@ app.get('/', async (c) => {
   const cursor = c.req.query('cursor');
   const limit = Math.min(parseInt(c.req.query('limit') ?? '30', 10), 100);
 
-  const conditions = [eq(graphs.ownerId, userId)];
+  const conditions = [eq(graphs.ownerId, userId), isNull(graphs.deletedAt)];
   if (search) conditions.push(ilike(graphs.name, `%${search}%`));
   if (status) conditions.push(eq(graphs.status, status));
   if (cursor) conditions.push(lt(graphs.updatedAt, new Date(cursor)));
@@ -179,7 +179,10 @@ app.delete('/:graphId', async (c) => {
   const check = await verifyGraphOwner(db, graphId, userId);
   if (!check.ok) return c.json({ error: check.error }, check.status);
 
-  await db.delete(graphs).where(eq(graphs.id, graphId));
+  // Soft delete
+  await db.update(graphs)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(eq(graphs.id, graphId));
   return c.json({ ok: true });
 });
 
