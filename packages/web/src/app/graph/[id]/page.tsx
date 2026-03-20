@@ -220,6 +220,13 @@ export default function GraphEditorPage() {
 
         <div className="flex-1" />
 
+        <Link
+          href={`/graph/${graphId}/runs`}
+          className="px-3 py-1.5 border border-border rounded-md text-xs hover:bg-accent/50"
+        >
+          Run History
+        </Link>
+
         {hasPlanTasks && (
           <button
             onClick={handleApprovePlans}

@@ -5,7 +5,7 @@ import { createTaskSchema, createEdgeSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
 import { tasks, edges } from '../db/schema.js';
 import { detectCycle } from '../lib/dag.js';
-import { clerkAuth } from '../lib/auth.js';
+import { clerkAuth, verifyGraphOwner, verifyTaskOwner, verifyEdgeOwner } from '../lib/auth.js';
 import type { Env } from '../types/index.js';
 
 type HonoEnv = { Bindings: Env; Variables: { userId: string } };
@@ -17,6 +17,11 @@ app.use('/*', clerkAuth);
 app.get('/graphs/:graphId/tasks', async (c) => {
   const db = createDb(c.env);
   const graphId = c.req.param('graphId');
+  const userId = c.get('userId');
+
+  const check = await verifyGraphOwner(db, graphId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
   const result = await db.select().from(tasks).where(eq(tasks.graphId, graphId));
   return c.json({ tasks: result });
 });
@@ -31,8 +36,12 @@ app.post('/graphs/:graphId/tasks', async (c) => {
 
   const db = createDb(c.env);
   const graphId = c.req.param('graphId');
-  const id = nanoid(12);
+  const userId = c.get('userId');
 
+  const check = await verifyGraphOwner(db, graphId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
+  const id = nanoid(12);
   const [task] = await db.insert(tasks).values({
     id,
     graphId,
@@ -55,8 +64,12 @@ app.post('/graphs/:graphId/tasks', async (c) => {
 app.patch('/tasks/:taskId', async (c) => {
   const db = createDb(c.env);
   const taskId = c.req.param('taskId');
-  const body = await c.req.json();
+  const userId = c.get('userId');
 
+  const check = await verifyTaskOwner(db, taskId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
+  const body = await c.req.json();
   const [updated] = await db.update(tasks)
     .set({ ...body, updatedAt: new Date() })
     .where(eq(tasks.id, taskId))
@@ -66,13 +79,17 @@ app.patch('/tasks/:taskId', async (c) => {
   return c.json({ task: updated });
 });
 
-// Approve task (change from pending_approval to pending)
+// Approve task (change from pending to ready)
 app.post('/tasks/:taskId/approve', async (c) => {
   const db = createDb(c.env);
   const taskId = c.req.param('taskId');
+  const userId = c.get('userId');
+
+  const check = await verifyTaskOwner(db, taskId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
 
   const [updated] = await db.update(tasks)
-    .set({ status: 'pending', updatedAt: new Date() })
+    .set({ status: 'ready', updatedAt: new Date() })
     .where(eq(tasks.id, taskId))
     .returning();
 
@@ -84,6 +101,10 @@ app.post('/tasks/:taskId/approve', async (c) => {
 app.post('/tasks/:taskId/cancel', async (c) => {
   const db = createDb(c.env);
   const taskId = c.req.param('taskId');
+  const userId = c.get('userId');
+
+  const check = await verifyTaskOwner(db, taskId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
 
   const [updated] = await db.update(tasks)
     .set({ status: 'canceled', updatedAt: new Date() })
@@ -100,6 +121,11 @@ app.post('/tasks/:taskId/cancel', async (c) => {
 app.get('/graphs/:graphId/edges', async (c) => {
   const db = createDb(c.env);
   const graphId = c.req.param('graphId');
+  const userId = c.get('userId');
+
+  const check = await verifyGraphOwner(db, graphId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
   const result = await db.select().from(edges).where(eq(edges.graphId, graphId));
   return c.json({ edges: result });
 });
@@ -114,6 +140,10 @@ app.post('/graphs/:graphId/edges', async (c) => {
 
   const db = createDb(c.env);
   const graphId = c.req.param('graphId');
+  const userId = c.get('userId');
+
+  const check = await verifyGraphOwner(db, graphId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
 
   // Get existing tasks and edges for this graph
   const existingTasks = await db.select({ id: tasks.id }).from(tasks).where(eq(tasks.graphId, graphId));
@@ -149,6 +179,11 @@ app.post('/graphs/:graphId/edges', async (c) => {
 app.delete('/edges/:edgeId', async (c) => {
   const db = createDb(c.env);
   const edgeId = c.req.param('edgeId');
+  const userId = c.get('userId');
+
+  const check = await verifyEdgeOwner(db, edgeId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
   await db.delete(edges).where(eq(edges.id, edgeId));
   return c.json({ ok: true });
 });

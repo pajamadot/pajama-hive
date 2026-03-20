@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 import { eq, desc } from 'drizzle-orm';
 import { createDb } from '../db/client.js';
 import { runs, tasks, graphs, runRetrospectives } from '../db/schema.js';
-import { clerkAuth } from '../lib/auth.js';
+import { clerkAuth, verifyGraphOwner, verifyRunOwner } from '../lib/auth.js';
 import type { Env } from '../types/index.js';
 
 type HonoEnv = { Bindings: Env; Variables: { userId: string } };
@@ -15,6 +15,11 @@ app.use('/*', clerkAuth);
 app.post('/graphs/:graphId/runs', async (c) => {
   const db = createDb(c.env);
   const graphId = c.req.param('graphId');
+  const userId = c.get('userId');
+
+  const check = await verifyGraphOwner(db, graphId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
   const id = nanoid(12);
 
   // Update graph status to running
@@ -29,10 +34,6 @@ app.post('/graphs/:graphId/runs', async (c) => {
     status: 'running',
     startedAt: new Date(),
   }).returning();
-
-  // Mark root tasks (no incoming edges) as ready
-  // This is done by the orchestrator in production, but we bootstrap here
-  const graphTasks = await db.select().from(tasks).where(eq(tasks.graphId, graphId));
 
   // Notify orchestrator DO to start scheduling
   const orchestratorId = c.env.ORCHESTRATOR.idFromName(graphId);
@@ -49,8 +50,12 @@ app.post('/graphs/:graphId/runs', async (c) => {
 app.get('/runs/:runId', async (c) => {
   const db = createDb(c.env);
   const runId = c.req.param('runId');
-  const [run] = await db.select().from(runs).where(eq(runs.id, runId));
+  const userId = c.get('userId');
 
+  const check = await verifyRunOwner(db, runId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
+  const [run] = await db.select().from(runs).where(eq(runs.id, runId));
   if (!run) return c.json({ error: 'Run not found' }, 404);
   return c.json({ run });
 });
@@ -59,6 +64,11 @@ app.get('/runs/:runId', async (c) => {
 app.get('/graphs/:graphId/runs', async (c) => {
   const db = createDb(c.env);
   const graphId = c.req.param('graphId');
+  const userId = c.get('userId');
+
+  const check = await verifyGraphOwner(db, graphId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
   const result = await db.select().from(runs).where(eq(runs.graphId, graphId)).orderBy(desc(runs.createdAt));
   return c.json({ runs: result });
 });
@@ -67,6 +77,11 @@ app.get('/graphs/:graphId/runs', async (c) => {
 app.get('/runs/:runId/detail', async (c) => {
   const db = createDb(c.env);
   const runId = c.req.param('runId');
+  const userId = c.get('userId');
+
+  const check = await verifyRunOwner(db, runId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
   const [run] = await db.select().from(runs).where(eq(runs.id, runId));
   if (!run) return c.json({ error: 'Run not found' }, 404);
 

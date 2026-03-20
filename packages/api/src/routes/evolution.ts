@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { nanoid } from 'nanoid';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, like, and } from 'drizzle-orm';
 import { createDb } from '../db/client.js';
 import { tasks, graphs, auditLogs } from '../db/schema.js';
 import { clerkAuth } from '../lib/auth.js';
@@ -85,14 +85,16 @@ app.post('/self-improve', async (c) => {
  */
 app.get('/self-improve', async (c) => {
   const db = createDb(c.env);
+  const userId = c.get('userId');
   const result = await db.select()
     .from(graphs)
-    .where(eq(graphs.name, graphs.name)) // TODO: filter by name pattern
+    .where(and(
+      like(graphs.id, 'evolve-%'),
+      eq(graphs.ownerId, userId),
+    ))
     .orderBy(desc(graphs.createdAt));
 
-  const evolveGraphs = result.filter((g) => g.id.startsWith('evolve-'));
-
-  return c.json({ graphs: evolveGraphs });
+  return c.json({ graphs: result });
 });
 
 function buildSelfImprovePrompt(goal: string, targetArea?: string, scope?: string): string {

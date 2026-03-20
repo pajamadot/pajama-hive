@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import { createGraphSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
 import { graphs } from '../db/schema.js';
-import { clerkAuth } from '../lib/auth.js';
+import { clerkAuth, verifyGraphOwner } from '../lib/auth.js';
 import type { Env } from '../types/index.js';
 
 type HonoEnv = { Bindings: Env; Variables: { userId: string } };
@@ -48,9 +48,11 @@ app.post('/', async (c) => {
 app.get('/:graphId', async (c) => {
   const db = createDb(c.env);
   const graphId = c.req.param('graphId');
-  const [graph] = await db.select().from(graphs).where(eq(graphs.id, graphId));
+  const userId = c.get('userId');
 
+  const [graph] = await db.select().from(graphs).where(eq(graphs.id, graphId));
   if (!graph) return c.json({ error: 'Graph not found' }, 404);
+  if (graph.ownerId !== userId) return c.json({ error: 'Forbidden' }, 403);
   return c.json({ graph });
 });
 
@@ -58,8 +60,12 @@ app.get('/:graphId', async (c) => {
 app.patch('/:graphId', async (c) => {
   const db = createDb(c.env);
   const graphId = c.req.param('graphId');
-  const body = await c.req.json();
+  const userId = c.get('userId');
 
+  const check = await verifyGraphOwner(db, graphId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
+  const body = await c.req.json();
   const [updated] = await db.update(graphs)
     .set({ ...body, updatedAt: new Date() })
     .where(eq(graphs.id, graphId))
@@ -73,6 +79,11 @@ app.patch('/:graphId', async (c) => {
 app.delete('/:graphId', async (c) => {
   const db = createDb(c.env);
   const graphId = c.req.param('graphId');
+  const userId = c.get('userId');
+
+  const check = await verifyGraphOwner(db, graphId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
   await db.delete(graphs).where(eq(graphs.id, graphId));
   return c.json({ ok: true });
 });

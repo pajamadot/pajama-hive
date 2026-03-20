@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface LogTerminalProps {
   logs: string[];
@@ -9,6 +9,33 @@ interface LogTerminalProps {
 export function LogTerminal({ logs }: LogTerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<unknown>(null);
+  const [height, setHeight] = useState(200);
+  const [collapsed, setCollapsed] = useState(false);
+  const dragging = useRef(false);
+  const startY = useRef(0);
+  const startHeight = useRef(0);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    dragging.current = true;
+    startY.current = e.clientY;
+    startHeight.current = height;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragging.current) return;
+      const delta = startY.current - e.clientY;
+      setHeight(Math.max(80, Math.min(600, startHeight.current + delta)));
+    };
+
+    const handleMouseUp = () => {
+      dragging.current = false;
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [height]);
 
   useEffect(() => {
     let disposed = false;
@@ -66,11 +93,23 @@ export function LogTerminal({ logs }: LogTerminalProps) {
   }, [logs]);
 
   return (
-    <div className="border-t border-border bg-[#0a0a0f]">
-      <div className="px-4 py-2 border-b border-border flex items-center gap-2">
+    <div className="border-t border-border bg-[#0a0a0f] flex flex-col" style={{ height: collapsed ? 'auto' : undefined }}>
+      {/* Drag handle */}
+      <div
+        onMouseDown={handleMouseDown}
+        className="h-1 cursor-row-resize hover:bg-blue-500/50 transition-colors shrink-0"
+      />
+      <div className="px-4 py-1.5 border-b border-border flex items-center gap-2 shrink-0">
         <span className="text-xs text-muted-foreground uppercase tracking-wider">Terminal Output</span>
+        <div className="flex-1" />
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          {collapsed ? 'Expand' : 'Collapse'}
+        </button>
       </div>
-      <div ref={containerRef} className="h-48" />
+      {!collapsed && <div ref={containerRef} style={{ height }} />}
     </div>
   );
 }

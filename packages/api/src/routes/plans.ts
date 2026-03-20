@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import { createDb } from '../db/client.js';
 import { tasks, edges, graphs } from '../db/schema.js';
 import { validatePlanOutput } from '../lib/plan-validator.js';
-import { clerkAuth } from '../lib/auth.js';
+import { clerkAuth, verifyGraphOwner } from '../lib/auth.js';
 import type { Env } from '../types/index.js';
 
 type HonoEnv = { Bindings: Env; Variables: { userId: string } };
@@ -20,6 +20,11 @@ app.use('/*', clerkAuth);
 app.post('/graphs/:graphId/plans', async (c) => {
   const db = createDb(c.env);
   const graphId = c.req.param('graphId');
+  const userId = c.get('userId');
+
+  const check = await verifyGraphOwner(db, graphId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
   const body = await c.req.json();
 
   // Get existing graph state
@@ -108,6 +113,11 @@ app.post('/graphs/:graphId/plans', async (c) => {
 app.post('/graphs/:graphId/plans/approve', async (c) => {
   const db = createDb(c.env);
   const graphId = c.req.param('graphId');
+  const userId = c.get('userId');
+
+  const check = await verifyGraphOwner(db, graphId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
   const body = await c.req.json().catch(() => ({})) as { taskIds?: string[] };
 
   // If specific task IDs provided, approve only those
@@ -119,7 +129,7 @@ app.post('/graphs/:graphId/plans/approve', async (c) => {
 
   for (const task of pendingPlanTasks) {
     await db.update(tasks)
-      .set({ status: 'pending', updatedAt: new Date() })
+      .set({ status: 'ready', updatedAt: new Date() })
       .where(eq(tasks.id, task.id));
   }
 
@@ -135,6 +145,10 @@ app.post('/graphs/:graphId/plans/approve', async (c) => {
 app.post('/graphs/:graphId/plans/reject', async (c) => {
   const db = createDb(c.env);
   const graphId = c.req.param('graphId');
+  const userId = c.get('userId');
+
+  const check = await verifyGraphOwner(db, graphId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
 
   const graphTasks = await db.select().from(tasks).where(eq(tasks.graphId, graphId));
   const planTasks = graphTasks.filter((t) => t.id.startsWith('plan-') && t.status === 'pending');

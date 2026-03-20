@@ -42,6 +42,10 @@ export const api = {
   // Runs
   createRun: (token: string, graphId: string) =>
     apiFetch(`/v1/graphs/${graphId}/runs`, token, { method: 'POST' }),
+  listRuns: (token: string, graphId: string) =>
+    apiFetch(`/v1/graphs/${graphId}/runs`, token),
+  getRunDetail: (token: string, runId: string) =>
+    apiFetch(`/v1/runs/${runId}/detail`, token),
 
   // Workers
   listWorkers: (token: string) => apiFetch('/v1/workers', token),

@@ -1,4 +1,7 @@
 import { createMiddleware } from 'hono/factory';
+import { eq } from 'drizzle-orm';
+import { createDb, type Database } from '../db/client.js';
+import { graphs, tasks as tasksTable, runs as runsTable, edges as edgesTable } from '../db/schema.js';
 import type { Env } from '../types/index.js';
 
 interface ClerkJWKS {
@@ -103,3 +106,30 @@ export const clerkAuth = createMiddleware<HonoEnv>(async (c, next) => {
     return c.json({ error: message }, 401);
   }
 });
+
+type OwnershipResult = { ok: true } | { ok: false; status: 404 | 403; error: string };
+
+export async function verifyGraphOwner(db: Database, graphId: string, userId: string): Promise<OwnershipResult> {
+  const [graph] = await db.select({ ownerId: graphs.ownerId }).from(graphs).where(eq(graphs.id, graphId));
+  if (!graph) return { ok: false, status: 404, error: 'Graph not found' };
+  if (graph.ownerId !== userId) return { ok: false, status: 403, error: 'Forbidden' };
+  return { ok: true };
+}
+
+export async function verifyTaskOwner(db: Database, taskId: string, userId: string): Promise<OwnershipResult> {
+  const [task] = await db.select({ graphId: tasksTable.graphId }).from(tasksTable).where(eq(tasksTable.id, taskId));
+  if (!task) return { ok: false, status: 404, error: 'Task not found' };
+  return verifyGraphOwner(db, task.graphId, userId);
+}
+
+export async function verifyRunOwner(db: Database, runId: string, userId: string): Promise<OwnershipResult> {
+  const [run] = await db.select({ graphId: runsTable.graphId }).from(runsTable).where(eq(runsTable.id, runId));
+  if (!run) return { ok: false, status: 404, error: 'Run not found' };
+  return verifyGraphOwner(db, run.graphId, userId);
+}
+
+export async function verifyEdgeOwner(db: Database, edgeId: string, userId: string): Promise<OwnershipResult> {
+  const [edge] = await db.select({ graphId: edgesTable.graphId }).from(edgesTable).where(eq(edgesTable.id, edgeId));
+  if (!edge) return { ok: false, status: 404, error: 'Edge not found' };
+  return verifyGraphOwner(db, edge.graphId, userId);
+}

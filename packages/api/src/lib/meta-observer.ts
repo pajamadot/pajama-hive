@@ -10,7 +10,7 @@
  */
 
 import { nanoid } from 'nanoid';
-import { eq, desc, gte, sql, and, count } from 'drizzle-orm';
+import { eq, desc, gte, lte, sql, and, count, like } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
 import * as schema from '../db/schema.js';
 import type { MetaEventKind, MetaSeverity, MetaDomain } from '@pajamadot/hive-shared';
@@ -197,12 +197,32 @@ export class MetaObserver {
     const anomalies = recentEvents.filter((e) => e.kind === 'anomaly');
     const criticals = recentEvents.filter((e) => e.severity === 'critical');
 
+    // Compute plan acceptance rate from actual data
+    const allPlanTasks = await this.db.select({ status: schema.tasks.status })
+      .from(schema.tasks)
+      .where(like(schema.tasks.id, 'plan-%'));
+
+    const totalPlanTasks = allPlanTasks.length;
+    const approvedPlanTasks = allPlanTasks.filter((t) =>
+      t.status !== 'pending' && t.status !== 'canceled',
+    ).length;
+    const planAcceptanceRate = totalPlanTasks > 0 ? approvedPlanTasks / totalPlanTasks : 1;
+
+    // Compute evolution score from evolve graph completions
+    const evolveGraphs = await this.db.select({ status: schema.graphs.status })
+      .from(schema.graphs)
+      .where(like(schema.graphs.id, 'evolve-%'));
+
+    const totalEvolve = evolveGraphs.length;
+    const completedEvolve = evolveGraphs.filter((g) => g.status === 'completed').length;
+    const evolveSuccessRate = totalEvolve > 0 ? completedEvolve / totalEvolve : 0;
+
     // Compute health scores (0-100)
     const scoreScheduling = Math.max(0, 100 - anomalies.filter((e) => e.domain === 'scheduling').length * 20);
     const scoreExecution = Math.round(successRate * 100);
     const scoreReliability = Math.max(0, 100 - criticals.length * 25);
-    const scorePlanning = 80; // TODO: compute from plan acceptance rate
-    const scoreEvolution = 50; // TODO: compute from self-improve PR activity
+    const scorePlanning = Math.round(planAcceptanceRate * 100);
+    const scoreEvolution = totalEvolve > 0 ? Math.round(evolveSuccessRate * 100) : 50;
 
     const overall = criticals.length > 0 ? 'critical' as const
       : (scoreExecution < 50 || scoreReliability < 50) ? 'degraded' as const
@@ -221,8 +241,8 @@ export class MetaObserver {
       activeRuns: activeRuns[0]?.cnt ?? 0,
       taskSuccessRate: successRate,
       avgTaskDurationMs: avgDuration,
-      planAcceptanceRate: 0.8, // TODO
-      selfImprovePrsMerged: 0, // TODO
+      planAcceptanceRate,
+      selfImprovePrsMerged: completedEvolve,
     });
 
     // Emit observations about health changes
@@ -249,12 +269,12 @@ export class MetaObserver {
     const now = new Date();
     const hourAgo = new Date(now.getTime() - 3_600_000);
 
-    // Check for stuck tasks (leased/running for too long without heartbeat)
+    // Check for stuck tasks (running but not updated in the last hour)
     const stuckTasks = await this.db.select()
       .from(schema.tasks)
       .where(and(
         eq(schema.tasks.status, 'running'),
-        gte(schema.tasks.updatedAt, hourAgo), // hasn't been updated
+        lte(schema.tasks.updatedAt, hourAgo),
       ));
 
     // Actually we want tasks that are running but their lease expired
