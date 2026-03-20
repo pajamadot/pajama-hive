@@ -184,6 +184,8 @@ export default function GraphEditorPage() {
   const shortcutDefs = [
     { key: 'Enter', ctrl: true, description: 'Start a run', action: handleRunGraph },
     { key: 'l', ctrl: true, description: 'Auto layout', action: handleAutoLayout },
+    { key: 'z', ctrl: true, description: 'Undo', action: () => store.undo() },
+    { key: 'y', ctrl: true, description: 'Redo', action: () => store.redo() },
     { key: 'Escape', description: 'Deselect node', action: () => store.setSelectedNode(null) },
   ];
   const { showHelp, setShowHelp } = useKeyboardShortcuts(shortcutDefs);

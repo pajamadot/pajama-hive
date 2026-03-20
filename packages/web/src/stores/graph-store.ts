@@ -22,12 +22,26 @@ export interface ConnectedWorker {
   currentTaskId?: string;
 }
 
+interface Snapshot {
+  nodes: Node<TaskNodeData>[];
+  edges: Edge[];
+}
+
+const MAX_HISTORY = 30;
+
 interface GraphState {
   graphId: string | null;
   nodes: Node<TaskNodeData>[];
   edges: Edge[];
   workers: ConnectedWorker[];
   selectedNodeId: string | null;
+  selectedNodeIds: Set<string>;
+
+  // Undo/redo
+  history: Snapshot[];
+  historyIndex: number;
+  canUndo: boolean;
+  canRedo: boolean;
 
   setGraphId: (id: string) => void;
   setNodes: (nodes: Node<TaskNodeData>[]) => void;
@@ -36,23 +50,41 @@ interface GraphState {
   addEdge: (edge: Edge) => void;
   updateNodeStatus: (nodeId: string, status: TaskStatus, workerId?: string) => void;
   setSelectedNode: (nodeId: string | null) => void;
+  toggleSelectedNode: (nodeId: string) => void;
+  clearSelection: () => void;
   setWorkers: (workers: ConnectedWorker[]) => void;
   updateWorkerStatus: (workerId: string, status: WorkerStatus, taskId?: string) => void;
+  pushSnapshot: () => void;
+  undo: () => void;
+  redo: () => void;
 }
 
-export const useGraphStore = create<GraphState>((set) => ({
+export const useGraphStore = create<GraphState>((set, get) => ({
   graphId: null,
   nodes: [],
   edges: [],
   workers: [],
   selectedNodeId: null,
+  selectedNodeIds: new Set<string>(),
+  history: [],
+  historyIndex: -1,
+  canUndo: false,
+  canRedo: false,
 
   setGraphId: (id) => set({ graphId: id }),
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
 
-  addNode: (node) => set((state) => ({ nodes: [...state.nodes, node] })),
-  addEdge: (edge) => set((state) => ({ edges: [...state.edges, edge] })),
+  addNode: (node) => {
+    const state = get();
+    state.pushSnapshot();
+    set({ nodes: [...state.nodes, node] });
+  },
+  addEdge: (edge) => {
+    const state = get();
+    state.pushSnapshot();
+    set({ edges: [...state.edges, edge] });
+  },
 
   updateNodeStatus: (nodeId, status, workerId) =>
     set((state) => ({
@@ -64,6 +96,17 @@ export const useGraphStore = create<GraphState>((set) => ({
     })),
 
   setSelectedNode: (nodeId) => set({ selectedNodeId: nodeId }),
+
+  toggleSelectedNode: (nodeId) =>
+    set((state) => {
+      const next = new Set(state.selectedNodeIds);
+      if (next.has(nodeId)) next.delete(nodeId);
+      else next.add(nodeId);
+      return { selectedNodeIds: next, selectedNodeId: next.size === 1 ? [...next][0] : null };
+    }),
+
+  clearSelection: () => set({ selectedNodeId: null, selectedNodeIds: new Set() }),
+
   setWorkers: (workers) => set({ workers }),
 
   updateWorkerStatus: (workerId, status, taskId) =>
@@ -72,4 +115,43 @@ export const useGraphStore = create<GraphState>((set) => ({
         w.id === workerId ? { ...w, status, currentTaskId: taskId } : w,
       ),
     })),
+
+  pushSnapshot: () => {
+    const state = get();
+    const snap: Snapshot = { nodes: [...state.nodes], edges: [...state.edges] };
+    const history = state.history.slice(0, state.historyIndex + 1);
+    history.push(snap);
+    if (history.length > MAX_HISTORY) history.shift();
+    set({ history, historyIndex: history.length - 1, canUndo: true, canRedo: false });
+  },
+
+  undo: () => {
+    const state = get();
+    if (state.historyIndex < 0) return;
+    const snap = state.history[state.historyIndex];
+    set({
+      nodes: snap.nodes,
+      edges: snap.edges,
+      historyIndex: state.historyIndex - 1,
+      canUndo: state.historyIndex - 1 >= 0,
+      canRedo: true,
+    });
+  },
+
+  redo: () => {
+    const state = get();
+    if (state.historyIndex >= state.history.length - 1) return;
+    const nextIndex = state.historyIndex + 1;
+    // If we're at the end, the "redo" is the current state which is already applied
+    if (nextIndex < state.history.length) {
+      const snap = state.history[nextIndex];
+      set({
+        nodes: snap.nodes,
+        edges: snap.edges,
+        historyIndex: nextIndex,
+        canUndo: true,
+        canRedo: nextIndex < state.history.length - 1,
+      });
+    }
+  },
 }));
