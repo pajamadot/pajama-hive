@@ -260,7 +260,7 @@ export const workflowNodeTypeSchema = z.enum([
   'http_request', 'plugin', 'knowledge_retrieval', 'message',
   'sub_workflow', 'database', 'image_gen', 'text_processor',
   'intent_detector', 'variable_assigner', 'batch', 'selector',
-  'json_transform', 'qa', 'emitter', 'receiver',
+  'json_transform', 'qa', 'emitter', 'receiver', 'agent_call',
 ]);
 
 export const workflowRunStatusSchema = z.enum(['pending', 'running', 'completed', 'failed', 'canceled']);

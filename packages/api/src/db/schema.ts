@@ -248,6 +248,7 @@ export const workspaces = pgTable('workspaces', {
   slug: text('slug').notNull(),
   description: text('description'),
   ownerId: text('owner_id').notNull(),
+  createdBy: text('created_by'),
   iconUrl: text('icon_url'),
   plan: text('plan').notNull().default('free'), // free, pro, enterprise
   deletedAt: timestamp('deleted_at'),
@@ -276,6 +277,7 @@ export const userProfiles = pgTable('user_profiles', {
   uniqueName: text('unique_name'),               // Coze: unique username
   avatarUrl: text('avatar_url'),
   bio: text('bio'),
+  description: text('description'),               // Coze: user description/tagline
   locale: text('locale'),                         // Coze: user locale
   defaultWorkspaceId: text('default_workspace_id'),
   preferences: jsonb('preferences'),
@@ -444,6 +446,7 @@ export const workflowVersions = pgTable('workflow_versions', {
   // Coze parity fields
   versionDescription: text('version_description'), // Coze: version desc
   commitId: text('commit_id'),                     // Coze: commit ID
+  deletedAt: timestamp('deleted_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 }, (t) => [
   index('wf_versions_workflow_idx').on(t.workflowId),
@@ -500,6 +503,7 @@ export const conversations = pgTable('conversations', {
   scene: text('scene'),                           // Coze: conversation scene (playground, api, connector)
   connectorId: text('connector_id'),             // Coze: which connector initiated
   isDebug: boolean('is_debug').notNull().default(false), // Coze: debug/test conversation
+  status: text('status').notNull().default('active'), // active, archived, deleted
   deletedAt: timestamp('deleted_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
@@ -527,6 +531,8 @@ export const messages = pgTable('messages', {
   chatId: text('chat_id'),                       // Coze: chat session ID
   replyId: text('reply_id'),                     // Coze: reply-to message ID
   isFinish: boolean('is_finish'),                 // Coze: streaming finished flag
+  userId: text('user_id'),                        // Coze: user who sent/received
+  status: text('status').notNull().default('active'), // active, deleted, redacted
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (t) => [
@@ -587,6 +593,8 @@ export const plugins = pgTable('plugins', {
   apiHost: text('api_host'),                     // Coze: API host for plugin
   runtimeVersion: text('runtime_version'),       // Coze: runtime version
   extraInfo: jsonb('extra_info'),                // Coze: extra metadata
+  version: text('version'),                       // Coze: current version string
+  versionDesc: text('version_desc'),              // Coze: current version description
   publishedAt: timestamp('published_at'),
   deletedAt: timestamp('deleted_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -680,6 +688,8 @@ export const documents = pgTable('documents', {
   autoSave: boolean('auto_save').notNull().default(true),
   language: text('language'),                     // Coze: document language
   charCount: integer('char_count'),               // Coze: character count
+  parseRule: jsonb('parse_rule'),                 // Coze: custom parse/split rules
+  tableInfo: jsonb('table_info'),                 // Coze: table structure metadata
   processedAt: timestamp('processed_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
@@ -701,6 +711,8 @@ export const documentChunks = pgTable('document_chunks', {
   hash: text('hash'),                            // Coze: content hash for dedup
   wordCount: integer('word_count'),               // Coze: word count
   caption: text('caption'),                       // Coze: image caption
+  failReason: text('fail_reason'),               // Coze: chunk processing failure reason
+  hitCount: integer('hit_count').notNull().default(0), // Coze: search hit counter
   status: integer('status').notNull().default(0), // Coze: 0=active, 1=disabled
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
@@ -757,6 +769,7 @@ export const variables = pgTable('variables', {
   defaultValue: text('default_value'),
   scope: text('scope').notNull().default('workspace'), // workspace, agent, conversation, workflow
   scopeId: text('scope_id'), // the specific agent/conversation/workflow ID
+  version: text('version'),                       // Coze: variable version
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (t) => [

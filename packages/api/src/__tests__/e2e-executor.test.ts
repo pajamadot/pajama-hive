@@ -58,8 +58,8 @@ describe('Text extractor logic', () => {
     expect(canExtractText('', 'script.py')).toBe(true);
     expect(canExtractText('', 'code.ts')).toBe(true);
     expect(canExtractText('', 'config.yaml')).toBe(true);
-    // Should not extract
-    expect(canExtractText('application/pdf', 'doc.pdf')).toBe(false);
+    // PDF is now extractable (basic text extraction)
+    expect(canExtractText('application/pdf', 'doc.pdf')).toBe(true);
     expect(canExtractText('image/png', 'photo.png')).toBe(false);
     expect(canExtractText('application/octet-stream', 'binary.dat')).toBe(false);
   });

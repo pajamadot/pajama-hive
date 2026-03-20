@@ -62,9 +62,9 @@ export function extractText(content: string | ArrayBuffer, mimeType: string, fil
     return text;
   }
 
-  // PDF — we can't parse binary PDF in a Worker without external help
+  // PDF — extract raw text strings from binary (basic extraction)
   if (mimeType === 'application/pdf' || fileName.endsWith('.pdf')) {
-    return '[PDF file — text extraction requires external parsing service. Upload as text instead.]';
+    return extractPdfText(typeof content === 'string' ? content : new TextDecoder('latin1').decode(content));
   }
 
   // DOCX — same limitation
@@ -105,14 +105,56 @@ function stripXml(xml: string): string {
  * Detect if a file can be text-extracted.
  */
 export function canExtractText(mimeType: string, fileName: string): boolean {
-  const textMimes = ['text/', 'application/json', 'application/xml'];
+  const textMimes = ['text/', 'application/json', 'application/xml', 'application/pdf'];
   if (textMimes.some((m) => mimeType.startsWith(m))) return true;
 
   const textExts = [
     '.txt', '.md', '.csv', '.tsv', '.log', '.html', '.htm',
     '.json', '.xml', '.yaml', '.yml', '.toml',
     '.ts', '.tsx', '.js', '.jsx', '.py', '.go', '.rs', '.java',
-    '.c', '.cpp', '.rb', '.php', '.sh',
+    '.c', '.cpp', '.rb', '.php', '.sh', '.pdf',
   ];
   return textExts.some((ext) => fileName.endsWith(ext));
+}
+
+/**
+ * Basic PDF text extraction — extracts readable text strings from raw PDF binary.
+ * This is a simple approach that works for text-heavy PDFs (not scanned images).
+ * For production, use a proper PDF parsing service.
+ */
+function extractPdfText(raw: string): string {
+  const texts: string[] = [];
+
+  // Extract text between BT and ET operators (PDF text objects)
+  const textObjRegex = /BT\s([\s\S]*?)ET/g;
+  let match;
+  while ((match = textObjRegex.exec(raw)) !== null) {
+    const block = match[1];
+    // Extract strings in parentheses: (text) Tj or (text) TJ
+    const strRegex = /\(([^)]*)\)/g;
+    let strMatch;
+    while ((strMatch = strRegex.exec(block)) !== null) {
+      const decoded = strMatch[1]
+        .replace(/\\n/g, '\n')
+        .replace(/\\r/g, '')
+        .replace(/\\t/g, ' ')
+        .replace(/\\\(/g, '(')
+        .replace(/\\\)/g, ')')
+        .replace(/\\\\/g, '\\');
+      if (decoded.trim()) texts.push(decoded);
+    }
+  }
+
+  // Also try to extract from stream content (for simpler PDFs)
+  if (texts.length === 0) {
+    const streamRegex = /stream\r?\n([\s\S]*?)endstream/g;
+    while ((match = streamRegex.exec(raw)) !== null) {
+      // Look for readable ASCII text sequences
+      const readable = match[1].replace(/[^\x20-\x7E\n]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (readable.length > 20) texts.push(readable);
+    }
+  }
+
+  const result = texts.join(' ').replace(/\s+/g, ' ').trim();
+  return result || '[PDF text extraction found no readable text — file may contain images only]';
 }

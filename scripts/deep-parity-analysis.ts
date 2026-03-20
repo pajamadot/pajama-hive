@@ -378,7 +378,7 @@ function analyzeFrontendUX(): UXGap[] {
     ['ToolArea', 'agent-ide', '/agents/[id] skills tab'],
     ['ModelManager', 'agent-ide', '/settings/models'],
     ['FabricEditor', 'workflow/fabric-canvas', '/workflows/[id] React Flow'],
-    ['FabricPreview', 'workflow/fabric-canvas', null],
+    ['FabricPreview', 'workflow/fabric-canvas', '/workflows/[id]/preview'],
     ['NodeTemplateList', 'workflow/nodes', '/workflows/[id] palette'],
     ['TestRunner', 'workflow/test-run', '/workflows/[id] test run button'],
     ['WorkflowHistory', 'workflow/history', '/workflows/[id]/runs/[runId]'],
@@ -489,9 +489,9 @@ function analyzeIntegrationFlows(): IntegrationFlow[] {
     },
     {
       name: 'PDF Document Pipeline',
-      steps: ['Upload PDF file', 'Extract text from PDF', 'Chunk extracted text', 'Generate embeddings', 'Search works'],
-      status: 'partial',
-      missingStep: 'PDF text extraction (needs external parser — binary PDFs cannot be parsed in CF Workers)',
+      steps: ['Upload PDF file', 'Extract text from PDF binary', 'Chunk extracted text', 'Generate embeddings', 'Search works'],
+      status: 'working',
+      missingStep: null,
     },
     {
       name: 'Conversation Branching',
