@@ -1,9 +1,11 @@
 'use client';
 
 import { useAuth } from '@clerk/nextjs';
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, useCallback, use } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://hive-api.pajamadot.com';
 
 interface AgentData {
   id: string;
@@ -24,6 +26,7 @@ interface AgentConfigData {
   suggestedReplies: string[] | null;
   knowledgeBaseIds: string[] | null;
   pluginIds: string[] | null;
+  workflowId?: string;
   modelConfigId: string | null;
 }
 
@@ -40,6 +43,9 @@ export default function AgentEditorPage({ params }: { params: Promise<{ id: stri
   const [testMessage, setTestMessage] = useState('');
   const [testResponse, setTestResponse] = useState('');
   const [testing, setTesting] = useState(false);
+  const [availablePlugins, setAvailablePlugins] = useState<{ id: string; name: string }[]>([]);
+  const [availableKBs, setAvailableKBs] = useState<{ id: string; name: string }[]>([]);
+  const [availableWorkflows, setAvailableWorkflows] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -58,6 +64,25 @@ export default function AgentEditorPage({ params }: { params: Promise<{ id: stri
     }
     load();
   }, [getToken, id]);
+
+  // Load available resources for attachment
+  useEffect(() => {
+    async function loadResources() {
+      const token = await getToken();
+      if (!token) return;
+      try {
+        const [pluginData, kbData, wfData] = await Promise.all([
+          api.listPlugins(token, 'default').catch(() => ({ plugins: [] })),
+          api.listKnowledgeBases(token, 'default').catch(() => ({ knowledgeBases: [] })),
+          api.listWorkflows(token, 'default').catch(() => ({ workflows: [] })),
+        ]);
+        setAvailablePlugins((pluginData.plugins ?? []).map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })));
+        setAvailableKBs((kbData.knowledgeBases ?? []).map((k: { id: string; name: string }) => ({ id: k.id, name: k.name })));
+        setAvailableWorkflows((wfData.workflows ?? []).map((w: { id: string; name: string }) => ({ id: w.id, name: w.name })));
+      } catch { /* */ }
+    }
+    loadResources();
+  }, [getToken]);
 
   async function handleSave() {
     if (!config) return;
@@ -218,42 +243,118 @@ export default function AgentEditorPage({ params }: { params: Promise<{ id: stri
           </div>
         )}
 
-        {activeTab === 'skills' && (
+        {activeTab === 'skills' && config && (
           <div className="max-w-3xl">
             <h3 className="text-lg font-medium mb-4">Plugins & Tools</h3>
             <p className="text-muted-foreground text-sm mb-4">Attach plugins to give your agent external capabilities.</p>
-            <div className="border rounded-lg p-8 text-center text-muted-foreground">
-              <p>No plugins attached yet.</p>
-              <Link href="/plugins" className="text-sm text-blue-400 hover:text-blue-300 mt-2 inline-block">
-                Browse plugins →
-              </Link>
-            </div>
+
+            {/* Attached plugins */}
+            {(config.pluginIds ?? []).length > 0 && (
+              <div className="space-y-2 mb-4">
+                {(config.pluginIds ?? []).map((pid) => {
+                  const plug = availablePlugins.find((p) => p.id === pid);
+                  return (
+                    <div key={pid} className="flex items-center justify-between border rounded-lg px-3 py-2">
+                      <span className="text-sm">{plug?.name ?? pid}</span>
+                      <button onClick={() => setConfig({ ...config, pluginIds: (config.pluginIds ?? []).filter((p) => p !== pid) })}
+                        className="text-xs text-red-400 hover:text-red-300">Remove</button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Add plugin */}
+            {availablePlugins.length > 0 ? (
+              <select onChange={(e) => {
+                if (!e.target.value) return;
+                const current = config.pluginIds ?? [];
+                if (!current.includes(e.target.value)) {
+                  setConfig({ ...config, pluginIds: [...current, e.target.value] });
+                }
+                e.target.value = '';
+              }} className="w-full px-3 py-2 border rounded-lg bg-background text-sm" defaultValue="">
+                <option value="">+ Add a plugin...</option>
+                {availablePlugins.filter((p) => !(config.pluginIds ?? []).includes(p.id)).map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            ) : (
+              <div className="border rounded-lg p-4 text-center text-muted-foreground text-sm">
+                No plugins available. <Link href="/plugins" className="text-blue-400 hover:text-blue-300">Create one →</Link>
+              </div>
+            )}
           </div>
         )}
 
-        {activeTab === 'knowledge' && (
+        {activeTab === 'knowledge' && config && (
           <div className="max-w-3xl">
             <h3 className="text-lg font-medium mb-4">Knowledge Bases</h3>
             <p className="text-muted-foreground text-sm mb-4">Attach knowledge bases for RAG-powered responses.</p>
-            <div className="border rounded-lg p-8 text-center text-muted-foreground">
-              <p>No knowledge bases attached yet.</p>
-              <Link href="/knowledge" className="text-sm text-blue-400 hover:text-blue-300 mt-2 inline-block">
-                Browse knowledge bases →
-              </Link>
-            </div>
+
+            {(config.knowledgeBaseIds ?? []).length > 0 && (
+              <div className="space-y-2 mb-4">
+                {(config.knowledgeBaseIds ?? []).map((kbId) => {
+                  const kb = availableKBs.find((k) => k.id === kbId);
+                  return (
+                    <div key={kbId} className="flex items-center justify-between border rounded-lg px-3 py-2">
+                      <span className="text-sm">{kb?.name ?? kbId}</span>
+                      <button onClick={() => setConfig({ ...config, knowledgeBaseIds: (config.knowledgeBaseIds ?? []).filter((k) => k !== kbId) })}
+                        className="text-xs text-red-400 hover:text-red-300">Remove</button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {availableKBs.length > 0 ? (
+              <select onChange={(e) => {
+                if (!e.target.value) return;
+                const current = config.knowledgeBaseIds ?? [];
+                if (!current.includes(e.target.value)) {
+                  setConfig({ ...config, knowledgeBaseIds: [...current, e.target.value] });
+                }
+                e.target.value = '';
+              }} className="w-full px-3 py-2 border rounded-lg bg-background text-sm" defaultValue="">
+                <option value="">+ Add a knowledge base...</option>
+                {availableKBs.filter((k) => !(config.knowledgeBaseIds ?? []).includes(k.id)).map((k) => (
+                  <option key={k.id} value={k.id}>{k.name}</option>
+                ))}
+              </select>
+            ) : (
+              <div className="border rounded-lg p-4 text-center text-muted-foreground text-sm">
+                No knowledge bases available. <Link href="/knowledge" className="text-blue-400 hover:text-blue-300">Create one →</Link>
+              </div>
+            )}
           </div>
         )}
 
-        {activeTab === 'workflows' && (
+        {activeTab === 'workflows' && config && (
           <div className="max-w-3xl">
             <h3 className="text-lg font-medium mb-4">Workflow</h3>
             <p className="text-muted-foreground text-sm mb-4">Attach a workflow for complex multi-step agent behavior.</p>
-            <div className="border rounded-lg p-8 text-center text-muted-foreground">
-              <p>No workflow attached yet.</p>
-              <Link href="/workflows" className="text-sm text-blue-400 hover:text-blue-300 mt-2 inline-block">
-                Browse workflows →
-              </Link>
-            </div>
+
+            {config.workflowId ? (
+              <div className="flex items-center justify-between border rounded-lg px-3 py-2 mb-4">
+                <span className="text-sm">{availableWorkflows.find((w) => w.id === config.workflowId)?.name ?? config.workflowId}</span>
+                <button onClick={() => setConfig({ ...config, workflowId: undefined })}
+                  className="text-xs text-red-400 hover:text-red-300">Remove</button>
+              </div>
+            ) : availableWorkflows.length > 0 ? (
+              <select onChange={(e) => {
+                if (!e.target.value) return;
+                setConfig({ ...config, workflowId: e.target.value });
+              }} className="w-full px-3 py-2 border rounded-lg bg-background text-sm" defaultValue="">
+                <option value="">Select a workflow...</option>
+                {availableWorkflows.map((w) => (
+                  <option key={w.id} value={w.id}>{w.name}</option>
+                ))}
+              </select>
+            ) : (
+              <div className="border rounded-lg p-4 text-center text-muted-foreground text-sm">
+                No workflows available. <Link href="/workflows" className="text-blue-400 hover:text-blue-300">Create one →</Link>
+              </div>
+            )}
           </div>
         )}
 

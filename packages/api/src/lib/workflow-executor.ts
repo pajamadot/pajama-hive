@@ -7,8 +7,9 @@
 import { nanoid } from 'nanoid';
 import { eq } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
-import { workflowNodes, workflowEdges, workflowRuns, workflowTraces } from '../db/schema.js';
+import { workflowNodes, workflowEdges, workflowRuns, workflowTraces, documentChunks, userTableRows } from '../db/schema.js';
 import { chatCompletion } from './llm.js';
+import { executePluginTool } from './plugin-executor.js';
 
 interface NodeExec {
   id: string;
@@ -181,21 +182,126 @@ async function executeNode(ctx: ExecutionContext, node: NodeExec): Promise<Recor
         result = { output: config.message ?? ctx.variables._lastOutput };
         break;
 
-      case 'knowledge_retrieval':
-      case 'plugin':
-      case 'database':
-      case 'image_gen':
+      case 'knowledge_retrieval': {
+        const kbId = config.knowledgeBaseId as string;
+        const queryText = String(ctx.variables._lastOutput ?? config.query ?? '');
+        const topK = (config.topK as number) ?? 5;
+        if (!kbId) { result = { output: [], error: 'No knowledge base configured' }; break; }
+
+        // Keyword search on chunks (vector search requires async embedding call)
+        const chunks = await ctx.db.select().from(documentChunks)
+          .where(eq(documentChunks.knowledgeBaseId, kbId));
+        const terms = queryText.toLowerCase().split(/\s+/).filter((t) => t.length > 2);
+        const scored = chunks.map((c) => {
+          const lower = c.content.toLowerCase();
+          const score = terms.filter((t) => lower.includes(t)).length;
+          return { content: c.content, score, chunkIndex: c.chunkIndex };
+        }).filter((c) => c.score > 0).sort((a, b) => b.score - a.score).slice(0, topK);
+        result = { output: scored };
+        break;
+      }
+
+      case 'plugin': {
+        const toolId = config.toolId as string;
+        if (!toolId) { result = { output: null, error: 'No tool ID configured' }; break; }
+        const pluginInput = (config.input as Record<string, unknown>) ?? ctx.variables._lastOutput ?? {};
+        const execResult = await executePluginTool(ctx.db, toolId, typeof pluginInput === 'object' ? pluginInput as Record<string, unknown> : {});
+        result = { output: execResult.data, success: execResult.success, statusCode: execResult.statusCode };
+        break;
+      }
+
+      case 'database': {
+        const tableId = config.tableId as string;
+        const operation = (config.operation as string) ?? 'read';
+        if (!tableId) { result = { output: null, error: 'No table configured' }; break; }
+
+        if (operation === 'read') {
+          const rows = await ctx.db.select().from(userTableRows)
+            .where(eq(userTableRows.tableId, tableId)).limit(100);
+          result = { output: rows.map((r) => r.data) };
+        } else {
+          result = { output: null, message: `Database ${operation} not yet implemented in workflow` };
+        }
+        break;
+      }
+
+      case 'loop': {
+        const items = Array.isArray(ctx.variables._lastOutput) ? ctx.variables._lastOutput : [];
+        const maxIter = (config.maxIterations as number) ?? 100;
+        const loopResults: unknown[] = [];
+        for (let i = 0; i < Math.min(items.length, maxIter); i++) {
+          ctx.variables._loopIndex = i;
+          ctx.variables._loopItem = items[i];
+          loopResults.push(items[i]);
+        }
+        result = { output: loopResults };
+        break;
+      }
+
+      case 'batch': {
+        const items = Array.isArray(ctx.variables._lastOutput) ? ctx.variables._lastOutput : [];
+        const batchSize = (config.batchSize as number) ?? 10;
+        const batches: unknown[][] = [];
+        for (let i = 0; i < items.length; i += batchSize) {
+          batches.push(items.slice(i, i + batchSize));
+        }
+        result = { output: batches };
+        break;
+      }
+
+      case 'selector': {
+        const expression = (config.expression as string) ?? '0';
+        const items = Array.isArray(ctx.variables._lastOutput) ? ctx.variables._lastOutput : [];
+        try {
+          const fn = new Function('items', 'variables', `'use strict'; return items[${expression}]`);
+          result = { output: fn(items, ctx.variables) };
+        } catch {
+          result = { output: items[0] ?? null };
+        }
+        break;
+      }
+
+      case 'variable_assigner': {
+        const assignments = (config.assignments as Record<string, unknown>) ?? {};
+        for (const [key, value] of Object.entries(assignments)) {
+          ctx.variables[key] = value;
+        }
+        result = { output: assignments };
+        break;
+      }
+
+      case 'intent_detector': {
+        const inputText = String(ctx.variables._lastOutput ?? '');
+        const intents = (config.intents as string[]) ?? [];
+        // Use LLM to detect intent
+        try {
+          const resp = await chatCompletion(ctx.db, ctx.workspaceId, [
+            { role: 'system', content: `Classify the following text into one of these intents: ${intents.join(', ')}. Respond with only the intent name.` },
+            { role: 'user', content: inputText },
+          ], { temperature: 0 });
+          result = { output: resp.content.trim(), branch: resp.content.trim() };
+        } catch {
+          result = { output: intents[0] ?? 'unknown', branch: intents[0] ?? 'unknown' };
+        }
+        break;
+      }
+
+      case 'qa': {
+        const question = String(ctx.variables._lastOutput ?? config.question ?? '');
+        const context = (config.context as string) ?? '';
+        const resp = await chatCompletion(ctx.db, ctx.workspaceId, [
+          { role: 'system', content: `Answer the question based on the given context.\n\nContext:\n${context}` },
+          { role: 'user', content: question },
+        ]);
+        result = { output: resp.content };
+        break;
+      }
+
       case 'sub_workflow':
-      case 'batch':
-      case 'loop':
-      case 'selector':
-      case 'intent_detector':
-      case 'variable_assigner':
-      case 'qa':
+      case 'image_gen':
       case 'emitter':
       case 'receiver':
-        // These need more complex implementations — mark as stub for now
-        result = { output: null, _stub: true, message: `Node type '${node.nodeType}' execution not yet implemented` };
+        result = { output: ctx.variables._lastOutput, _stub: true, message: `Node type '${node.nodeType}' not yet implemented` };
         break;
 
       default:

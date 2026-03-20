@@ -6,6 +6,7 @@ import { createDb } from '../db/client.js';
 import { knowledgeBases, documents, documentChunks } from '../db/schema.js';
 import { clerkAuth } from '../lib/auth.js';
 import { processDocument } from '../lib/chunker.js';
+import { generateEmbeddings, vectorSearch } from '../lib/embeddings.js';
 import type { Env } from '../types/index.js';
 
 type HonoEnv = { Bindings: Env; Variables: { userId: string } };
@@ -142,6 +143,18 @@ app.post('/:id/documents', async (c) => {
       );
     }
 
+    // Generate embeddings (best-effort — skip if no embedding provider)
+    try {
+      const embeds = await generateEmbeddings(db, kb?.workspaceId ?? 'default', chunks.map((c) => c.content), kb?.embeddingModelId);
+      if (embeds && embeds.length === chunks.length) {
+        const { sql } = await import('drizzle-orm');
+        for (let i = 0; i < chunks.length; i++) {
+          const vec = `[${embeds[i].embedding.join(',')}]`;
+          await db.execute(sql`UPDATE document_chunks SET embedding_vec = ${vec}::vector WHERE id = ${chunks[i].id}`);
+        }
+      }
+    } catch { /* embedding provider not configured — keyword search still works */ }
+
     // Mark document as completed
     await db.update(documents).set({
       status: 'completed',
@@ -213,23 +226,37 @@ app.post('/:id/search', async (c) => {
   const query = body.query;
   if (!query) return c.json({ error: 'query required' }, 400);
 
-  // Basic keyword search using SQL ILIKE (will upgrade to pgvector when embeddings are added)
   const limit = body.limit ?? 10;
+  const mode = body.mode ?? 'auto'; // 'vector', 'keyword', 'auto'
 
+  // Get KB workspace for embedding provider resolution
+  const [kb] = await db.select().from(knowledgeBases).where(eq(knowledgeBases.id, kbId));
+  const workspaceId = kb?.workspaceId ?? 'default';
+
+  // Try vector search first (if mode is 'vector' or 'auto')
+  if (mode !== 'keyword') {
+    try {
+      const vecResults = await vectorSearch(db, workspaceId, kbId, query, limit, kb?.embeddingModelId);
+      if (vecResults.length > 0) {
+        return c.json({ results: vecResults, total: vecResults.length, mode: 'vector' });
+      }
+    } catch { /* vector search failed — fall through to keyword */ }
+  }
+
+  // Keyword fallback
   const allChunks = await db.select().from(documentChunks)
     .where(eq(documentChunks.knowledgeBaseId, kbId));
 
-  // Simple relevance: filter chunks containing query terms, rank by match count
   const queryTerms = query.toLowerCase().split(/\s+/).filter((t: string) => t.length > 2);
   const scored = allChunks.map((chunk) => {
     const lower = chunk.content.toLowerCase();
     const matchCount = queryTerms.filter((term: string) => lower.includes(term)).length;
-    return { ...chunk, score: matchCount };
+    return { ...chunk, score: matchCount / Math.max(queryTerms.length, 1) };
   }).filter((c) => c.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 
-  return c.json({ results: scored, total: scored.length });
+  return c.json({ results: scored, total: scored.length, mode: 'keyword' });
 });
 
 export default app;

@@ -33,5 +33,10 @@ new_classes = ["WsRoom", "Orchestrator"]
 tag = "v2"
 new_classes = ["MetaObserverDO"]
 
+# R2 storage for file uploads
+[[r2_buckets]]
+bucket_name = "hive-uploads"
+binding = "UPLOADS_BUCKET"
+
 [vars]
 ENVIRONMENT = "development"

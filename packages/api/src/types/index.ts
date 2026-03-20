@@ -7,6 +7,9 @@ export interface Env {
   ORCHESTRATOR: DurableObjectNamespace;
   META_OBSERVER: DurableObjectNamespace;
 
+  // R2 storage
+  UPLOADS_BUCKET: R2Bucket;
+
   // Secrets
   CLERK_SECRET_KEY: string;
   CLERK_PUBLISHABLE_KEY: string;
