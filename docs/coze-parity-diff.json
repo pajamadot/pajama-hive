@@ -1,55 +1,55 @@
 {
-  "timestamp": "2026-03-20T19:59:01.135Z",
+  "timestamp": "2026-03-20T20:10:27.697Z",
   "coze": {
     "endpoints": 244,
     "tables": 55,
     "routes": 25
   },
   "hive": {
-    "endpoints": 190,
+    "endpoints": 275,
     "tables": 54,
     "pages": 25
   },
   "endpointMapping": [
     {
       "cozeEndpoint": "GET /api/admin/config/basic/get",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/basic/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/admin/config/basic/save",
-      "hiveEquivalent": "POST /v1/graphs/:graphId/save-template",
+      "hiveEquivalent": "POST /v1/coze-compat/api/workflow_api/save",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /api/admin/config/knowledge/get",
-      "hiveEquivalent": "GET /v1/knowledge",
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/basic/get",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/admin/config/knowledge/save",
-      "hiveEquivalent": "POST /v1/graphs/:graphId/save-template",
+      "hiveEquivalent": "POST /v1/coze-compat/api/workflow_api/save",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/admin/config/model/create",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/create_section",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/admin/config/model/delete",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/delete_message",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /api/admin/config/model/list",
-      "hiveEquivalent": "GET /v1/graphs/templates/list",
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/model/list",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/bot/get_type_list",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/bot/upload_file",
@@ -58,8 +58,8 @@
     },
     {
       "cozeEndpoint": "GET /api/common/upload/apply_upload_action",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "GET /v1/coze-compat/api/common/upload/apply_upload_action",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/common/upload/apply_upload_action",
@@ -73,8 +73,8 @@
     },
     {
       "cozeEndpoint": "POST /api/conversation/break_message",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/break_message",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/conversation/chat",
@@ -88,38 +88,38 @@
     },
     {
       "cozeEndpoint": "POST /api/conversation/create_section",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/create_section",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/conversation/delete_message",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/delete_message",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/conversation/get_message_list",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/get_message_list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/developer/get_icon",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/draftbot/commit_check",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/commit_check",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/draftbot/create",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/create_section",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/draftbot/delete",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/delete_message",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/draftbot/duplicate",
@@ -128,13 +128,13 @@
     },
     {
       "cozeEndpoint": "POST /api/draftbot/get_display_info",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/get_display_info",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/draftbot/list_draft_history",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/list_draft_history",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/draftbot/publish",
@@ -143,8 +143,8 @@
     },
     {
       "cozeEndpoint": "POST /api/draftbot/update_display_info",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/update_display_info",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/draftbot/publish/connector/list",
@@ -153,28 +153,28 @@
     },
     {
       "cozeEndpoint": "POST /api/intelligence_api/draft_project/copy",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/intelligence_api/draft_project/copy",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/intelligence_api/draft_project/create",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/create_section",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/intelligence_api/draft_project/delete",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/delete_message",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/intelligence_api/draft_project/inner_task_list",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/intelligence_api/draft_project/update",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/update_display_info",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/intelligence_api/publish/check_version_number",
@@ -208,57 +208,57 @@
     },
     {
       "cozeEndpoint": "POST /api/intelligence_api/search/get_draft_intelligence_info",
-      "hiveEquivalent": "POST /v1/knowledge/:id/search",
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/intelligence_api/search/get_draft_intelligence_list",
-      "hiveEquivalent": "POST /v1/knowledge/:id/search",
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/list",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/intelligence_api/search/get_recently_edit_intelligence",
-      "hiveEquivalent": "POST /v1/knowledge/:id/search",
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/create",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/create_section",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/delete",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/delete_message",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/detail",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/detail",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/list",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/get_message_list",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/update",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/update_display_info",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/document/create",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/create_section",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/document/delete",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/delete_message",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/document/list",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/get_message_list",
       "status": "mapped"
     },
     {
@@ -268,17 +268,17 @@
     },
     {
       "cozeEndpoint": "POST /api/knowledge/document/update",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/update_display_info",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/document/progress/get",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/get_message_list",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/icon/get",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/get_message_list",
       "status": "mapped"
     },
     {
@@ -288,7 +288,7 @@
     },
     {
       "cozeEndpoint": "POST /api/knowledge/photo/detail",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/detail",
       "status": "mapped"
     },
     {
@@ -298,52 +298,52 @@
     },
     {
       "cozeEndpoint": "POST /api/knowledge/photo/list",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/get_message_list",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/review/create",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/create_section",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/review/mget",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/review/save",
-      "hiveEquivalent": "POST /v1/graphs/:graphId/save-template",
+      "hiveEquivalent": "POST /v1/coze-compat/api/workflow_api/save",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/slice/create",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/create_section",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/slice/delete",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/delete_message",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/slice/list",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/get_message_list",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/slice/update",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/update_display_info",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/table_schema/get",
-      "hiveEquivalent": "POST /v1/databases/:id/tables",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/get_message_list",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/knowledge/table_schema/validate",
-      "hiveEquivalent": "POST /v1/databases/:id/tables",
+      "hiveEquivalent": "POST /v1/coze-compat/api/workflow_api/validate_tree",
       "status": "mapped"
     },
     {
@@ -353,7 +353,7 @@
     },
     {
       "cozeEndpoint": "GET /api/marketplace/product/config",
-      "hiveEquivalent": "GET /v1/marketplace",
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/model/list",
       "status": "mapped"
     },
     {
@@ -373,12 +373,12 @@
     },
     {
       "cozeEndpoint": "GET /api/marketplace/product/favorite/list.v2",
-      "hiveEquivalent": "GET /v1/graphs/templates/list",
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/model/list",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /api/marketplace/product/list",
-      "hiveEquivalent": "GET /v1/graphs/templates/list",
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/model/list",
       "status": "mapped"
     },
     {
@@ -393,93 +393,93 @@
     },
     {
       "cozeEndpoint": "GET /api/marketplace/product/category/list",
-      "hiveEquivalent": "GET /v1/graphs/templates/list",
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/model/list",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /api/memory/doc_table_info",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "GET /v1/coze-compat/api/memory/doc_table_info",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /api/memory/sys_variable_conf",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "GET /v1/coze-compat/api/memory/sys_variable_conf",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /api/memory/table_mode_config",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "GET /v1/coze-compat/api/memory/table_mode_config",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/database/add",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/database/add",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/database/bind_to_bot",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/database/bind_to_bot",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/database/delete",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/delete_message",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/database/get_by_id",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/database/get_connector_name",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/database/get_online_database_id",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/database/get_template",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/database/list",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/get_message_list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/database/list_records",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/database/unbind_to_bot",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/database/bind_to_bot",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/database/update",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/update_display_info",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/database/update_bot_switch",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/update",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/database/update_records",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/update",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/database/table/list_new",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/database/table/reset",
@@ -488,118 +488,118 @@
     },
     {
       "cozeEndpoint": "GET /api/memory/project/variable/meta_list",
-      "hiveEquivalent": "GET /v1/graphs/templates/list",
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/model/list",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/project/variable/meta_update",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/update",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/table_file/get_progress",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/table_file/submit",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/table_file/submit",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/table_schema/get",
-      "hiveEquivalent": "POST /v1/databases/:id/tables",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/get_message_list",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/table_schema/validate",
-      "hiveEquivalent": "POST /v1/databases/:id/tables",
+      "hiveEquivalent": "POST /v1/coze-compat/api/workflow_api/validate_tree",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/variable/delete",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/delete_message",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/variable/get",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/get_message_list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/variable/get_meta",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/memory/variable/upsert",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/upsert",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /api/oauth/authorization_code",
+      "hiveEquivalent": "GET /v1/coze-compat/api/oauth/authorization_code",
+      "status": "mapped"
+    },
+    {
+      "cozeEndpoint": "POST /api/passport/account/info/v2/",
       "hiveEquivalent": null,
       "status": "missing"
     },
     {
-      "cozeEndpoint": "POST /api/passport/account/info/v2/",
-      "hiveEquivalent": "POST /v1/agents",
-      "status": "mapped"
-    },
-    {
       "cozeEndpoint": "POST /api/passport/web/email/login/",
-      "hiveEquivalent": "POST /v1/agents",
-      "status": "mapped"
+      "hiveEquivalent": null,
+      "status": "missing"
     },
     {
       "cozeEndpoint": "GET /api/passport/web/email/password/reset/",
-      "hiveEquivalent": "GET /v1/agents",
-      "status": "mapped"
+      "hiveEquivalent": null,
+      "status": "missing"
     },
     {
       "cozeEndpoint": "POST /api/passport/web/email/register/v2/",
-      "hiveEquivalent": "POST /v1/agents",
+      "hiveEquivalent": "POST /v1/workers/register",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /api/passport/web/logout/",
-      "hiveEquivalent": "GET /v1/agents",
-      "status": "mapped"
+      "hiveEquivalent": null,
+      "status": "missing"
     },
     {
       "cozeEndpoint": "POST /api/permission_api/coze_web_app/impersonate_coze_user",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/permission_api/coze_web_app/impersonate_coze_user",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/permission_api/pat/create_personal_access_token_and_permission",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/create",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/permission_api/pat/delete_personal_access_token_and_permission",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/delete",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /api/permission_api/pat/get_personal_access_token_and_permission",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/basic/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /api/permission_api/pat/list_personal_access_tokens",
-      "hiveEquivalent": "GET /v1/graphs/templates/list",
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/model/list",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/permission_api/pat/update_personal_access_token_and_permission",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/update",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/playground/get_onboarding",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/playground/upload/auth_token",
@@ -608,98 +608,98 @@
     },
     {
       "cozeEndpoint": "POST /api/playground_api/create_update_shortcut_command",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/create",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/playground_api/delete_prompt_resource",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/delete",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/playground_api/get_file_list",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/playground_api/get_imagex_url",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/playground_api/get_official_prompt_list",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /api/playground_api/get_prompt_resource_info",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/basic/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/playground_api/mget_user_info",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/playground_api/report_user_behavior",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/playground_api/report_user_behavior",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/playground_api/upsert_prompt_resource",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/upsert",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/playground_api/draftbot/get_draft_bot_info",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/playground_api/draftbot/update_draft_bot_info",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/update",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/playground_api/operate/get_bot_popup_info",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/playground_api/operate/update_bot_popup_info",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/update",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/playground_api/space/list",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/get_message_list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin/get_oauth_schema",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/batch_create_api",
-      "hiveEquivalent": "POST /v1/graphs/:graphId/tasks/batch",
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/create",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/check_and_lock_plugin_edit",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/plugin_api/check_and_lock_plugin_edit",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/convert_to_openapi",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/plugin_api/convert_to_openapi",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/create_api",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/create",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/debug_api",
@@ -708,78 +708,78 @@
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/del_plugin",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/plugin_api/del_plugin",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/delete_api",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/delete",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/get_bot_default_params",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/get_dev_plugin_list",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/get_oauth_schema",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/get_oauth_status",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/get_playground_plugin_list",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/get_plugin_apis",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/get_plugin_info",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/get_plugin_next_version",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/get_queried_oauth_plugins",
-      "hiveEquivalent": "POST /v1/plugins",
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/get_updated_apis",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/update",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/get_user_authority",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/library_resource_list",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/project_resource_list",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/publish_plugin",
@@ -798,22 +798,22 @@
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/resource_copy_cancel",
-      "hiveEquivalent": "POST /v1/graphs/:graphId/runs/:runId/cancel",
+      "hiveEquivalent": "POST /v1/coze-compat/api/intelligence_api/draft_project/copy",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/resource_copy_detail",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/detail",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/resource_copy_dispatch",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/intelligence_api/draft_project/copy",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/resource_copy_retry",
-      "hiveEquivalent": "POST /v1/tasks/:taskId/retry",
+      "hiveEquivalent": "POST /v1/coze-compat/api/intelligence_api/draft_project/copy",
       "status": "mapped"
     },
     {
@@ -823,42 +823,42 @@
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/unlock_plugin_edit",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/plugin_api/unlock_plugin_edit",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/update",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/update_display_info",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/update_api",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/update",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/update_bot_default_params",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/update",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/plugin_api/update_plugin_meta",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/update",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/user/update_profile",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/update",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/user/update_profile_check",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/update",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/web/user/update/upload_avatar/",
-      "hiveEquivalent": "POST /v1/agents",
+      "hiveEquivalent": "POST /v1/conversations/:id/messages/upload",
       "status": "mapped"
     },
     {
@@ -868,7 +868,7 @@
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/batch_delete",
-      "hiveEquivalent": "POST /v1/graphs/:graphId/tasks/batch",
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/delete",
       "status": "mapped"
     },
     {
@@ -878,58 +878,58 @@
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/canvas",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/workflow_api/canvas",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/copy",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/intelligence_api/draft_project/copy",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/copy_wk_template",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/intelligence_api/draft_project/copy",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/create",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/create_section",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/delete",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/delete_message",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/delete_strategy",
-      "hiveEquivalent": "POST /v1/models/providers/:id/test",
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/delete",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/example_workflow_list",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /api/workflow_api/get_node_execute_history",
-      "hiveEquivalent": "GET /v1/meta/health/history",
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/basic/get",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /api/workflow_api/get_process",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/basic/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/get_trace",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/memory/variable/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/history_schema",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/workflow_api/history_schema",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/list_publish_workflow",
@@ -938,18 +938,18 @@
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/list_spans",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/llm_fc_setting_detail",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/detail",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/llm_fc_setting_merged",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/workflow_api/llm_fc_setting_merged",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/nodeDebug",
@@ -963,13 +963,13 @@
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/node_template_list",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/node_type",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/workflow_api/node_type",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/publish",
@@ -983,7 +983,7 @@
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/save",
-      "hiveEquivalent": "POST /v1/graphs/:graphId/save-template",
+      "hiveEquivalent": "POST /v1/coze-compat/api/workflow_api/save",
       "status": "mapped"
     },
     {
@@ -998,38 +998,38 @@
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/test_run",
-      "hiveEquivalent": "POST /v1/models/providers/:id/test",
+      "hiveEquivalent": "POST /v1/coze-compat/api/workflow_api/test_run",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/update_meta",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/update",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/validate_tree",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/workflow_api/validate_tree",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/workflow_detail",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/detail",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/workflow_detail_info",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/detail",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/workflow_list",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/knowledge/list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/workflow_references",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/workflow_api/workflow_references",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/chat_flow_role/create",
@@ -1043,28 +1043,28 @@
     },
     {
       "cozeEndpoint": "GET /api/workflow_api/chat_flow_role/get",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/basic/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/project_conversation/create",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/create_section",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/project_conversation/delete",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/delete_message",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /api/workflow_api/project_conversation/list",
-      "hiveEquivalent": "GET /v1/graphs/templates/list",
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/model/list",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/project_conversation/update",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/update_display_info",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /api/workflow_api/upload/auth_token",
@@ -1073,22 +1073,22 @@
     },
     {
       "cozeEndpoint": "POST /open_api/knowledge/document/create",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/create_section",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /open_api/knowledge/document/list",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/get_message_list",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /open_api/knowledge/document/delete",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/delete_message",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /open_api/knowledge/document/update",
-      "hiveEquivalent": "POST /v1/knowledge",
+      "hiveEquivalent": "POST /v1/coze-compat/api/draftbot/update_display_info",
       "status": "mapped"
     },
     {
@@ -1098,73 +1098,73 @@
     },
     {
       "cozeEndpoint": "DELETE /v1/conversations/:conversation_id",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "DELETE /v1/agents/:id",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "PUT /v1/conversations/:conversation_id",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "PUT /v1/agents/:id/config",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /v1/datasets",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "GET /v1/coze-compat/v1/datasets",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "DELETE /v1/datasets/:dataset_id",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "DELETE /v1/agents/:id",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /v1/datasets/:dataset_id/images",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "GET /v1/agents/:id",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /v1/datasets/:dataset_id/process",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/v1/datasets",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "PUT /v1/datasets/:dataset_id",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "PUT /v1/agents/:id/config",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /v1/datasets",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/v1/datasets",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /v1/apps/:app_id",
-      "hiveEquivalent": "GET /v1/apps",
+      "hiveEquivalent": "GET /v1/agents/:id",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /v1/bot/get_online_info",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/basic/get",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /v1/bots/:bot_id",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "GET /v1/agents/:id",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /v1/conversation/create",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/create_section",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /v1/conversation/retrieve",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "GET /v1/coze-compat/v3/chat/retrieve",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /v1/conversation/message/list",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/get_message_list",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /v1/conversations/:conversation_id/clear",
@@ -1178,12 +1178,12 @@
     },
     {
       "cozeEndpoint": "GET /v1/workflow/get_run_history",
-      "hiveEquivalent": "GET /v1/meta/health/history",
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/basic/get",
       "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /v1/workflow/run",
-      "hiveEquivalent": "POST /v1/graphs/:graphId/runs",
+      "hiveEquivalent": "POST /v1/coze-compat/api/workflow_api/test_run",
       "status": "mapped"
     },
     {
@@ -1198,8 +1198,8 @@
     },
     {
       "cozeEndpoint": "POST /v1/workflow/conversation/create",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "POST /v1/coze-compat/api/conversation/create_section",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "POST /v1/workflows/chat",
@@ -1208,7 +1208,7 @@
     },
     {
       "cozeEndpoint": "GET /v1/workflows/:workflow_id",
-      "hiveEquivalent": "GET /v1/workflows",
+      "hiveEquivalent": "GET /v1/agents/:id",
       "status": "mapped"
     },
     {
@@ -1223,12 +1223,12 @@
     },
     {
       "cozeEndpoint": "GET /v3/chat/retrieve",
-      "hiveEquivalent": null,
-      "status": "missing"
+      "hiveEquivalent": "GET /v1/coze-compat/v3/chat/retrieve",
+      "status": "mapped"
     },
     {
       "cozeEndpoint": "GET /v3/chat/message/list",
-      "hiveEquivalent": "GET /v1/graphs/templates/list",
+      "hiveEquivalent": "GET /v1/coze-compat/api/admin/config/model/list",
       "status": "mapped"
     }
   ],
@@ -1350,162 +1350,18 @@
   },
   "missingEndpointsByDomain": {
     "api": [
-      "GET /api/admin/config/basic/get",
-      "POST /api/admin/config/model/create",
-      "POST /api/admin/config/model/delete",
-      "POST /api/bot/get_type_list",
-      "GET /api/common/upload/apply_upload_action",
-      "POST /api/conversation/break_message",
-      "POST /api/conversation/create_section",
-      "POST /api/conversation/delete_message",
-      "POST /api/conversation/get_message_list",
-      "POST /api/developer/get_icon",
-      "POST /api/draftbot/commit_check",
-      "POST /api/draftbot/create",
-      "POST /api/draftbot/delete",
-      "POST /api/draftbot/get_display_info",
-      "POST /api/draftbot/list_draft_history",
-      "POST /api/draftbot/update_display_info",
-      "POST /api/intelligence_api/draft_project/copy",
-      "POST /api/intelligence_api/draft_project/create",
-      "POST /api/intelligence_api/draft_project/delete",
-      "POST /api/intelligence_api/draft_project/inner_task_list",
-      "POST /api/intelligence_api/draft_project/update",
-      "GET /api/memory/doc_table_info",
-      "GET /api/memory/sys_variable_conf",
-      "GET /api/memory/table_mode_config",
-      "POST /api/memory/database/add",
-      "POST /api/memory/database/bind_to_bot",
-      "POST /api/memory/database/delete",
-      "POST /api/memory/database/get_by_id",
-      "POST /api/memory/database/get_connector_name",
-      "POST /api/memory/database/get_online_database_id",
-      "POST /api/memory/database/get_template",
-      "POST /api/memory/database/list",
-      "POST /api/memory/database/list_records",
-      "POST /api/memory/database/unbind_to_bot",
-      "POST /api/memory/database/update",
-      "POST /api/memory/database/update_bot_switch",
-      "POST /api/memory/database/update_records",
-      "POST /api/memory/database/table/list_new",
-      "POST /api/memory/project/variable/meta_update",
-      "POST /api/memory/table_file/get_progress",
-      "POST /api/memory/table_file/submit",
-      "POST /api/memory/variable/delete",
-      "POST /api/memory/variable/get",
-      "POST /api/memory/variable/get_meta",
-      "POST /api/memory/variable/upsert",
-      "GET /api/oauth/authorization_code",
-      "POST /api/permission_api/coze_web_app/impersonate_coze_user",
-      "POST /api/permission_api/pat/create_personal_access_token_and_permission",
-      "POST /api/permission_api/pat/delete_personal_access_token_and_permission",
-      "GET /api/permission_api/pat/get_personal_access_token_and_permission",
-      "POST /api/permission_api/pat/update_personal_access_token_and_permission",
-      "POST /api/playground/get_onboarding",
-      "POST /api/playground_api/create_update_shortcut_command",
-      "POST /api/playground_api/delete_prompt_resource",
-      "POST /api/playground_api/get_file_list",
-      "POST /api/playground_api/get_imagex_url",
-      "POST /api/playground_api/get_official_prompt_list",
-      "GET /api/playground_api/get_prompt_resource_info",
-      "POST /api/playground_api/mget_user_info",
-      "POST /api/playground_api/report_user_behavior",
-      "POST /api/playground_api/upsert_prompt_resource",
-      "POST /api/playground_api/draftbot/get_draft_bot_info",
-      "POST /api/playground_api/draftbot/update_draft_bot_info",
-      "POST /api/playground_api/operate/get_bot_popup_info",
-      "POST /api/playground_api/operate/update_bot_popup_info",
-      "POST /api/playground_api/space/list",
-      "POST /api/plugin/get_oauth_schema",
-      "POST /api/plugin_api/check_and_lock_plugin_edit",
-      "POST /api/plugin_api/convert_to_openapi",
-      "POST /api/plugin_api/create_api",
-      "POST /api/plugin_api/del_plugin",
-      "POST /api/plugin_api/delete_api",
-      "POST /api/plugin_api/get_bot_default_params",
-      "POST /api/plugin_api/get_dev_plugin_list",
-      "POST /api/plugin_api/get_oauth_schema",
-      "POST /api/plugin_api/get_oauth_status",
-      "POST /api/plugin_api/get_playground_plugin_list",
-      "POST /api/plugin_api/get_plugin_apis",
-      "POST /api/plugin_api/get_plugin_info",
-      "POST /api/plugin_api/get_plugin_next_version",
-      "POST /api/plugin_api/get_updated_apis",
-      "POST /api/plugin_api/get_user_authority",
-      "POST /api/plugin_api/library_resource_list",
-      "POST /api/plugin_api/project_resource_list",
-      "POST /api/plugin_api/resource_copy_detail",
-      "POST /api/plugin_api/resource_copy_dispatch",
-      "POST /api/plugin_api/unlock_plugin_edit",
-      "POST /api/plugin_api/update",
-      "POST /api/plugin_api/update_api",
-      "POST /api/plugin_api/update_bot_default_params",
-      "POST /api/plugin_api/update_plugin_meta",
-      "POST /api/user/update_profile",
-      "POST /api/user/update_profile_check",
-      "POST /api/workflow_api/canvas",
-      "POST /api/workflow_api/copy",
-      "POST /api/workflow_api/copy_wk_template",
-      "POST /api/workflow_api/create",
-      "POST /api/workflow_api/delete",
-      "POST /api/workflow_api/example_workflow_list",
-      "GET /api/workflow_api/get_process",
-      "POST /api/workflow_api/get_trace",
-      "POST /api/workflow_api/history_schema",
-      "POST /api/workflow_api/list_spans",
-      "POST /api/workflow_api/llm_fc_setting_detail",
-      "POST /api/workflow_api/llm_fc_setting_merged",
-      "POST /api/workflow_api/node_template_list",
-      "POST /api/workflow_api/node_type",
-      "POST /api/workflow_api/update_meta",
-      "POST /api/workflow_api/validate_tree",
-      "POST /api/workflow_api/workflow_detail",
-      "POST /api/workflow_api/workflow_detail_info",
-      "POST /api/workflow_api/workflow_list",
-      "POST /api/workflow_api/workflow_references",
-      "GET /api/workflow_api/chat_flow_role/get",
-      "POST /api/workflow_api/project_conversation/create",
-      "POST /api/workflow_api/project_conversation/delete",
-      "POST /api/workflow_api/project_conversation/update"
-    ],
-    "v1": [
-      "DELETE /v1/conversations/:conversation_id",
-      "PUT /v1/conversations/:conversation_id",
-      "GET /v1/datasets",
-      "DELETE /v1/datasets/:dataset_id",
-      "GET /v1/datasets/:dataset_id/images",
-      "POST /v1/datasets/:dataset_id/process",
-      "PUT /v1/datasets/:dataset_id",
-      "POST /v1/datasets",
-      "GET /v1/bot/get_online_info",
-      "GET /v1/bots/:bot_id",
-      "POST /v1/conversation/create",
-      "GET /v1/conversation/retrieve",
-      "POST /v1/conversation/message/list",
-      "POST /v1/workflow/conversation/create"
-    ],
-    "v3": [
-      "GET /v3/chat/retrieve"
+      "POST /api/passport/account/info/v2/",
+      "POST /api/passport/web/email/login/",
+      "GET /api/passport/web/email/password/reset/",
+      "GET /api/passport/web/logout/"
     ]
   },
   "actionItems": [
     {
       "priority": "high",
       "category": "api/api",
-      "description": "117 Coze api endpoints not mapped in Hive",
-      "cozeReference": "GET /api/admin/config/basic/get, POST /api/admin/config/model/create, POST /api/admin/config/model/delete, POST /api/bot/get_type_list, GET /api/common/upload/apply_upload_action"
-    },
-    {
-      "priority": "high",
-      "category": "api/v1",
-      "description": "14 Coze v1 endpoints not mapped in Hive",
-      "cozeReference": "DELETE /v1/conversations/:conversation_id, PUT /v1/conversations/:conversation_id, GET /v1/datasets, DELETE /v1/datasets/:dataset_id, GET /v1/datasets/:dataset_id/images"
-    },
-    {
-      "priority": "medium",
-      "category": "api/v3",
-      "description": "Missing endpoint: GET /v3/chat/retrieve",
-      "cozeReference": "GET /v3/chat/retrieve"
+      "description": "4 Coze api endpoints not mapped in Hive",
+      "cozeReference": "POST /api/passport/account/info/v2/, POST /api/passport/web/email/login/, GET /api/passport/web/email/password/reset/, GET /api/passport/web/logout/"
     },
     {
       "priority": "low",
@@ -1838,5 +1694,5 @@
       "cozeReference": "docker/volumes/mysql/schema.sql → workflow_version"
     }
   ],
-  "score": 32
+  "score": 69
 }

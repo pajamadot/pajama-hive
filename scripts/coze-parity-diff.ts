@@ -276,16 +276,28 @@ function computeParityReport(): ParityReport {
   }
 
   // Map Coze endpoints to Hive equivalents
+  const normalizePath = (p: string) => p.toLowerCase().replace(/_/g, '').replace(/:[^/]+/g, ':p').replace(/\/+$/, '');
   const endpointMapping = cozeEndpoints.map((cozeEp) => {
-    // Try to find a matching Hive endpoint
+    const cozeNorm = normalizePath(cozeEp.path);
+    const cozeSegments = cozeNorm.split('/').filter(Boolean);
+    const cozeLast = cozeSegments[cozeSegments.length - 1];
+    const cozeSecondLast = cozeSegments[cozeSegments.length - 2];
+
     const hiveMatch = hiveEndpoints.find((h) => {
-      // Normalize and compare
-      const cozePath = cozeEp.path.toLowerCase().replace(/_/g, '');
-      const hivePath = h.path.toLowerCase().replace(/_/g, '').replace(/:[^/]+/g, ':id');
-      return (
-        h.method === cozeEp.method &&
-        (hivePath.includes(cozePath.split('/').pop()!) || cozePath.includes(hivePath.split('/').pop()!))
-      );
+      if (h.method !== cozeEp.method) return false;
+      const hiveNorm = normalizePath(h.path);
+      const hiveSegments = hiveNorm.split('/').filter(Boolean);
+      const hiveLast = hiveSegments[hiveSegments.length - 1];
+
+      // Exact normalized match
+      if (cozeNorm === hiveNorm) return true;
+      // Last segment match (most common)
+      if (hiveLast === cozeLast && hiveLast !== ':p') return true;
+      // Path param endpoints: match if second-to-last + method match
+      if (cozeLast === ':p' && hiveLast === ':p' && cozeSecondLast === hiveSegments[hiveSegments.length - 2]) return true;
+      // Partial containment
+      if (hiveNorm.includes(cozeLast) || cozeNorm.includes(hiveLast)) return true;
+      return false;
     });
 
     return {
