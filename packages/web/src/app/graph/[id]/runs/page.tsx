@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useAuth, UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { GanttView } from '@/components/dag/GanttView';
 
 interface RunTask {
   id: string;
@@ -255,6 +256,21 @@ export default function RunHistoryPage() {
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" />{selectedRun.tasks.filter((t) => t.status === 'done').length} done</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-500" />{selectedRun.tasks.filter((t) => t.status === 'running' || t.status === 'leased').length} running</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" />{selectedRun.tasks.filter((t) => t.status === 'failed').length} failed</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Gantt Timeline */}
+              {selectedRun.run.startedAt && selectedRun.tasks.some((t) => t.startedAt) && (
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                    Execution Timeline
+                  </h3>
+                  <div className="bg-card border border-border rounded-lg p-4">
+                    <GanttView
+                      tasks={selectedRun.tasks}
+                      runStartedAt={selectedRun.run.startedAt}
+                    />
                   </div>
                 </div>
               )}

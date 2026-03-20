@@ -50,3 +50,4 @@ coverage/
 .nyc_output/
 
 .vercel
+.claude/settings.local.json
