@@ -6,7 +6,6 @@
  * Follows Coze's testify/assert table-driven pattern.
  */
 import { describe, it, expect } from 'vitest';
-import { z } from 'zod';
 import {
   createWorkspaceSchema, createAgentSchema, agentConfigSchema,
   createWorkflowSchema, createWorkflowNodeSchema, createWorkflowEdgeSchema,
@@ -22,9 +21,9 @@ import {
 } from '@pajamadot/hive-shared';
 
 // Helper for table-driven test pattern
-function runTableTests<T extends z.ZodType>(
-  schema: T,
-  testCases: { name: string; input: unknown; shouldPass: boolean; expected?: Partial<z.output<T>> }[],
+function runTableTests(
+  schema: { safeParse: (input: unknown) => { success: boolean; data?: unknown; error?: unknown } },
+  testCases: { name: string; input: unknown; shouldPass: boolean; expected?: Record<string, unknown> }[],
 ) {
   for (const tc of testCases) {
     it(tc.name, () => {
@@ -59,7 +58,7 @@ describe('Workspace schema (table-driven)', () => {
     { name: 'reject slug with special chars', input: { name: 'T', slug: 'bad@slug!' }, shouldPass: false },
     { name: 'reject missing slug', input: { name: 'T' }, shouldPass: false },
     { name: 'reject missing name', input: { slug: 'test' }, shouldPass: false },
-    { name: 'reject null input', input: null, shouldPass: false },
+    { name: 'reject null input', input: null as unknown, shouldPass: false },
     { name: 'reject too long name', input: { name: 'x'.repeat(101), slug: 'test' }, shouldPass: false },
     { name: 'reject too long slug', input: { name: 'T', slug: 'x'.repeat(51) }, shouldPass: false },
   ]);
@@ -133,7 +132,7 @@ describe('Workflow node types (exhaustive)', () => {
   cases.push(
     { name: 'reject: empty type', input: { nodeType: '', label: 'x' }, shouldPass: false },
     { name: 'reject: unknown type', input: { nodeType: 'magic', label: 'x' }, shouldPass: false },
-    { name: 'reject: null type', input: { nodeType: null, label: 'x' }, shouldPass: false },
+    { name: 'reject: null type', input: { nodeType: null as unknown as string, label: 'x' }, shouldPass: false },
   );
 
   runTableTests(createWorkflowNodeSchema, cases);
@@ -163,7 +162,7 @@ describe('Knowledge base schema (table-driven)', () => {
 
 describe('Model provider schema (table-driven)', () => {
   const providers = ['openai', 'anthropic', 'google', 'volcengine', 'deepseek', 'qwen', 'ollama', 'custom'];
-  const cases = providers.map((p) => ({
+  const cases: { name: string; input: unknown; shouldPass: boolean }[] = providers.map((p) => ({
     name: `valid: ${p}`,
     input: { name: p, provider: p },
     shouldPass: true,

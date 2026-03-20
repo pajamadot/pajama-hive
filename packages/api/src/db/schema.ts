@@ -620,6 +620,14 @@ export const pluginVersions = pgTable('plugin_versions', {
   version: integer('version').notNull(),
   snapshot: jsonb('snapshot').notNull(),
   publishedBy: text('published_by').notNull(),
+  // Coze parity fields
+  versionDesc: text('version_desc'),              // Coze: version description
+  manifest: jsonb('manifest'),                    // Coze: plugin manifest
+  openapiDoc: jsonb('openapi_doc'),              // Coze: OpenAPI doc snapshot
+  iconUrl: text('icon_url'),                     // Coze: version-specific icon
+  serverUrl: text('server_url'),                 // Coze: server URL at version time
+  pluginType: text('plugin_type'),               // Coze: type at version time
+  deletedAt: timestamp('deleted_at'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 }, (t) => [
   index('plugin_versions_plugin_idx').on(t.pluginId),
