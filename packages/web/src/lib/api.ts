@@ -56,6 +56,8 @@ export const api = {
     apiFetch(`/v1/graphs/${graphId}/runs`, token, { method: 'POST' }),
   listRuns: (token: string, graphId: string) =>
     apiFetch(`/v1/graphs/${graphId}/runs`, token),
+  cancelRun: (token: string, graphId: string, runId: string) =>
+    apiFetch(`/v1/graphs/${graphId}/runs/${runId}/cancel`, token, { method: 'POST' }),
   getRunDetail: (token: string, runId: string) =>
     apiFetch(`/v1/runs/${runId}/detail`, token),
 

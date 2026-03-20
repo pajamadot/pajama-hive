@@ -29,6 +29,7 @@ export default function GraphEditorPage() {
   const [token, setToken] = useState<string | null>(null);
   const [graphName, setGraphName] = useState('');
   const [graphStatus, setGraphStatus] = useState('draft');
+  const [currentRunId, setCurrentRunId] = useState<string | null>(null);
   const [showWorkers, setShowWorkers] = useState(false);
   const [showCriticalPath, setShowCriticalPath] = useState(false);
 
@@ -171,9 +172,18 @@ export default function GraphEditorPage() {
 
   const handleRunGraph = useCallback(async () => {
     if (!token) return;
-    await api.createRun(token, graphId);
+    const res = await api.createRun(token, graphId);
     setGraphStatus('running');
+    setCurrentRunId(res.run?.id ?? null);
   }, [token, graphId]);
+
+  const handleCancelRun = useCallback(async () => {
+    if (!token || !currentRunId) return;
+    await api.cancelRun(token, graphId, currentRunId);
+    setGraphStatus('failed');
+    setCurrentRunId(null);
+    toast.info('Run canceled');
+  }, [token, graphId, currentRunId]);
 
   const handleAutoLayout = useCallback(() => {
     const { nodes: laid, edges: laidEdges } = getLayoutedElements(store.nodes, store.edges);
@@ -288,13 +298,21 @@ export default function GraphEditorPage() {
         >
           Workers ({store.workers.length})
         </button>
-        <button
-          onClick={handleRunGraph}
-          disabled={graphStatus === 'running'}
-          className="px-4 py-1.5 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700 disabled:opacity-50"
-        >
-          {graphStatus === 'running' ? 'Running...' : 'Run'}
-        </button>
+        {graphStatus === 'running' ? (
+          <button
+            onClick={handleCancelRun}
+            className="px-4 py-1.5 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700"
+          >
+            Stop Run
+          </button>
+        ) : (
+          <button
+            onClick={handleRunGraph}
+            className="px-4 py-1.5 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
+          >
+            Run
+          </button>
+        )}
         <ThemeToggle />
         <UserButton />
       </header>

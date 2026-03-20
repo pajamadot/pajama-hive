@@ -59,6 +59,44 @@ app.post('/graphs/:graphId/runs', async (c) => {
   return c.json({ run }, 201);
 });
 
+// Cancel a run (stop orchestrator, mark tasks as canceled)
+app.post('/graphs/:graphId/runs/:runId/cancel', async (c) => {
+  const db = createDb(c.env);
+  const graphId = c.req.param('graphId');
+  const runId = c.req.param('runId');
+  const userId = c.get('userId');
+
+  const check = await verifyGraphOwner(db, graphId, userId);
+  if (!check.ok) return c.json({ error: check.error }, check.status);
+
+  // Stop orchestrator
+  const orchestratorId = c.env.ORCHESTRATOR.idFromName(graphId);
+  const orchestrator = c.env.ORCHESTRATOR.get(orchestratorId);
+  await orchestrator.fetch(new Request('http://internal/stop'));
+
+  // Mark run as canceled
+  await db.update(runs)
+    .set({ status: 'canceled', completedAt: new Date() })
+    .where(eq(runs.id, runId));
+
+  // Mark graph as failed
+  await db.update(graphs)
+    .set({ status: 'failed', updatedAt: new Date() })
+    .where(eq(graphs.id, graphId));
+
+  // Cancel all running/leased/ready/pending tasks
+  const runTasks = await db.select().from(tasks).where(eq(tasks.graphId, graphId));
+  for (const t of runTasks) {
+    if (['running', 'leased', 'ready', 'pending'].includes(t.status)) {
+      await db.update(tasks)
+        .set({ status: 'canceled', updatedAt: new Date() })
+        .where(eq(tasks.id, t.id));
+    }
+  }
+
+  return c.json({ ok: true, canceled: true });
+});
+
 // Get run status
 app.get('/runs/:runId', async (c) => {
   const db = createDb(c.env);
