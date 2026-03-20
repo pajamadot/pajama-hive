@@ -11,6 +11,7 @@ export interface TaskNodeData {
   outputSummary?: string;
   assignedWorkerId?: string;
   priority: number;
+  timeoutMs?: number;
   [key: string]: unknown;
 }
 

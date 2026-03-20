@@ -136,6 +136,27 @@ export function NodeDetail({ nodeId, data, onApprove, onCancel, onRetry, onDelet
           </div>
         )}
 
+        {/* Timeout */}
+        <div>
+          <label className="text-xs text-muted-foreground uppercase">Timeout</label>
+          {isEditable ? (
+            <select
+              value={data.timeoutMs ?? 900000}
+              onChange={(e) => onUpdate?.(nodeId, { timeoutMs: parseInt(e.target.value) })}
+              className="w-full mt-1 px-2 py-1.5 bg-background border border-border rounded-md text-sm"
+            >
+              <option value={60000}>1 min</option>
+              <option value={300000}>5 min</option>
+              <option value={600000}>10 min</option>
+              <option value={900000}>15 min (default)</option>
+              <option value={1800000}>30 min</option>
+              <option value={3600000}>1 hour</option>
+            </select>
+          ) : (
+            <p className="text-sm font-medium">{((data.timeoutMs ?? 900000) / 60000).toFixed(0)} min</p>
+          )}
+        </div>
+
         {/* Editable input */}
         <div>
           <div className="flex items-center justify-between">
