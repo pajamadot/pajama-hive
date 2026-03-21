@@ -351,6 +351,16 @@ export default function WorkflowEditorPage({ params }: { params: Promise<{ id: s
         {selectedNode && (
           <NodeConfigPanel
             node={selectedNode}
+            onTest={async (nodeId, input) => {
+              const token = await getToken();
+              if (!token) return { error: 'Not authenticated' };
+              const res = await fetch(`${API_URL}/v1/workflows/${id}/nodes/${nodeId}/test`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ input }),
+              });
+              return res.json();
+            }}
             onSave={async (nodeId, updates) => {
               const token = await getToken();
               if (!token) return;

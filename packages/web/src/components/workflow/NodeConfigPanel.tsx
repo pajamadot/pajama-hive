@@ -14,12 +14,16 @@ interface Props {
   onSave: (nodeId: string, updates: { label?: string; config?: Record<string, unknown> }) => void;
   onDelete: (nodeId: string) => void;
   onClose: () => void;
+  onTest?: (nodeId: string, input: unknown) => Promise<unknown>;
 }
 
-export default function NodeConfigPanel({ node, onSave, onDelete, onClose }: Props) {
+export default function NodeConfigPanel({ node, onSave, onDelete, onClose, onTest }: Props) {
   const [label, setLabel] = useState(node.label);
   const [config, setConfig] = useState<Record<string, unknown>>(node.config ?? {});
   const [dirty, setDirty] = useState(false);
+  const [testInput, setTestInput] = useState('');
+  const [testResult, setTestResult] = useState<unknown>(null);
+  const [testing, setTesting] = useState(false);
 
   useEffect(() => {
     setLabel(node.label);
@@ -380,6 +384,39 @@ export default function NodeConfigPanel({ node, onSave, onDelete, onClose }: Pro
           </div>
         )}
       </div>
+
+      {/* Test Section */}
+      {onTest && node.nodeType !== 'start' && node.nodeType !== 'end' && (
+        <div className="border-t p-3 space-y-2">
+          <div className="text-xs font-medium text-muted-foreground">Test Node</div>
+          <input type="text" value={testInput}
+            onChange={(e) => setTestInput(e.target.value)}
+            placeholder="Test input (text or JSON)"
+            className="w-full px-2 py-1.5 border rounded text-xs bg-background font-mono" />
+          <button onClick={async () => {
+            if (testing) return;
+            setTesting(true);
+            setTestResult(null);
+            try {
+              let parsed: unknown = testInput;
+              try { parsed = JSON.parse(testInput); } catch { /* use as string */ }
+              const result = await onTest(node.id, parsed);
+              setTestResult(result);
+            } catch (err) {
+              setTestResult({ error: err instanceof Error ? err.message : 'Test failed' });
+            }
+            setTesting(false);
+          }} disabled={testing}
+            className="w-full px-2 py-1.5 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50">
+            {testing ? 'Testing...' : 'Run Test'}
+          </button>
+          {testResult != null && (
+            <pre className="text-[10px] bg-muted p-2 rounded max-h-32 overflow-y-auto font-mono whitespace-pre-wrap">
+              {JSON.stringify(testResult, null, 2)}
+            </pre>
+          )}
+        </div>
+      )}
 
       {/* Footer */}
       <div className="border-t p-3 flex gap-2">
