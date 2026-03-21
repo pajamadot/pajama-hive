@@ -7,7 +7,7 @@
 import { nanoid } from 'nanoid';
 import { eq } from 'drizzle-orm';
 import type { Database } from '../db/client.js';
-import { workflowNodes, workflowEdges, workflowRuns, workflowTraces, documentChunks, userTableRows } from '../db/schema.js';
+import { workflowNodes, workflowEdges, workflowRuns, workflowTraces, documentChunks, userTableRows, workflowApprovals } from '../db/schema.js';
 import { chatCompletion } from './llm.js';
 import { executePluginTool } from './plugin-executor.js';
 
@@ -328,6 +328,26 @@ async function executeNode(ctx: ExecutionContext, node: NodeExec): Promise<Recor
           temperature: targetConfig?.temperature ?? 0.7,
         });
         result = { output: agentResp.content, agentId: targetAgentId, usage: agentResp.usage };
+        break;
+      }
+
+      case 'human_input': {
+        // Human-in-the-loop: create an approval request and pause
+        const formSchema = config.formSchema ?? { fields: [{ name: 'approved', type: 'boolean', label: 'Approve?' }] };
+        const approvalId = nanoid();
+        await ctx.db.insert(workflowApprovals).values({
+          id: approvalId,
+          workflowRunId: ctx.runId,
+          nodeId: node.id,
+          status: 'pending',
+          formSchema: formSchema as Record<string, unknown>,
+          assignedTo: (config.assignedTo as string) ?? null,
+          expiresAt: config.expiresInHours ? new Date(Date.now() + (config.expiresInHours as number) * 3600000) : null,
+          createdAt: new Date(),
+        });
+        // In a real system, this would pause execution and resume on approval
+        // For now, auto-approve to keep the workflow running
+        result = { output: { approvalId, status: 'pending', message: 'Human input requested — auto-approved for testing' } };
         break;
       }
 

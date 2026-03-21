@@ -262,6 +262,115 @@ app.post('/:id/run', async (c) => {
   return c.json({ run: { id: runId, workflowId: id, status: 'completed', output: result.output, traces: result.traces } }, 201);
 });
 
+// Per-node test execution (Dify pattern: test individual nodes)
+app.post('/:id/nodes/:nodeId/test', async (c) => {
+  const db = createDb(c.env);
+  const workflowId = c.req.param('id');
+  const nodeId = c.req.param('nodeId');
+  const body = await c.req.json().catch(() => ({}));
+
+  // Get the node
+  const [node] = await db.select().from(workflowNodes).where(eq(workflowNodes.id, nodeId));
+  if (!node) return c.json({ error: 'Node not found' }, 404);
+
+  const [wf] = await db.select().from(workflowDefinitions).where(eq(workflowDefinitions.id, workflowId));
+  const workspaceId = wf?.workspaceId ?? 'default';
+
+  // Create a minimal execution context and run just this node
+  const { nanoid: genId } = await import('nanoid');
+  const testRunId = genId();
+
+  // Import the executor's node execution logic
+  const { executeWorkflow } = await import('../lib/workflow-executor.js');
+
+  // Create a temporary single-node workflow: start → target node → end
+  // by running the full executor with just input mapped to this node
+  try {
+    const startTime = Date.now();
+
+    // For simple node testing, we use the chatCompletion / fetch directly based on node type
+    const config = (node.config ?? {}) as Record<string, unknown>;
+    const input = body.input ?? body;
+    let output: unknown = null;
+    let error: string | null = null;
+
+    const { chatCompletion } = await import('../lib/llm.js');
+
+    switch (node.nodeType) {
+      case 'llm': {
+        const prompt = (config.prompt as string) ?? 'Respond to the input.';
+        const resp = await chatCompletion(db, workspaceId, [
+          { role: 'system', content: prompt },
+          { role: 'user', content: typeof input === 'string' ? input : JSON.stringify(input) },
+        ], { temperature: (config.temperature as number) ?? 0.7 });
+        output = { content: resp.content, usage: resp.usage, model: resp.model };
+        break;
+      }
+      case 'code': {
+        const code = (config.code as string) ?? 'return input';
+        try {
+          const fn = new Function('input', `'use strict'; ${code}`);
+          output = fn(input);
+        } catch (e) { error = e instanceof Error ? e.message : 'Code error'; }
+        break;
+      }
+      case 'http_request': {
+        const url = config.url as string;
+        if (!url) { error = 'No URL configured'; break; }
+        const method = (config.method as string) ?? 'GET';
+        const res = await fetch(url, { method, headers: config.headers as Record<string, string> ?? {} });
+        output = { status: res.status, body: await res.text().then((t) => { try { return JSON.parse(t); } catch { return t; } }) };
+        break;
+      }
+      case 'condition': {
+        const expr = (config.expression as string) ?? 'true';
+        try {
+          const fn = new Function('input', `'use strict'; return !!(${expr})`);
+          output = { result: fn(input), branch: fn(input) ? 'true' : 'false' };
+        } catch { output = { result: false, branch: 'false' }; }
+        break;
+      }
+      case 'text_processor': {
+        const op = (config.operation as string) ?? 'template';
+        const inputStr = typeof input === 'string' ? input : JSON.stringify(input);
+        if (op === 'uppercase') output = inputStr.toUpperCase();
+        else if (op === 'lowercase') output = inputStr.toLowerCase();
+        else if (op === 'trim') output = inputStr.trim();
+        else if (op === 'template') {
+          let tmpl = (config.template as string) ?? '{{input}}';
+          tmpl = tmpl.replace(/\{\{input\}\}/g, inputStr);
+          output = tmpl;
+        } else output = inputStr;
+        break;
+      }
+      case 'json_transform': {
+        const expr = (config.expression as string) ?? '.';
+        try {
+          const keys = expr.replace(/^\./, '').split('.').filter(Boolean);
+          let current: unknown = input;
+          for (const key of keys) {
+            if (typeof current === 'object' && current !== null) current = (current as Record<string, unknown>)[key];
+          }
+          output = current;
+        } catch { output = null; }
+        break;
+      }
+      default:
+        output = { message: `Node type '${node.nodeType}' tested with input`, input };
+    }
+
+    return c.json({
+      nodeId, nodeType: node.nodeType, label: node.label,
+      input, output, error,
+      durationMs: Date.now() - startTime,
+    });
+  } catch (err) {
+    return c.json({
+      nodeId, nodeType: node.nodeType, error: err instanceof Error ? err.message : 'Test failed',
+    }, 500);
+  }
+});
+
 // List workflow runs
 app.get('/:id/runs', async (c) => {
   const db = createDb(c.env);

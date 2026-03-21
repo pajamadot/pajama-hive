@@ -973,3 +973,46 @@ export const modelUsageLogs = pgTable('model_usage_logs', {
   index('usage_ws_idx').on(t.workspaceId, t.createdAt),
   index('usage_model_idx').on(t.modelId, t.createdAt),
 ]);
+
+// ════════════════════════════════════════════════════════════
+// Dify-Inspired Features
+// ════════════════════════════════════════════════════════════
+
+// ── Annotations (feedback/RLHF data collection) ──
+
+export const annotations = pgTable('annotations', {
+  id: text('id').primaryKey(),
+  workspaceId: text('workspace_id').notNull(),
+  messageId: text('message_id').references(() => messages.id, { onDelete: 'set null' }),
+  conversationId: text('conversation_id'),
+  agentId: text('agent_id'),
+  question: text('question').notNull(),         // original user input
+  answer: text('answer').notNull(),             // corrected/approved answer
+  source: text('source').notNull().default('console'), // console, api, user
+  rating: integer('rating'),                     // 1-5 quality rating
+  createdBy: text('created_by').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+  index('annotations_ws_idx').on(t.workspaceId),
+  index('annotations_agent_idx').on(t.agentId),
+  index('annotations_msg_idx').on(t.messageId),
+]);
+
+// ── Workflow Approvals (human-in-the-loop) ──
+
+export const workflowApprovals = pgTable('workflow_approvals', {
+  id: text('id').primaryKey(),
+  workflowRunId: text('workflow_run_id').notNull().references(() => workflowRuns.id, { onDelete: 'cascade' }),
+  nodeId: text('node_id').notNull(),
+  status: text('status').notNull().default('pending'), // pending, approved, rejected, expired
+  formSchema: jsonb('form_schema'),             // what input is needed
+  formData: jsonb('form_data'),                 // submitted data
+  assignedTo: text('assigned_to'),              // user who should approve
+  approvedBy: text('approved_by'),
+  expiresAt: timestamp('expires_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  resolvedAt: timestamp('resolved_at'),
+}, (t) => [
+  index('approvals_run_idx').on(t.workflowRunId),
+  index('approvals_status_idx').on(t.status),
+]);

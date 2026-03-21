@@ -396,36 +396,72 @@ app.post('/:id/search', async (c) => {
   if (!query) return c.json({ error: 'query required' }, 400);
 
   const limit = body.limit ?? 10;
-  const mode = body.mode ?? 'auto'; // 'vector', 'keyword', 'auto'
+  const mode = body.mode ?? 'hybrid'; // 'vector', 'keyword', 'hybrid', 'auto'
+  const vectorWeight = body.vectorWeight ?? 0.7; // weight for vector results in hybrid mode
+  const keywordWeight = body.keywordWeight ?? 0.3;
 
-  // Get KB workspace for embedding provider resolution
   const [kb] = await db.select().from(knowledgeBases).where(eq(knowledgeBases.id, kbId));
   const workspaceId = kb?.workspaceId ?? 'default';
 
-  // Try vector search first (if mode is 'vector' or 'auto')
-  if (mode !== 'keyword') {
-    try {
-      const vecResults = await vectorSearch(db, workspaceId, kbId, query, limit, kb?.embeddingModelId);
-      if (vecResults.length > 0) {
-        return c.json({ results: vecResults, total: vecResults.length, mode: 'vector' });
-      }
-    } catch { /* vector search failed — fall through to keyword */ }
-  }
-
-  // Keyword fallback
+  // Keyword search function
   const allChunks = await db.select().from(documentChunks)
     .where(eq(documentChunks.knowledgeBaseId, kbId));
-
   const queryTerms = query.toLowerCase().split(/\s+/).filter((t: string) => t.length > 2);
-  const scored = allChunks.map((chunk) => {
-    const lower = chunk.content.toLowerCase();
-    const matchCount = queryTerms.filter((term: string) => lower.includes(term)).length;
-    return { ...chunk, score: matchCount / Math.max(queryTerms.length, 1) };
-  }).filter((c) => c.score > 0)
+
+  function keywordSearch() {
+    return allChunks.map((chunk) => {
+      const lower = chunk.content.toLowerCase();
+      const matchCount = queryTerms.filter((term: string) => lower.includes(term)).length;
+      return { id: chunk.id, content: chunk.content, chunkIndex: chunk.chunkIndex, score: matchCount / Math.max(queryTerms.length, 1) };
+    }).filter((c) => c.score > 0).sort((a, b) => b.score - a.score).slice(0, limit * 2);
+  }
+
+  // Vector search function
+  async function vecSearch() {
+    try {
+      return await vectorSearch(db, workspaceId, kbId, query, limit * 2, kb?.embeddingModelId);
+    } catch { return []; }
+  }
+
+  if (mode === 'keyword') {
+    const results = keywordSearch().slice(0, limit);
+    return c.json({ results, total: results.length, mode: 'keyword' });
+  }
+
+  if (mode === 'vector') {
+    const results = await vecSearch();
+    return c.json({ results: results.slice(0, limit), total: results.length, mode: 'vector' });
+  }
+
+  // Hybrid mode (Dify pattern): combine vector + keyword with RRF (Reciprocal Rank Fusion)
+  const vecResults = await vecSearch();
+  const kwResults = keywordSearch();
+
+  // Reciprocal Rank Fusion: score = sum(1 / (k + rank)) across methods
+  const k = 60; // RRF constant
+  const fusedScores = new Map<string, { content: string; chunkIndex: number; score: number }>();
+
+  vecResults.forEach((r, idx) => {
+    const existing = fusedScores.get(r.id) ?? { content: r.content, chunkIndex: r.chunkIndex, score: 0 };
+    existing.score += vectorWeight * (1 / (k + idx));
+    fusedScores.set(r.id, existing);
+  });
+
+  kwResults.forEach((r, idx) => {
+    const existing = fusedScores.get(r.id) ?? { content: r.content, chunkIndex: r.chunkIndex, score: 0 };
+    existing.score += keywordWeight * (1 / (k + idx));
+    fusedScores.set(r.id, existing);
+  });
+
+  const scored = [...fusedScores.entries()]
+    .map(([id, data]) => ({ id, ...data }))
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 
-  return c.json({ results: scored, total: scored.length, mode: 'keyword' });
+  return c.json({
+    results: scored, total: scored.length, mode: 'hybrid',
+    breakdown: { vectorResults: vecResults.length, keywordResults: kwResults.length },
+  });
 });
 
 export default app;

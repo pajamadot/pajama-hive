@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 import { eq, and, desc, lt, isNull } from 'drizzle-orm';
 import { createConversationSchema, sendMessageSchema, chatRequestSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
-import { conversations, messages, chatRuns, runSteps, agentConfigs } from '../db/schema.js';
+import { conversations, messages, chatRuns, runSteps, agentConfigs, annotations } from '../db/schema.js';
 import { clerkAuth } from '../lib/auth.js';
 import { chatCompletion } from '../lib/llm.js';
 import { createChatStream } from '../lib/llm-stream.js';
@@ -509,6 +509,61 @@ app.post('/chat/stream', async (c) => {
       Connection: 'keep-alive',
     },
   });
+});
+
+// ── Annotations (Dify pattern: feedback/RLHF data collection) ──
+
+// Annotate a message (correct/approve an answer)
+app.post('/messages/:msgId/annotate', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const msgId = c.req.param('msgId');
+  const body = await c.req.json();
+
+  const [msg] = await db.select().from(messages).where(eq(messages.id, msgId));
+  if (!msg) return c.json({ error: 'Message not found' }, 404);
+
+  // Get the preceding user message as the question
+  const allMsgs = await db.select().from(messages)
+    .where(eq(messages.conversationId, msg.conversationId))
+    .orderBy(messages.createdAt);
+  const msgIndex = allMsgs.findIndex((m) => m.id === msgId);
+  const question = msgIndex > 0 ? allMsgs[msgIndex - 1].content : '';
+
+  const id = nanoid();
+  await db.insert(annotations).values({
+    id,
+    workspaceId: body.workspaceId ?? 'default',
+    messageId: msgId,
+    conversationId: msg.conversationId,
+    agentId: body.agentId ?? null,
+    question,
+    answer: body.answer ?? msg.content,
+    source: body.source ?? 'console',
+    rating: body.rating ?? null,
+    createdBy: userId,
+    createdAt: new Date(),
+  });
+
+  return c.json({ annotation: { id, question, answer: body.answer ?? msg.content, rating: body.rating } }, 201);
+});
+
+// List annotations for an agent/workspace
+app.get('/annotations', async (c) => {
+  const db = createDb(c.env);
+  const agentId = c.req.query('agentId');
+  const workspaceId = c.req.query('workspaceId');
+  const limit = Math.min(parseInt(c.req.query('limit') ?? '50', 10), 200);
+
+  const conditions = [];
+  if (agentId) conditions.push(eq(annotations.agentId, agentId));
+  if (workspaceId) conditions.push(eq(annotations.workspaceId, workspaceId));
+
+  const result = conditions.length > 0
+    ? await db.select().from(annotations).where(and(...conditions)).orderBy(desc(annotations.createdAt)).limit(limit)
+    : await db.select().from(annotations).orderBy(desc(annotations.createdAt)).limit(limit);
+
+  return c.json({ annotations: result });
 });
 
 export default app;
