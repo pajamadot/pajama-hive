@@ -115,6 +115,9 @@ export default function WorkflowEditorPage({ params }: { params: Promise<{ id: s
   const [backendNodes, setBackendNodes] = useState<WfNode[]>([]);
   const [runResult, setRunResult] = useState<Record<string, unknown> | null>(null);
   const [running, setRunning] = useState(false);
+  const [history, setHistory] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [copiedNodeId, setCopiedNodeId] = useState<string | null>(null);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -153,12 +156,72 @@ export default function WorkflowEditorPage({ params }: { params: Promise<{ id: s
 
   useEffect(() => { loadWorkflow(); }, [loadWorkflow]);
 
+  // Push to undo history
+  function pushHistory() {
+    const snapshot = { nodes: [...nodes], edges: [...edges] };
+    setHistory((prev) => [...prev.slice(0, historyIndex + 1), snapshot]);
+    setHistoryIndex((prev) => prev + 1);
+  }
+
+  function undo() {
+    if (historyIndex <= 0) return;
+    const prev = history[historyIndex - 1];
+    setNodes(prev.nodes);
+    setEdges(prev.edges);
+    setHistoryIndex((i) => i - 1);
+  }
+
+  function redo() {
+    if (historyIndex >= history.length - 1) return;
+    const next = history[historyIndex + 1];
+    setNodes(next.nodes);
+    setEdges(next.edges);
+    setHistoryIndex((i) => i + 1);
+  }
+
+  async function copyNode() {
+    if (!selectedNodeId) return;
+    setCopiedNodeId(selectedNodeId);
+  }
+
+  async function pasteNode() {
+    if (!copiedNodeId) return;
+    const source = backendNodes.find((n) => n.id === copiedNodeId);
+    if (!source) return;
+    const token = await getToken();
+    if (!token) return;
+    const label = source.nodeType === 'start' || source.nodeType === 'end' ? source.label : `${source.label} (copy)`;
+    const res = await fetch(`${API_URL}/v1/workflows/${id}/nodes`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nodeType: source.nodeType, label,
+        positionX: source.positionX + 50, positionY: source.positionY + 50,
+        config: source.config,
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const newNode = data.node;
+      setNodes((nds) => [...nds, {
+        id: newNode.id, type: 'workflowNode',
+        position: { x: newNode.positionX, y: newNode.positionY },
+        data: { label: newNode.label, nodeType: newNode.nodeType, config: newNode.config },
+      }]);
+      setBackendNodes((prev) => [...prev, { ...newNode }]);
+      pushHistory();
+    }
+  }
+
   // Keyboard shortcuts
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      const isInput = document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA' || document.activeElement?.tagName === 'SELECT';
+
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selectedNodeId && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        if (selectedNodeId && !isInput) {
           e.preventDefault();
+          pushHistory();
           deleteNode(selectedNodeId);
         }
       }
@@ -166,10 +229,28 @@ export default function WorkflowEditorPage({ params }: { params: Promise<{ id: s
         setSelectedNodeId(null);
         setShowPalette(false);
       }
+      // Undo: Ctrl+Z
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey && !isInput) {
+        e.preventDefault();
+        undo();
+      }
+      // Redo: Ctrl+Shift+Z or Ctrl+Y
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'Z' || e.key === 'y') && !isInput) {
+        e.preventDefault();
+        redo();
+      }
+      // Copy: Ctrl+C
+      if ((e.metaKey || e.ctrlKey) && e.key === 'c' && !isInput) {
+        copyNode();
+      }
+      // Paste: Ctrl+V
+      if ((e.metaKey || e.ctrlKey) && e.key === 'v' && !isInput) {
+        pasteNode();
+      }
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNodeId]);
+  }, [selectedNodeId, historyIndex, copiedNodeId, nodes, edges]);
 
   const onConnect = useCallback(async (connection: Connection) => {
     const token = await getToken();
@@ -281,24 +362,29 @@ export default function WorkflowEditorPage({ params }: { params: Promise<{ id: s
     <div className="h-screen flex flex-col">
       {/* Header */}
       <div className="border-b px-6 py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
-          <Link href="/workflows" className="text-sm text-muted-foreground hover:text-foreground">← Workflows</Link>
-          <h1 className="text-lg font-semibold">{workflow.name}</h1>
-          <span className={`text-xs px-2 py-0.5 rounded-full ${
-            workflow.status === 'published' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
+        <div className="flex items-center gap-3">
+          <Link href="/workflows" className="text-xs text-muted-foreground hover:text-foreground">←</Link>
+          <h1 className="text-sm font-medium">{workflow.name}</h1>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+            workflow.status === 'published' ? 'bg-green-500/10 text-green-600' : 'bg-muted text-muted-foreground'
           }`}>{workflow.status}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          <button onClick={undo} disabled={historyIndex <= 0} title="Undo (Ctrl+Z)"
+            className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-20">Undo</button>
+          <button onClick={redo} disabled={historyIndex >= history.length - 1} title="Redo (Ctrl+Shift+Z)"
+            className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-20">Redo</button>
+          <span className="text-border">|</span>
           <button onClick={() => setShowPalette(!showPalette)}
-            className="px-3 py-1.5 text-sm border rounded-md hover:bg-accent/50">
-            + Add Node
+            className="px-2.5 py-1 text-xs border rounded hover:bg-accent/50">
+            + Node
           </button>
           <button onClick={handleRun} disabled={running}
-            className="px-3 py-1.5 text-sm border border-green-600 text-green-400 rounded-md hover:bg-green-600/10 disabled:opacity-50">
-            {running ? 'Running...' : 'Test Run'}
+            className="px-2.5 py-1 text-xs border border-green-600/50 text-green-600 rounded hover:bg-green-600/5 disabled:opacity-30">
+            {running ? '...' : 'Run'}
           </button>
           <button onClick={handlePublish}
-            className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            className="px-2.5 py-1 text-xs bg-foreground text-background rounded hover:opacity-90">
             Publish
           </button>
         </div>
