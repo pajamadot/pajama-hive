@@ -118,8 +118,9 @@ export const clerkAuth = createMiddleware<HonoEnv>(async (c, next) => {
 
       await next();
       return;
-    } catch {
-      return c.json({ error: 'API key authentication failed' }, 401);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'unknown';
+      return c.json({ error: `API key authentication failed: ${msg}` }, 401);
     }
   }
 

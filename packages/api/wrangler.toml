@@ -9,7 +9,7 @@ routes = [{ pattern = "hive-api.pajamadot.com", custom_domain = true }]
 # Hyperdrive binding for Neon Postgres
 [[hyperdrive]]
 binding = "HYPERDRIVE"
-id = "e5677cabce904563b94921b8838e15d6"
+id = "2b1b040b5f71498b949467996ded3999"
 
 # Durable Objects
 [[durable_objects.bindings]]

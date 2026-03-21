@@ -4,7 +4,11 @@ import * as schema from './schema.js';
 import type { Env } from '../types/index.js';
 
 export function createDb(env: Env) {
-  const sql = neon(env.HYPERDRIVE.connectionString);
+  // Use DATABASE_URL secret if available (direct Neon connection)
+  // Falls back to Hyperdrive if DATABASE_URL is not set
+  const directUrl = (env as unknown as Record<string, string>).DATABASE_URL;
+  const connectionString = directUrl || env.HYPERDRIVE.connectionString;
+  const sql = neon(connectionString);
   return drizzle(sql, { schema });
 }
 
