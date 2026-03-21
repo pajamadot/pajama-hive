@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  typecheck-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build shared package
+        run: pnpm --filter @pajamadot/hive-shared build
+
+      - name: Typecheck API
+        run: pnpm --filter @pajamadot/hive-api typecheck
+
+      - name: Typecheck Web
+        run: pnpm --filter @pajamadot/hive-web typecheck
+
+      - name: Run API tests
+        run: pnpm --filter @pajamadot/hive-api test
+
+      - name: Run Web tests
+        run: cd packages/web && npx vitest run
+
+  deploy:
+    needs: typecheck-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build shared package
+        run: pnpm --filter @pajamadot/hive-shared build
+
+      - name: Deploy API to Cloudflare Workers
+        run: pnpm --filter @pajamadot/hive-api deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Deploy Frontend to Vercel
+        run: npx vercel --prod --yes --archive=tgz --token=${{ secrets.VERCEL_TOKEN }}

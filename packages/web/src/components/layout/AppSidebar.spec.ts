@@ -33,8 +33,6 @@ const NAV_SECTIONS = [
     items: [
       { href: '/', label: 'Graphs' },
       { href: '/workers', label: 'Workers' },
-      { href: '/evolution', label: 'Evolution' },
-      { href: '/meta', label: 'Observatory' },
       { href: '/replication', label: 'Replication' },
     ],
   },
@@ -58,7 +56,7 @@ describe('AppSidebar navigation structure', () => {
 
   it('has 16 total nav items', () => {
     const total = NAV_SECTIONS.reduce((sum, s) => sum + s.items.length, 0);
-    expect(total).toBe(15);
+    expect(total).toBe(13);
   });
 
   it('all hrefs start with /', () => {

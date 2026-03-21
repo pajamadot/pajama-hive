@@ -8,41 +8,39 @@ const NAV_SECTIONS = [
   {
     label: 'Build',
     items: [
-      { href: '/agents', label: 'Agents', icon: '🤖' },
-      { href: '/workflows', label: 'Workflows', icon: '⚡' },
-      { href: '/plugins', label: 'Plugins', icon: '🔌' },
-      { href: '/knowledge', label: 'Knowledge', icon: '📚' },
-      { href: '/prompts', label: 'Prompts', icon: '📝' },
+      { href: '/agents', label: 'Agents' },
+      { href: '/workflows', label: 'Workflows' },
+      { href: '/plugins', label: 'Plugins' },
+      { href: '/knowledge', label: 'Knowledge' },
+      { href: '/prompts', label: 'Prompts' },
     ],
   },
   {
     label: 'Test',
     items: [
-      { href: '/playground', label: 'Playground', icon: '💬' },
+      { href: '/playground', label: 'Playground' },
     ],
   },
   {
     label: 'Deploy',
     items: [
-      { href: '/apps', label: 'Apps', icon: '📦' },
-      { href: '/marketplace', label: 'Marketplace', icon: '🏪' },
+      { href: '/apps', label: 'Apps' },
+      { href: '/marketplace', label: 'Marketplace' },
     ],
   },
   {
     label: 'Orchestrate',
     items: [
-      { href: '/', label: 'Graphs', icon: '📊' },
-      { href: '/workers', label: 'Workers', icon: '⚙️' },
-      { href: '/evolution', label: 'Evolution', icon: '🧬' },
-      { href: '/meta', label: 'Observatory', icon: '🔭' },
-      { href: '/replication', label: 'Replication', icon: '📈' },
+      { href: '/', label: 'Graphs' },
+      { href: '/workers', label: 'Workers' },
+      { href: '/replication', label: 'Replication' },
     ],
   },
   {
     label: 'System',
     items: [
-      { href: '/audit', label: 'Audit Log', icon: '📋' },
-      { href: '/settings', label: 'Settings', icon: '⚙️' },
+      { href: '/audit', label: 'Audit Log' },
+      { href: '/settings', label: 'Settings' },
     ],
   },
 ];
@@ -56,30 +54,32 @@ export default function AppSidebar() {
   }
 
   return (
-    <aside className="w-56 h-screen border-r border-border bg-card flex flex-col fixed left-0 top-0 z-30">
-      <div className="px-4 py-4 border-b border-border">
+    <aside className="w-52 h-screen border-r bg-card flex flex-col fixed left-0 top-0 z-30">
+      <div className="px-4 py-4 border-b">
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-lg font-bold text-primary">Pajama Hive</span>
+          <div className="w-6 h-6 bg-foreground rounded-md flex items-center justify-center">
+            <span className="text-background text-xs font-bold">H</span>
+          </div>
+          <span className="text-sm font-semibold tracking-tight">Pajama Hive</span>
         </Link>
       </div>
 
-      <nav className="flex-1 overflow-y-auto py-2">
+      <nav className="flex-1 overflow-y-auto py-3">
         {NAV_SECTIONS.map((section) => (
-          <div key={section.label} className="mb-1">
-            <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div key={section.label} className="mb-3">
+            <div className="px-4 pb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
               {section.label}
             </div>
             {section.items.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-2.5 px-4 py-1.5 mx-2 rounded-md text-sm transition-colors ${
+                className={`flex items-center px-4 py-1.5 text-[13px] transition-colors ${
                   isActive(item.href)
-                    ? 'bg-primary/10 text-primary font-medium'
+                    ? 'text-foreground font-medium bg-accent'
                     : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
                 }`}
               >
-                <span className="text-sm w-5 text-center">{item.icon}</span>
                 {item.label}
               </Link>
             ))}
@@ -87,7 +87,7 @@ export default function AppSidebar() {
         ))}
       </nav>
 
-      <div className="border-t border-border px-4 py-3 flex items-center gap-2">
+      <div className="border-t px-4 py-3 flex items-center gap-2">
         <UserButton afterSignOutUrl="/sign-in" />
         <span className="text-xs text-muted-foreground">Account</span>
       </div>
