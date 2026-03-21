@@ -3,6 +3,7 @@
 import { useAuth } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 
 interface Workflow {
@@ -16,8 +17,10 @@ interface Workflow {
 
 export default function WorkflowsPage() {
   const { getToken } = useAuth();
+  const router = useRouter();
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -31,6 +34,20 @@ export default function WorkflowsPage() {
     }
     load();
   }, [getToken]);
+
+  async function handleCreate() {
+    if (creating) return;
+    setCreating(true);
+    const token = await getToken();
+    if (!token) { setCreating(false); return; }
+    try {
+      try { await api.createWorkspace(token, { name: 'Default', slug: 'default' }); } catch { /* already exists */ }
+      const data = await api.createWorkflow(token, { name: 'New Workflow', workspaceId: 'default' });
+      const wfId = data.workflow?.id;
+      if (wfId) router.push(`/workflows/${wfId}`);
+    } catch { /* */ }
+    setCreating(false);
+  }
 
   if (loading) {
     return (
@@ -48,15 +65,20 @@ export default function WorkflowsPage() {
             <h1 className="text-3xl font-bold">Workflows</h1>
             <p className="text-muted-foreground mt-1">Visual workflow editor for AI pipelines</p>
           </div>
-          <Link href="/workflows/new" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            Create Workflow
-          </Link>
+          <button onClick={handleCreate} disabled={creating}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+            {creating ? 'Creating...' : 'Create Workflow'}
+          </button>
         </div>
 
         {workflows.length === 0 ? (
           <div className="text-center py-20 border rounded-lg border-dashed">
             <h3 className="text-lg font-medium mb-2">No workflows yet</h3>
             <p className="text-muted-foreground mb-4">Create visual AI workflows with drag-and-drop nodes.</p>
+            <button onClick={handleCreate} disabled={creating}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              {creating ? 'Creating...' : 'Create Workflow'}
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
