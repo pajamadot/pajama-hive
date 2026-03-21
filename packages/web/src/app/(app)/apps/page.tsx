@@ -24,7 +24,8 @@ export default function AppsPage() {
       const token = await getToken();
       if (!token) return;
       try {
-        const data = await api.listApps(token, 'default');
+        const wsId = await api.getWorkspaceId(token);
+        const data = await api.listApps(token, wsId);
         setApps(data.apps ?? []);
       } catch { /* */ }
       setLoading(false);

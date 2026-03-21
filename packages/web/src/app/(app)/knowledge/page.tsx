@@ -25,7 +25,8 @@ export default function KnowledgePage() {
       const token = await getToken();
       if (!token) return;
       try {
-        const data = await api.listKnowledgeBases(token, 'default');
+        const wsId = await api.getWorkspaceId(token);
+        const data = await api.listKnowledgeBases(token, wsId);
         setKbs(data.knowledgeBases ?? []);
       } catch { /* */ }
       setLoading(false);

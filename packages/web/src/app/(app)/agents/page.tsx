@@ -27,7 +27,8 @@ export default function AgentsPage() {
       const token = await getToken();
       if (!token) return;
       try {
-        const data = await api.listAgents(token, 'default');
+        const wsId = await api.getWorkspaceId(token);
+        const data = await api.listAgents(token, wsId);
         setAgents(data.agents ?? []);
       } catch { /* workspace may not exist yet */ }
       setLoading(false);
@@ -41,9 +42,8 @@ export default function AgentsPage() {
     const token = await getToken();
     if (!token) { setCreating(false); return; }
     try {
-      // Ensure workspace exists
-      try { await api.createWorkspace(token, { name: 'Default', slug: 'default' }); } catch { /* already exists */ }
-      const data = await api.createAgent(token, { name: 'New Agent', workspaceId: 'default' });
+      const wsId = await api.getWorkspaceId(token);
+      const data = await api.createAgent(token, { name: 'New Agent', workspaceId: wsId });
       const agentId = data.agent?.id;
       if (agentId) router.push(`/agents/${agentId}`);
     } catch { /* */ }

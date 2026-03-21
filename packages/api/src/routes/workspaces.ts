@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { nanoid } from 'nanoid';
-import { eq, and, desc, lt, isNull } from 'drizzle-orm';
+import { eq, and, desc, lt, isNull, inArray } from 'drizzle-orm';
 import { createWorkspaceSchema, updateWorkspaceSchema, inviteMemberSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
 import { workspaces, workspaceMembers } from '../db/schema.js';
@@ -13,15 +13,31 @@ const app = new Hono<HonoEnv>();
 
 app.use('/*', clerkAuth);
 
-// List workspaces for current user
+// List workspaces for current user (auto-creates default workspace if none exist)
 app.get('/', async (c) => {
   const db = createDb(c.env);
   const userId = c.get('userId');
 
   // Get all workspaces where user is a member
-  const memberships = await db.select()
+  let memberships = await db.select()
     .from(workspaceMembers)
     .where(eq(workspaceMembers.userId, userId));
+
+  // Auto-create default workspace for new users
+  if (memberships.length === 0) {
+    const wsId = nanoid();
+    const now = new Date();
+    try {
+      await db.insert(workspaces).values({
+        id: wsId, name: 'My Workspace', slug: `ws-${wsId.slice(0, 8)}`,
+        ownerId: userId, createdAt: now, updatedAt: now,
+      });
+      await db.insert(workspaceMembers).values({
+        id: nanoid(), workspaceId: wsId, userId, role: 'owner', joinedAt: now,
+      });
+      memberships = [{ id: '', workspaceId: wsId, userId, role: 'owner', invitedBy: null, joinedAt: now }];
+    } catch { /* race condition — another request created it */ }
+  }
 
   if (memberships.length === 0) return c.json({ workspaces: [] });
 
@@ -29,8 +45,7 @@ app.get('/', async (c) => {
   const result = await db.select().from(workspaces)
     .where(and(
       isNull(workspaces.deletedAt),
-      // Filter to user's workspaces
-      eq(workspaces.id, wsIds[0]), // simplified — use inArray for multiple
+      inArray(workspaces.id, wsIds),
     ))
     .orderBy(desc(workspaces.updatedAt));
 

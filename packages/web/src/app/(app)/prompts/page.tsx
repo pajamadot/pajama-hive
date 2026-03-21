@@ -24,7 +24,8 @@ export default function PromptsPage() {
       const token = await getToken();
       if (!token) return;
       try {
-        const data = await api.listPrompts(token, 'default');
+        const wsId = await api.getWorkspaceId(token);
+        const data = await api.listPrompts(token, wsId);
         setPrompts(data.prompts ?? []);
       } catch { /* */ }
       setLoading(false);

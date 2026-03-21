@@ -71,10 +71,11 @@ export default function AgentEditorPage({ params }: { params: Promise<{ id: stri
       const token = await getToken();
       if (!token) return;
       try {
+        const wsId = await api.getWorkspaceId(token);
         const [pluginData, kbData, wfData] = await Promise.all([
-          api.listPlugins(token, 'default').catch(() => ({ plugins: [] })),
-          api.listKnowledgeBases(token, 'default').catch(() => ({ knowledgeBases: [] })),
-          api.listWorkflows(token, 'default').catch(() => ({ workflows: [] })),
+          api.listPlugins(token, wsId).catch(() => ({ plugins: [] })),
+          api.listKnowledgeBases(token, wsId).catch(() => ({ knowledgeBases: [] })),
+          api.listWorkflows(token, wsId).catch(() => ({ workflows: [] })),
         ]);
         setAvailablePlugins((pluginData.plugins ?? []).map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })));
         setAvailableKBs((kbData.knowledgeBases ?? []).map((k: { id: string; name: string }) => ({ id: k.id, name: k.name })));
@@ -110,7 +111,8 @@ export default function AgentEditorPage({ params }: { params: Promise<{ id: stri
     if (token) {
       try {
         // Create a temp conversation and send message
-        const conv = await api.createConversation(token, { workspaceId: 'default', agentId: id, title: 'Test' });
+        const wsId = await api.getWorkspaceId(token);
+        const conv = await api.createConversation(token, { workspaceId: wsId, agentId: id, title: 'Test' });
         const result = await api.chat(token, { conversationId: conv.conversation.id, message: testMessage });
         setTestResponse(result.message?.content ?? 'No response');
       } catch (err) {

@@ -24,7 +24,8 @@ export default function PluginsPage() {
       const token = await getToken();
       if (!token) return;
       try {
-        const data = await api.listPlugins(token, 'default');
+        const wsId = await api.getWorkspaceId(token);
+        const data = await api.listPlugins(token, wsId);
         setPlugins(data.plugins ?? []);
       } catch { /* */ }
       setLoading(false);

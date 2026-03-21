@@ -39,7 +39,8 @@ export default function PlaygroundPage() {
     try {
       let convId = conversationId;
       if (!convId) {
-        const conv = await api.createConversation(token, { workspaceId: 'default', title: 'Playground' });
+        const wsId = await api.getWorkspaceId(token);
+        const conv = await api.createConversation(token, { workspaceId: wsId, title: 'Playground' });
         convId = conv.conversation.id;
         setConversationId(convId);
       }

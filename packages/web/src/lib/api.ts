@@ -1,5 +1,22 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://hive-api.pajamadot.com';
 
+// Cache the workspace ID per session
+let _cachedWsId: string | null = null;
+
+/** Get the user's default workspace ID (auto-creates on first call) */
+export async function getWorkspaceId(token: string): Promise<string> {
+  if (_cachedWsId) return _cachedWsId;
+  const res = await fetch(`${API_URL}/v1/workspaces`, {
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+  });
+  if (res.ok) {
+    const data = await res.json();
+    const ws = data.workspaces?.[0];
+    if (ws?.id) { _cachedWsId = ws.id; return ws.id; }
+  }
+  return 'default';
+}
+
 async function apiFetch(path: string, token: string, options: RequestInit = {}) {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
@@ -76,6 +93,9 @@ export const api = {
 
   // Workers
   listWorkers: (token: string) => apiFetch('/v1/workers', token),
+
+  /** Resolve workspace ID — call before any workspace-scoped operation */
+  getWorkspaceId: (token: string) => getWorkspaceId(token),
 
   // ── Workspaces ──
   listWorkspaces: (token: string) => apiFetch('/v1/workspaces', token),

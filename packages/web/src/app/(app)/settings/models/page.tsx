@@ -42,7 +42,8 @@ export default function ModelSettingsPage() {
     const token = await getToken();
     if (!token) return;
     try {
-      const data = await api.listModelProviders(token, 'default');
+      const wsId = await api.getWorkspaceId(token);
+      const data = await api.listModelProviders(token, wsId);
       setProviders(data.providers ?? []);
     } catch { /* */ }
     setLoading(false);
@@ -57,6 +58,7 @@ export default function ModelSettingsPage() {
     if (token) {
       const provInfo = PROVIDERS.find((p) => p.id === addProvider);
       const name = addName || provInfo?.name || addProvider;
+      const wsId = await api.getWorkspaceId(token);
 
       // Create provider
       const res = await fetch(`${API_URL}/v1/models/providers`, {
@@ -67,7 +69,7 @@ export default function ModelSettingsPage() {
           provider: addProvider,
           apiKey: addApiKey || undefined,
           baseUrl: addBaseUrl || undefined,
-          workspaceId: 'default',
+          workspaceId: wsId,
         }),
       });
 

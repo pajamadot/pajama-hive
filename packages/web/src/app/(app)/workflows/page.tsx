@@ -27,7 +27,8 @@ export default function WorkflowsPage() {
       const token = await getToken();
       if (!token) return;
       try {
-        const data = await api.listWorkflows(token, 'default');
+        const wsId = await api.getWorkspaceId(token);
+        const data = await api.listWorkflows(token, wsId);
         setWorkflows(data.workflows ?? []);
       } catch { /* workspace may not exist yet */ }
       setLoading(false);
@@ -41,8 +42,8 @@ export default function WorkflowsPage() {
     const token = await getToken();
     if (!token) { setCreating(false); return; }
     try {
-      try { await api.createWorkspace(token, { name: 'Default', slug: 'default' }); } catch { /* already exists */ }
-      const data = await api.createWorkflow(token, { name: 'New Workflow', workspaceId: 'default' });
+      const wsId = await api.getWorkspaceId(token);
+      const data = await api.createWorkflow(token, { name: 'New Workflow', workspaceId: wsId });
       const wfId = data.workflow?.id;
       if (wfId) router.push(`/workflows/${wfId}`);
     } catch { /* */ }

@@ -31,13 +31,15 @@ import uploadsRouter from './routes/uploads.js';
 import cozeCompatRouter from './routes/coze-compat.js';
 import { standardRateLimit } from './lib/rate-limiter.js';
 import { maxPayloadSize, requestId, securityHeaders, responseTime } from './lib/validation.js';
+import { resolveWorkspaceId } from './lib/workspace.js';
+import { createDb } from './db/client.js';
 import type { Env } from './types/index.js';
 
 export { WsRoom } from './durable-objects/ws-room.js';
 export { Orchestrator } from './durable-objects/orchestrator.js';
 export { MetaObserverDO } from './durable-objects/meta-observer-do.js';
 
-type HonoEnv = { Bindings: Env; Variables: { userId: string; claims: Record<string, unknown> } };
+type HonoEnv = { Bindings: Env; Variables: { userId: string; claims: Record<string, unknown>; workspaceId: string } };
 
 const app = new Hono<HonoEnv>();
 
