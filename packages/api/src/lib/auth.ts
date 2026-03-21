@@ -1,6 +1,6 @@
 import { createMiddleware } from 'hono/factory';
 import { eq } from 'drizzle-orm';
-import { createDb, type Database } from '../db/client.js';
+import { createDb, markHyperdriveBroken, type Database } from '../db/client.js';
 import { graphs, tasks as tasksTable, runs as runsTable, edges as edgesTable, apiKeys as apiKeysTable } from '../db/schema.js';
 import type { Env } from '../types/index.js';
 
@@ -120,6 +120,23 @@ export const clerkAuth = createMiddleware<HonoEnv>(async (c, next) => {
       return;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'unknown';
+      // If Hyperdrive failed (error 1016), retry with direct connection
+      if (msg.includes('1016') || msg.includes('530')) {
+        markHyperdriveBroken();
+        try {
+          const db = createDb(c.env);
+          const keyHash = await hashApiKey(token);
+          const [apiKey] = await db.select().from(apiKeysTable).where(eq(apiKeysTable.keyHash, keyHash));
+          if (!apiKey) return c.json({ error: 'Invalid API key' }, 401);
+          c.set('userId', apiKey.userId);
+          c.set('claims', { sub: apiKey.userId, scopes: apiKey.scopes });
+          await next();
+          return;
+        } catch (retryErr) {
+          const retryMsg = retryErr instanceof Error ? retryErr.message : 'unknown';
+          return c.json({ error: `API key auth failed after Hyperdrive fallback: ${retryMsg}` }, 401);
+        }
+      }
       return c.json({ error: `API key authentication failed: ${msg}` }, 401);
     }
   }
