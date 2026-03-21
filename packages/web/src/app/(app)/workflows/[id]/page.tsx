@@ -20,6 +20,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { api } from '@/lib/api';
+import NodeConfigPanel from '@/components/workflow/NodeConfigPanel';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://hive-api.pajamadot.com';
 
@@ -103,6 +104,8 @@ export default function WorkflowEditorPage({ params }: { params: Promise<{ id: s
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showPalette, setShowPalette] = useState(false);
   const [backendNodes, setBackendNodes] = useState<WfNode[]>([]);
+  const [runResult, setRunResult] = useState<Record<string, unknown> | null>(null);
+  const [running, setRunning] = useState(false);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -140,6 +143,24 @@ export default function WorkflowEditorPage({ params }: { params: Promise<{ id: s
   }, [getToken, id, setNodes, setEdges]);
 
   useEffect(() => { loadWorkflow(); }, [loadWorkflow]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedNodeId && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          deleteNode(selectedNodeId);
+        }
+      }
+      if (e.key === 'Escape') {
+        setSelectedNodeId(null);
+        setShowPalette(false);
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedNodeId]);
 
   const onConnect = useCallback(async (connection: Connection) => {
     const token = await getToken();
@@ -218,9 +239,18 @@ export default function WorkflowEditorPage({ params }: { params: Promise<{ id: s
   }
 
   async function handleRun() {
+    if (running) return;
+    setRunning(true);
+    setRunResult(null);
     const token = await getToken();
-    if (!token) return;
-    await api.runWorkflow(token, id, {});
+    if (!token) { setRunning(false); return; }
+    try {
+      const result = await api.runWorkflow(token, id, {});
+      setRunResult(result as Record<string, unknown>);
+    } catch (err) {
+      setRunResult({ error: err instanceof Error ? err.message : 'Run failed' });
+    }
+    setRunning(false);
   }
 
   const selectedNode = useMemo(() => {
@@ -254,9 +284,9 @@ export default function WorkflowEditorPage({ params }: { params: Promise<{ id: s
             className="px-3 py-1.5 text-sm border rounded-md hover:bg-accent/50">
             + Add Node
           </button>
-          <button onClick={handleRun}
-            className="px-3 py-1.5 text-sm border border-green-600 text-green-400 rounded-md hover:bg-green-600/10">
-            Test Run
+          <button onClick={handleRun} disabled={running}
+            className="px-3 py-1.5 text-sm border border-green-600 text-green-400 rounded-md hover:bg-green-600/10 disabled:opacity-50">
+            {running ? 'Running...' : 'Test Run'}
           </button>
           <button onClick={handlePublish}
             className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
@@ -306,30 +336,38 @@ export default function WorkflowEditorPage({ params }: { params: Promise<{ id: s
           </ReactFlow>
         </div>
 
+        {/* Test Run Result */}
+        {runResult && (
+          <div className="absolute bottom-2 left-2 right-2 z-10 bg-card border rounded-lg shadow-lg p-3 max-h-48 overflow-y-auto" style={{ marginRight: selectedNode ? '320px' : '0' }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-muted-foreground">Test Run Result</span>
+              <button onClick={() => setRunResult(null)} className="text-xs text-muted-foreground hover:text-foreground">×</button>
+            </div>
+            <pre className="text-xs font-mono whitespace-pre-wrap">{JSON.stringify(runResult, null, 2)}</pre>
+          </div>
+        )}
+
         {/* Config panel */}
         {selectedNode && (
-          <div className="w-72 border-l bg-card p-4 overflow-y-auto shrink-0">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium text-sm">Node Config</h3>
-              <button onClick={() => setSelectedNodeId(null)} className="text-muted-foreground hover:text-foreground">x</button>
-            </div>
-            <div className="space-y-3 text-sm">
-              <div>
-                <div className="text-xs text-muted-foreground mb-1">Type</div>
-                <div className="capitalize">{selectedNode.nodeType.replace('_', ' ')}</div>
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground mb-1">Label</div>
-                <div>{selectedNode.label}</div>
-              </div>
-              <div className="pt-2">
-                <button onClick={() => deleteNode(selectedNode.id)}
-                  className="w-full px-2 py-1.5 text-xs text-red-400 border border-red-500/30 rounded hover:bg-red-500/10">
-                  Delete Node
-                </button>
-              </div>
-            </div>
-          </div>
+          <NodeConfigPanel
+            node={selectedNode}
+            onSave={async (nodeId, updates) => {
+              const token = await getToken();
+              if (!token) return;
+              await fetch(`${API_URL}/v1/workflows/nodes/${nodeId}`, {
+                method: 'PATCH',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates),
+              });
+              // Update local state
+              setBackendNodes((prev) => prev.map((n) => n.id === nodeId ? { ...n, ...updates, config: updates.config ?? n.config } : n));
+              if (updates.label) {
+                setNodes((nds) => nds.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, label: updates.label! } } : n));
+              }
+            }}
+            onDelete={deleteNode}
+            onClose={() => setSelectedNodeId(null)}
+          />
         )}
       </div>
     </div>
