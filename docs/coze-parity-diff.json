@@ -1,14 +1,14 @@
 {
-  "timestamp": "2026-03-20T20:18:32.157Z",
+  "timestamp": "2026-03-21T18:49:45.702Z",
   "coze": {
     "endpoints": 244,
     "tables": 55,
     "routes": 25
   },
   "hive": {
-    "endpoints": 275,
-    "tables": 54,
-    "pages": 25
+    "endpoints": 286,
+    "tables": 58,
+    "pages": 26
   },
   "endpointMapping": [
     {
@@ -1093,7 +1093,7 @@
     },
     {
       "cozeEndpoint": "GET /v1/conversations",
-      "hiveEquivalent": "GET /v1/conversations",
+      "hiveEquivalent": "GET /v1/conversations/annotations",
       "status": "mapped"
     },
     {
@@ -1237,6 +1237,8 @@
       "data_copy_task"
     ],
     "hiveOnly": [
+      "agent_connectors",
+      "annotations",
       "audit_logs",
       "edges",
       "graph_snapshots",
@@ -1244,6 +1246,7 @@
       "marketplace_installs",
       "marketplace_products",
       "marketplace_reviews",
+      "message_feedback",
       "meta_events",
       "model_usage_logs",
       "prompt_versions",
@@ -1259,6 +1262,7 @@
       "webhook_deliveries",
       "webhooks",
       "workers",
+      "workflow_approvals",
       "workflow_nodes"
     ],
     "both": [
