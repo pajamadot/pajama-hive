@@ -12,7 +12,8 @@
     "clean": "turbo clean",
     "analyze": "npx tsx scripts/post-iteration-analysis.ts",
     "parity": "npx tsx scripts/coze-parity-diff.ts",
-    "smoke": "cd packages/api && npx tsx ../../scripts/e2e-smoke-test.ts"
+    "smoke": "cd packages/api && npx tsx ../../scripts/e2e-smoke-test.ts",
+    "test:tabs": "tsx scripts/feature-tab-tests.ts"
   },
   "devDependencies": {
     "next": "^15.3.0",
