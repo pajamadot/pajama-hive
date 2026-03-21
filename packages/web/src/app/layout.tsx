@@ -11,7 +11,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      afterSignOutUrl="/sign-in"
+      signInForceRedirectUrl="/"
+      signUpForceRedirectUrl="/"
+    >
       <html lang="en" suppressHydrationWarning>
         <body className="min-h-screen antialiased">
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
