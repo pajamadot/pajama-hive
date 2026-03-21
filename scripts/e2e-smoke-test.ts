@@ -527,6 +527,22 @@ async function run() {
     const runList = await req('GET', `/v1/graphs/${graphId}/runs`);
     ok('Graphs: list runs', runList.s === 200);
 
+    // Reset graph
+    const grReset = await req('POST', `/v1/graphs/${graphId}/reset`);
+    ok('Graphs: reset endpoint works', grReset.s === 200 || grReset.s === 400); // 400 = graph is running (expected after creating a run)
+
+    // Task management (approve, cancel, retry — may return 400 due to state)
+    if (taskId) {
+      const taskApprove = await req('POST', `/v1/tasks/${taskId}/approve`);
+      ok('Graphs: approve task', taskApprove.s === 200 || taskApprove.s === 400);
+
+      const taskCancel = await req('POST', `/v1/tasks/${taskId}/cancel`);
+      ok('Graphs: cancel task', taskCancel.s === 200 || taskCancel.s === 400);
+
+      const taskRetry = await req('POST', `/v1/tasks/${taskId}/retry`);
+      ok('Graphs: retry task', taskRetry.s === 200 || taskRetry.s === 400);
+    }
+
     // Delete
     const grDelete = await req('DELETE', `/v1/graphs/${graphId}`);
     ok('Graphs: delete', grDelete.s === 200);

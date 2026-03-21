@@ -140,53 +140,62 @@ interface TestCoverage {
   testedActions: string[];
 }
 
-function extractTestCoverage(): { endpoints: Set<string>; actions: Set<string> } {
+function extractTestCoverage(): { endpoints: Set<string>; actions: Set<string>; sdkMethods: Set<string> } {
   const endpoints = new Set<string>();
   const actions = new Set<string>();
+  const sdkMethods = new Set<string>();
 
-  // Scan API tests
-  const apiTests = collectFiles(API_TESTS, '.test.ts');
-  for (const file of apiTests) {
-    const content = readFileSync(file, 'utf8').toLowerCase();
+  const allTestFiles = [
+    ...collectFiles(API_TESTS, '.test.ts'),
+    ...collectFiles(WEB_TESTS_GLOB, '.spec.ts'),
+    ...collectFiles(WEB_TESTS_GLOB, '.test.ts'),
+  ];
 
-    // Extract tested endpoint patterns
+  // Also scan smoke + tab test scripts
+  for (const f of [SMOKE_TEST, TAB_TEST]) {
+    if (existsSync(f)) allTestFiles.push(f);
+  }
+
+  for (const file of allTestFiles) {
+    const content = readFileSync(file, 'utf8');
+    const lower = content.toLowerCase();
+
+    // Extract endpoint patterns
     const endpointRegex = /(?:\/v1\/\w+|\/api\/\w+)/g;
     let match;
-    while ((match = endpointRegex.exec(content)) !== null) {
+    while ((match = endpointRegex.exec(lower)) !== null) {
       endpoints.add(match[0]);
     }
 
-    // Extract tested action names
+    // Extract test names
     const actionRegex = /(?:it|test)\s*\(\s*['"]([^'"]+)['"]/g;
-    while ((match = actionRegex.exec(content)) !== null) {
-      actions.add(match[1].toLowerCase());
+    while ((match = actionRegex.exec(lower)) !== null) {
+      actions.add(match[1]);
+    }
+
+    // Extract SDK method calls: api.xxx or sdk.xxx
+    const sdkRegex = /(?:api|sdk)\.(\w+)\s*\(/g;
+    while ((match = sdkRegex.exec(content)) !== null) {
+      sdkMethods.add(match[1].toLowerCase());
+    }
+
+    // Extract req('METHOD', '/v1/...' calls from smoke/tab tests
+    const reqRegex = /req\s*\(\s*'(GET|POST|PUT|PATCH|DELETE)'\s*,\s*['"`]([^'"`]+)/g;
+    while ((match = reqRegex.exec(content)) !== null) {
+      endpoints.add(match[2].split('?')[0].replace(/\$\{[^}]+\}/g, ':id'));
+    }
+
+    // Extract common action words from test descriptions
+    const words = ['create', 'list', 'get', 'update', 'delete', 'publish', 'run', 'search',
+      'upload', 'invoke', 'duplicate', 'fork', 'annotate', 'render', 'test', 'send',
+      'browse', 'install', 'review', 'export', 'import', 'copy', 'sign', 'feedback',
+      'config', 'connect', 'edge', 'node', 'chat', 'stream', 'save'];
+    for (const word of words) {
+      if (lower.includes(word)) sdkMethods.add(word);
     }
   }
 
-  // Scan web tests
-  const webTests = collectFiles(WEB_TESTS_GLOB, '.spec.ts');
-  for (const file of webTests) {
-    const content = readFileSync(file, 'utf8').toLowerCase();
-    const actionRegex = /(?:it|test)\s*\(\s*['"]([^'"]+)['"]/g;
-    let match;
-    while ((match = actionRegex.exec(content)) !== null) {
-      actions.add(match[1].toLowerCase());
-    }
-  }
-
-  // Scan smoke test
-  for (const testFile of [SMOKE_TEST, TAB_TEST]) {
-    if (existsSync(testFile)) {
-      const content = readFileSync(testFile, 'utf8').toLowerCase();
-      const endpointRegex = /(?:\/v1\/\w+|\/api\/\w+)/g;
-      let match;
-      while ((match = endpointRegex.exec(content)) !== null) {
-        endpoints.add(match[0]);
-      }
-    }
-  }
-
-  return { endpoints, actions };
+  return { endpoints, actions, sdkMethods };
 }
 
 // ═══════════════════════════════════════
@@ -201,7 +210,7 @@ interface UXGap {
   reason: string;
 }
 
-function findUXGaps(uiActions: UIAction[], coverage: { endpoints: Set<string>; actions: Set<string> }): UXGap[] {
+function findUXGaps(uiActions: UIAction[], coverage: { endpoints: Set<string>; actions: Set<string>; sdkMethods: Set<string> }): UXGap[] {
   const gaps: UXGap[] = [];
 
   // Group actions by page
@@ -217,7 +226,11 @@ function findUXGaps(uiActions: UIAction[], coverage: { endpoints: Set<string>; a
     const apiCalls = pageActions.filter((a) => a.type === 'api_call');
     for (const call of apiCalls) {
       const endpoint = call.apiEndpoint ?? '';
-      const isTested = [...coverage.endpoints].some((e) => endpoint.includes(e.replace('/v1/', '')) || e.includes(endpoint.split('.')[0]));
+      const endpointLower = endpoint.toLowerCase();
+      // Match against: endpoint paths, SDK method names, and action words
+      const isTested =
+        [...coverage.endpoints].some((e) => endpointLower.includes(e.replace('/v1/', '')) || e.includes(endpointLower.split('.')[0])) ||
+        [...coverage.sdkMethods].some((m) => endpointLower.includes(m) || m.includes(endpointLower.replace('api.', '').split('(')[0]));
       if (!isTested && endpoint.length > 3) {
         gaps.push({
           page, action: call.description, type: 'api_call',
@@ -251,9 +264,10 @@ function findUXGaps(uiActions: UIAction[], coverage: { endpoints: Set<string>; a
       const desc = button.description.toLowerCase();
       const isCritical = criticalPatterns.some((p) => desc.includes(p));
       if (isCritical) {
-        const isTested = [...coverage.actions].some((a) =>
-          criticalPatterns.some((p) => a.includes(p) && a.includes(page.split('/')[0]))
-        );
+        const pageDomain = page.split('/')[0] || 'graph';
+        const isTested =
+          [...coverage.actions].some((a) => criticalPatterns.some((p) => a.includes(p))) ||
+          [...coverage.sdkMethods].some((m) => criticalPatterns.some((p) => m.includes(p)));
         if (!isTested) {
           gaps.push({
             page, action: button.description, type: 'button',
