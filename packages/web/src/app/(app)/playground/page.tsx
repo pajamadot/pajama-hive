@@ -4,11 +4,14 @@ import { useAuth } from '@clerk/nextjs';
 import { useEffect, useState, useRef } from 'react';
 import { api } from '@/lib/api';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://hive-api.pajamadot.com';
+
 interface Message {
   id: string;
   role: string;
   content: string;
   createdAt: string;
+  feedback?: 'thumbs_up' | 'thumbs_down' | null;
 }
 
 export default function PlaygroundPage() {
@@ -46,7 +49,6 @@ export default function PlaygroundPage() {
       }
 
       if (useStreaming) {
-        // SSE streaming mode
         const assistantMsgId = crypto.randomUUID();
         setMessages((prev) => [...prev, {
           id: assistantMsgId, role: 'assistant', content: '', createdAt: new Date().toISOString(),
@@ -77,22 +79,13 @@ export default function PlaygroundPage() {
               const parsed = JSON.parse(data);
               if (parsed.type === 'content' && parsed.content) {
                 setMessages((prev) => prev.map((m) =>
-                  m.id === assistantMsgId
-                    ? { ...m, content: m.content + parsed.content }
-                    : m,
-                ));
-              } else if (parsed.type === 'error') {
-                setMessages((prev) => prev.map((m) =>
-                  m.id === assistantMsgId
-                    ? { ...m, content: m.content + `\n[Error: ${parsed.content}]` }
-                    : m,
+                  m.id === assistantMsgId ? { ...m, content: m.content + parsed.content } : m,
                 ));
               }
             } catch { /* skip */ }
           }
         }
       } else {
-        // Non-streaming mode
         const result = await api.chat(token, { conversationId: convId!, message: userMsg });
         setMessages((prev) => [...prev, {
           id: result.message?.id ?? crypto.randomUUID(),
@@ -103,8 +96,7 @@ export default function PlaygroundPage() {
       }
     } catch (err) {
       setMessages((prev) => [...prev, {
-        id: crypto.randomUUID(),
-        role: 'assistant',
+        id: crypto.randomUUID(), role: 'assistant',
         content: `Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
         createdAt: new Date().toISOString(),
       }]);
@@ -112,55 +104,113 @@ export default function PlaygroundPage() {
     setSending(false);
   }
 
+  async function handleRegenerate(msgId: string) {
+    const token = await getToken();
+    if (!token) return;
+    setSending(true);
+    try {
+      const res = await fetch(`${API_URL}/v1/conversations/messages/${msgId}/regenerate`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMessages((prev) => prev.map((m) =>
+          m.id === msgId ? { ...m, content: data.message?.content ?? m.content } : m
+        ));
+      }
+    } catch { /* */ }
+    setSending(false);
+  }
+
+  async function handleFeedback(msgId: string, rating: 'thumbs_up' | 'thumbs_down') {
+    const token = await getToken();
+    if (!token) return;
+    await fetch(`${API_URL}/v1/conversations/messages/${msgId}/feedback`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rating }),
+    });
+    setMessages((prev) => prev.map((m) =>
+      m.id === msgId ? { ...m, feedback: rating } : m,
+    ));
+  }
+
   return (
     <div className="flex flex-col h-screen">
       <header className="border-b px-6 py-3 flex items-center justify-between shrink-0">
-        <h1 className="text-lg font-semibold">Chat Playground</h1>
-        <label className="flex items-center gap-2 text-sm text-muted-foreground">
-          <input type="checkbox" checked={useStreaming}
-            onChange={(e) => setUseStreaming(e.target.checked)}
-            className="rounded" />
-          Stream
-        </label>
+        <h1 className="text-sm font-medium">Playground</h1>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+            <input type="checkbox" checked={useStreaming}
+              onChange={(e) => setUseStreaming(e.target.checked)}
+              className="rounded w-3.5 h-3.5" />
+            Stream
+          </label>
+          {conversationId && (
+            <button onClick={() => { setMessages([]); setConversationId(null); }}
+              className="text-xs text-muted-foreground hover:text-foreground">
+              New chat
+            </button>
+          )}
+        </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-6 max-w-3xl mx-auto w-full">
+      <div className="flex-1 overflow-y-auto px-6 py-4 max-w-2xl mx-auto w-full">
         {messages.length === 0 && (
           <div className="text-center py-20 text-muted-foreground">
-            <h2 className="text-xl font-medium mb-2">Start a conversation</h2>
-            <p>Type a message to chat with an AI agent.</p>
-            <p className="text-xs mt-2">Configure a model provider in Settings to enable real LLM responses.</p>
+            <p className="text-base font-medium mb-1">New conversation</p>
+            <p className="text-sm">Send a message to start chatting.</p>
           </div>
         )}
         {messages.map((msg) => (
-          <div key={msg.id} className={`mb-4 flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[80%] rounded-lg px-4 py-2 ${
-              msg.role === 'user'
-                ? 'bg-blue-600 text-white'
-                : 'bg-muted text-foreground'
-            }`}>
-              <p className="whitespace-pre-wrap">{msg.content || (sending ? '...' : '')}</p>
+          <div key={msg.id} className="mb-5">
+            <div className="text-[11px] text-muted-foreground/60 mb-1 uppercase tracking-wide">
+              {msg.role === 'user' ? 'You' : 'Assistant'}
             </div>
+            <div className={`text-sm leading-relaxed ${msg.role === 'user' ? '' : ''}`}>
+              <p className="whitespace-pre-wrap">{msg.content || (sending && msg.role === 'assistant' ? '...' : '')}</p>
+            </div>
+
+            {/* Actions for assistant messages */}
+            {msg.role === 'assistant' && msg.content && (
+              <div className="flex items-center gap-2 mt-1.5">
+                <button onClick={() => handleRegenerate(msg.id)}
+                  className="text-[11px] text-muted-foreground hover:text-foreground">
+                  Regenerate
+                </button>
+                <span className="text-muted-foreground/30">|</span>
+                <button onClick={() => handleFeedback(msg.id, 'thumbs_up')}
+                  className={`text-[11px] ${msg.feedback === 'thumbs_up' ? 'text-green-500' : 'text-muted-foreground hover:text-foreground'}`}>
+                  Good
+                </button>
+                <button onClick={() => handleFeedback(msg.id, 'thumbs_down')}
+                  className={`text-[11px] ${msg.feedback === 'thumbs_down' ? 'text-red-500' : 'text-muted-foreground hover:text-foreground'}`}>
+                  Bad
+                </button>
+              </div>
+            )}
+
+            {msg.role === 'user' && <div className="border-b mt-4 mb-1" />}
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t p-4 max-w-3xl mx-auto w-full shrink-0">
+      <div className="border-t p-4 max-w-2xl mx-auto w-full shrink-0">
         <div className="flex gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-            placeholder="Type a message..."
-            className="flex-1 px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Send a message..."
+            className="flex-1 px-3 py-2 border rounded-lg bg-background text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20"
             disabled={sending}
           />
           <button
             onClick={handleSend}
             disabled={sending || !input.trim()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="px-3 py-2 bg-foreground text-background text-sm rounded-lg hover:opacity-90 disabled:opacity-30"
           >
             {sending ? '...' : 'Send'}
           </button>
