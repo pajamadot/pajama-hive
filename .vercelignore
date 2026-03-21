@@ -1,0 +1,8 @@
+reference/
+crates/
+npm/
+assets/
+docker/
+.git/
+node_modules/
+packages/api/
