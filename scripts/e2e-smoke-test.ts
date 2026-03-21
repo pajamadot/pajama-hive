@@ -473,6 +473,205 @@ async function run() {
   const cozeValidate = await req('POST', '/api/workflow_api/validate_tree', { workflow_id: wfId });
   ok('Coze validate tree', cozeValidate.s === 200);
 
+  // ═══ 17. Graphs (DAG Orchestrator) ═══
+  console.log('\n── 17. Graphs ──');
+  const grCreate = await req('POST', '/v1/graphs', { name: 'Smoke Graph' });
+  ok('Graphs: create', grCreate.s === 201);
+  const graphId = (grCreate.d.graph as Record<string, string>)?.id;
+
+  if (graphId) {
+    const grGet = await req('GET', `/v1/graphs/${graphId}`);
+    ok('Graphs: get', grGet.s === 200);
+
+    const grStats = await req('GET', '/v1/graphs/stats');
+    ok('Graphs: stats', grStats.s === 200);
+
+    const grList = await req('GET', '/v1/graphs');
+    ok('Graphs: list', grList.s === 200);
+
+    // Create task
+    const taskCreate = await req('POST', `/v1/graphs/${graphId}/tasks`, { title: 'Test Task', type: 'code' });
+    ok('Graphs: create task', taskCreate.s === 201);
+    const taskId = (taskCreate.d.task as Record<string, string>)?.id;
+
+    // List tasks
+    const taskList = await req('GET', `/v1/graphs/${graphId}/tasks`);
+    ok('Graphs: list tasks', taskList.s === 200);
+
+    // Create edge (need 2 tasks)
+    const task2 = await req('POST', `/v1/graphs/${graphId}/tasks`, { title: 'Task 2', type: 'test' });
+    ok('Graphs: create task 2', task2.s === 201);
+    const task2Id = (task2.d.task as Record<string, string>)?.id;
+
+    if (taskId && task2Id) {
+      const edgeCreate = await req('POST', `/v1/graphs/${graphId}/edges`, { fromTaskId: taskId, toTaskId: task2Id });
+      ok('Graphs: create edge', edgeCreate.s === 201);
+
+      const edgeList = await req('GET', `/v1/graphs/${graphId}/edges`);
+      ok('Graphs: list edges', edgeList.s === 200);
+    }
+
+    // Export
+    const grExport = await req('GET', `/v1/graphs/${graphId}/export`);
+    ok('Graphs: export', grExport.s === 200);
+
+    // Duplicate
+    const grDup = await req('POST', `/v1/graphs/${graphId}/duplicate`, {});
+    ok('Graphs: duplicate', grDup.s === 201);
+
+    // Create run
+    const runCreate = await req('POST', `/v1/graphs/${graphId}/runs`);
+    ok('Graphs: create run', runCreate.s === 201 || runCreate.s === 200);
+
+    // List runs
+    const runList = await req('GET', `/v1/graphs/${graphId}/runs`);
+    ok('Graphs: list runs', runList.s === 200);
+
+    // Delete
+    const grDelete = await req('DELETE', `/v1/graphs/${graphId}`);
+    ok('Graphs: delete', grDelete.s === 200);
+  }
+
+  // ═══ 18. Meta Observatory ═══
+  console.log('\n── 18. Meta Observatory ──');
+  const metaHealth = await req('GET', '/v1/meta/health');
+  ok('Meta: health', metaHealth.s === 200);
+
+  const metaEvents = await req('GET', '/v1/meta/events');
+  ok('Meta: events', metaEvents.s === 200);
+
+  const metaRetro = await req('GET', '/v1/meta/retrospectives');
+  ok('Meta: retrospectives', metaRetro.s === 200);
+
+  const metaHistory = await req('GET', '/v1/meta/health/history');
+  ok('Meta: health history', metaHistory.s === 200);
+
+  // ═══ 19. Workers ═══
+  console.log('\n── 19. Workers ──');
+  const workerList = await req('GET', '/v1/workers');
+  ok('Workers: list', workerList.s === 200);
+
+  // ═══ 20. Audit Log ═══
+  console.log('\n── 20. Audit ──');
+  const auditList = await req('GET', '/v1/audit');
+  ok('Audit: list', auditList.s === 200);
+
+  // ═══ 21. API Keys (Settings) ═══
+  console.log('\n── 21. API Keys ──');
+  const keyList = await req('GET', '/v1/api-keys');
+  ok('API Keys: list', keyList.s === 200);
+
+  const keyCreate = await req('POST', '/v1/api-keys', { name: 'Smoke Key' });
+  ok('API Keys: create', keyCreate.s === 201);
+  const newKeyId = (keyCreate.d.apiKey as Record<string, string>)?.id;
+
+  if (newKeyId) {
+    const keyDelete = await req('DELETE', `/v1/api-keys/${newKeyId}`);
+    ok('API Keys: delete', keyDelete.s === 200);
+  }
+
+  // ═══ 22. Webhooks (Settings) ═══
+  console.log('\n── 22. Webhooks ──');
+  const whList = await req('GET', '/v1/webhooks');
+  ok('Webhooks: list', whList.s === 200);
+
+  const whCreate = await req('POST', '/v1/webhooks', { url: 'https://httpbin.org/post', events: ['run.completed'] });
+  ok('Webhooks: create', whCreate.s === 201);
+  const webhookId = (whCreate.d.webhook as Record<string, string>)?.id;
+
+  if (webhookId) {
+    const whDelete = await req('DELETE', `/v1/webhooks/${webhookId}`);
+    ok('Webhooks: delete', whDelete.s === 200);
+  }
+
+  // ═══ 23. Model Provider CRUD ═══
+  console.log('\n── 23. Model Providers ──');
+  const mpCreate = await req('POST', '/v1/models/providers', {
+    name: 'Smoke Provider', provider: 'custom', workspaceId: WSID,
+    baseUrl: 'https://api.test.com/v1',
+  });
+  ok('Models: create provider', mpCreate.s === 201);
+  const providerId = (mpCreate.d.provider as Record<string, string>)?.id;
+
+  if (providerId) {
+    const mcCreate = await req('POST', '/v1/models/configs', {
+      providerId, modelId: 'test-model', modelType: 'chat', isDefault: true,
+    });
+    ok('Models: create config', mcCreate.s === 201);
+
+    const mpDelete = await req('DELETE', `/v1/models/providers/${providerId}`);
+    ok('Models: delete provider', mpDelete.s === 200);
+  }
+
+  // ═══ 24. Uploads ═══
+  console.log('\n── 24. Uploads ──');
+  const uploadRes = await req('POST', '/v1/uploads', {
+    name: 'smoke-test.txt', content: btoa('Hello from smoke test'), contentType: 'text/plain',
+  });
+  ok('Uploads: upload file', uploadRes.s === 201);
+  const uploadKey = (uploadRes.d.upload as Record<string, string>)?.key;
+
+  if (uploadKey) {
+    const signRes = await req('POST', '/v1/uploads/sign', { key: uploadKey });
+    ok('Uploads: sign URL', signRes.s === 200);
+    ok('Uploads: has signed URL', !!(signRes.d as Record<string, string>).url);
+
+    const deleteRes = await req('DELETE', `/v1/uploads/${uploadKey}`);
+    ok('Uploads: delete file', deleteRes.s === 200);
+  }
+
+  // ═══ 25. Agent Config Persistence ═══
+  console.log('\n── 25. Agent Config Deep ──');
+  const deepAgent = await req('POST', '/v1/agents', { name: 'Deep Agent', workspaceId: WSID });
+  const deepAgentId = (deepAgent.d.agent as Record<string, string>)?.id;
+
+  if (deepAgentId) {
+    // Set full config
+    await req('PUT', `/v1/agents/${deepAgentId}/config`, {
+      systemPrompt: 'Deep test prompt', temperature: 0.3, maxTokens: 2000,
+      memoryEnabled: true, memoryWindowSize: 30,
+      openingMessage: 'Hello!', suggestedReplies: ['Help', 'FAQ'],
+    });
+
+    // Read back and verify
+    const deepGet = await req('GET', `/v1/agents/${deepAgentId}`);
+    const cfg = deepGet.d.config as Record<string, unknown>;
+    ok('Agent config: systemPrompt persisted', cfg?.systemPrompt === 'Deep test prompt');
+    ok('Agent config: temperature persisted', cfg?.temperature === 0.3);
+    ok('Agent config: memory persisted', cfg?.memoryEnabled === true);
+    ok('Agent config: windowSize persisted', cfg?.memoryWindowSize === 30);
+    ok('Agent config: openingMessage persisted', cfg?.openingMessage === 'Hello!');
+
+    await req('DELETE', `/v1/agents/${deepAgentId}`);
+  }
+
+  // ═══ 26. Workflow Node Config Persistence ═══
+  console.log('\n── 26. Node Config Deep ──');
+  const deepWf = await req('POST', '/v1/workflows', { name: 'Deep WF', workspaceId: WSID });
+  const deepWfId = (deepWf.d.workflow as Record<string, string>)?.id;
+
+  if (deepWfId) {
+    const llmNode = await req('POST', `/v1/workflows/${deepWfId}/nodes`, {
+      nodeType: 'llm', label: 'DeepLLM',
+      config: { prompt: 'Test prompt here', temperature: 0.2, maxTokens: 500 },
+    });
+    const llmId = (llmNode.d.node as Record<string, string>)?.id;
+
+    if (llmId) {
+      // Update config
+      await req('PATCH', `/v1/workflows/nodes/${llmId}`, {
+        config: { prompt: 'Updated prompt', temperature: 0.8 },
+      });
+
+      // Read back
+      const wfGet = await req('GET', `/v1/workflows/${deepWfId}`);
+      const nodes = wfGet.d.nodes as { id: string; config: Record<string, unknown> }[];
+      const updatedNode = nodes?.find((n) => n.id === llmId);
+      ok('Node config: prompt updated', (updatedNode?.config)?.prompt === 'Updated prompt');
+      ok('Node config: temp updated', (updatedNode?.config)?.temperature === 0.8);
+    }
+  }
+
   // ═══ Summary ═══
   console.log('\n╔═══════════════════════════════════════════════════╗');
   console.log(`║  PASSED: ${String(passed).padStart(3)}   FAILED: ${String(failed).padStart(3)}   TOTAL: ${String(passed + failed).padStart(3)}          ║`);
