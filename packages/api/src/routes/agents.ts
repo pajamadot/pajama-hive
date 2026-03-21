@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 import { eq, and, desc, lt, isNull } from 'drizzle-orm';
 import { createAgentSchema, updateAgentSchema, agentConfigSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
-import { agents, agentVersions, agentConfigs, conversations, messages } from '../db/schema.js';
+import { agents, agentVersions, agentConfigs, conversations, messages, agentConnectors } from '../db/schema.js';
 import { clerkAuth } from '../lib/auth.js';
 import { chatCompletion } from '../lib/llm.js';
 import type { Env } from '../types/index.js';
@@ -261,6 +261,52 @@ app.post('/:id/invoke', async (c) => {
       error: err instanceof Error ? err.message : 'Agent invocation failed',
     }, 500);
   }
+});
+
+// ── Agent Connectors (multi-channel publishing) ──
+
+app.get('/:id/connectors', async (c) => {
+  const db = createDb(c.env);
+  const agentId = c.req.param('id');
+  const connectors = await db.select().from(agentConnectors)
+    .where(eq(agentConnectors.agentId, agentId));
+  return c.json({ connectors });
+});
+
+app.post('/:id/connectors', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const agentId = c.req.param('id');
+  const body = await c.req.json();
+
+  const id = nanoid();
+  const connectorType = body.connectorType ?? 'web';
+  const name = body.name ?? `${connectorType} connector`;
+
+  // Generate URL based on connector type
+  let url = '';
+  switch (connectorType) {
+    case 'web': url = `https://hive.pajamadot.com/chat/${agentId}`; break;
+    case 'api': url = `https://hive-api.pajamadot.com/v1/agents/${agentId}/invoke`; break;
+    case 'embed': url = `https://hive.pajamadot.com/embed/${agentId}`; break;
+    default: url = `https://hive-api.pajamadot.com/v1/agents/${agentId}/invoke`;
+  }
+
+  const now = new Date();
+  await db.insert(agentConnectors).values({
+    id, agentId, connectorType, name, url,
+    config: body.config ?? null,
+    status: 'active', createdBy: userId, createdAt: now, updatedAt: now,
+  });
+
+  return c.json({ connector: { id, connectorType, name, url, status: 'active' } }, 201);
+});
+
+app.delete('/connectors/:connectorId', async (c) => {
+  const db = createDb(c.env);
+  const connectorId = c.req.param('connectorId');
+  await db.delete(agentConnectors).where(eq(agentConnectors.id, connectorId));
+  return c.json({ ok: true });
 });
 
 export default app;

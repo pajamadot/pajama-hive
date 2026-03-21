@@ -1016,3 +1016,34 @@ export const workflowApprovals = pgTable('workflow_approvals', {
   index('approvals_run_idx').on(t.workflowRunId),
   index('approvals_status_idx').on(t.status),
 ]);
+
+// ── Message Feedback (thumbs up/down) ──
+
+export const messageFeedback = pgTable('message_feedback', {
+  id: text('id').primaryKey(),
+  messageId: text('message_id').notNull().references(() => messages.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull(),
+  rating: text('rating').notNull(), // thumbs_up, thumbs_down
+  comment: text('comment'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+  index('feedback_msg_idx').on(t.messageId),
+  uniqueIndex('feedback_unique_idx').on(t.messageId, t.userId),
+]);
+
+// ── Agent Connectors (multi-channel publishing) ──
+
+export const agentConnectors = pgTable('agent_connectors', {
+  id: text('id').primaryKey(),
+  agentId: text('agent_id').notNull().references(() => agents.id, { onDelete: 'cascade' }),
+  connectorType: text('connector_type').notNull(), // web, api, embed, slack, discord, telegram
+  name: text('name').notNull(),
+  url: text('url'),                               // public access URL
+  config: jsonb('config'),                         // connector-specific config
+  status: text('status').notNull().default('active'), // active, inactive
+  createdBy: text('created_by').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (t) => [
+  index('connectors_agent_idx').on(t.agentId),
+]);

@@ -261,6 +261,8 @@ export const workflowNodeTypeSchema = z.enum([
   'sub_workflow', 'database', 'image_gen', 'text_processor',
   'intent_detector', 'variable_assigner', 'batch', 'selector',
   'json_transform', 'qa', 'emitter', 'receiver', 'agent_call', 'human_input',
+  'question_classifier', 'document_extractor', 'trigger_webhook', 'trigger_schedule',
+  'list_operator', 'parameter_extractor',
 ]);
 
 export const workflowRunStatusSchema = z.enum(['pending', 'running', 'completed', 'failed', 'canceled']);
@@ -495,7 +497,7 @@ export const updatePromptSchema = z.object({
 // Phase 3: Publishing & API Schemas
 // ════════════════════════════════════════════════════════════
 
-export const appTypeSchema = z.enum(['chat', 'workflow', 'custom']);
+export const appTypeSchema = z.enum(['chat', 'advanced-chat', 'agent-chat', 'workflow', 'completion', 'custom']);
 
 export const createAppSchema = z.object({
   name: z.string().min(1).max(200),
@@ -503,6 +505,25 @@ export const createAppSchema = z.object({
   appType: appTypeSchema.default('chat'),
   agentId: z.string().optional(),
   workflowId: z.string().optional(),
+  config: z.record(z.unknown()).optional(),
+});
+
+// ── Message Feedback ──
+
+export const messageFeedbackSchema = z.object({
+  messageId: z.string().min(1),
+  rating: z.enum(['thumbs_up', 'thumbs_down']),
+  comment: z.string().optional(),
+});
+
+// ── Agent Connector Publishing ──
+
+export const connectorTypeSchema = z.enum(['web', 'api', 'embed', 'slack', 'discord', 'telegram']);
+
+export const createConnectorSchema = z.object({
+  agentId: z.string().min(1),
+  connectorType: connectorTypeSchema,
+  name: z.string().min(1).max(100),
   config: z.record(z.unknown()).optional(),
 });
 

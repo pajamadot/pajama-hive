@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 import { eq, and, desc, lt, isNull } from 'drizzle-orm';
 import { createConversationSchema, sendMessageSchema, chatRequestSchema } from '@pajamadot/hive-shared';
 import { createDb } from '../db/client.js';
-import { conversations, messages, chatRuns, runSteps, agentConfigs, annotations } from '../db/schema.js';
+import { conversations, messages, chatRuns, runSteps, agentConfigs, annotations, messageFeedback } from '../db/schema.js';
 import { clerkAuth } from '../lib/auth.js';
 import { chatCompletion } from '../lib/llm.js';
 import { createChatStream } from '../lib/llm-stream.js';
@@ -527,6 +527,32 @@ app.post('/chat/stream', async (c) => {
       Connection: 'keep-alive',
     },
   });
+});
+
+// ── Message Feedback (thumbs up/down) ──
+
+app.post('/messages/:msgId/feedback', async (c) => {
+  const db = createDb(c.env);
+  const userId = c.get('userId');
+  const msgId = c.req.param('msgId');
+  const body = await c.req.json();
+
+  if (!['thumbs_up', 'thumbs_down'].includes(body.rating)) {
+    return c.json({ error: 'rating must be thumbs_up or thumbs_down' }, 400);
+  }
+
+  const id = nanoid();
+  try {
+    await db.insert(messageFeedback).values({
+      id, messageId: msgId, userId, rating: body.rating, comment: body.comment ?? null, createdAt: new Date(),
+    });
+  } catch {
+    // Update existing feedback
+    await db.update(messageFeedback).set({ rating: body.rating, comment: body.comment ?? null })
+      .where(and(eq(messageFeedback.messageId, msgId), eq(messageFeedback.userId, userId)));
+  }
+
+  return c.json({ ok: true, rating: body.rating });
 });
 
 // ── Annotations (Dify pattern: feedback/RLHF data collection) ──

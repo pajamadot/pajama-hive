@@ -64,6 +64,15 @@ const NODE_PALETTE = [
   { type: 'json_transform', label: 'JSON', color: '#84cc16' },
   { type: 'intent_detector', label: 'Intent', color: '#8b5cf6' },
   { type: 'qa', label: 'Q&A', color: '#0ea5e9' },
+  { type: 'question_classifier', label: 'Classifier', color: '#7c3aed' },
+  { type: 'document_extractor', label: 'Doc Extract', color: '#dc2626' },
+  { type: 'parameter_extractor', label: 'Param Extract', color: '#b91c1c' },
+  { type: 'list_operator', label: 'List Op', color: '#059669' },
+  { type: 'human_input', label: 'Human Input', color: '#d97706' },
+  { type: 'agent_call', label: 'Agent', color: '#4f46e5' },
+  { type: 'sub_workflow', label: 'Sub-Workflow', color: '#7e22ce' },
+  { type: 'trigger_webhook', label: 'Webhook', color: '#0d9488' },
+  { type: 'trigger_schedule', label: 'Schedule', color: '#0891b2' },
 ];
 
 function getNodeColor(nodeType: string) {

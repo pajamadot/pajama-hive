@@ -579,7 +579,35 @@ export interface PromptVersion {
 // Phase 3: Publishing & API Types
 // ════════════════════════════════════════════════════════════
 
-export type AppType = 'chat' | 'workflow' | 'custom';
+export type AppType = 'chat' | 'advanced-chat' | 'agent-chat' | 'workflow' | 'completion' | 'custom';
+
+// ── Message Feedback ──
+
+export type FeedbackRating = 'thumbs_up' | 'thumbs_down';
+
+export interface MessageFeedback {
+  id: string;
+  messageId: string;
+  userId: string;
+  rating: FeedbackRating;
+  comment?: string;
+  createdAt: string;
+}
+
+// ── Agent Connectors ──
+
+export type ConnectorType = 'web' | 'api' | 'embed' | 'slack' | 'discord' | 'telegram';
+
+export interface AgentConnector {
+  id: string;
+  agentId: string;
+  connectorType: ConnectorType;
+  name: string;
+  url?: string;
+  config?: Record<string, unknown>;
+  status: string;
+  createdAt: string;
+}
 
 export interface App {
   id: string;

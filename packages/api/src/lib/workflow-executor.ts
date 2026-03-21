@@ -351,6 +351,68 @@ async function executeNode(ctx: ExecutionContext, node: NodeExec): Promise<Recor
         break;
       }
 
+      case 'question_classifier': {
+        const inputText = String(ctx.variables._lastOutput ?? '');
+        const categories = (config.categories as string[]) ?? ['general'];
+        const resp = await chatCompletion(ctx.db, ctx.workspaceId, [
+          { role: 'system', content: `Classify the following text into exactly one of these categories: ${categories.join(', ')}. Respond with ONLY the category name, nothing else.` },
+          { role: 'user', content: inputText },
+        ], { temperature: 0 });
+        const classified = resp.content.trim();
+        result = { output: classified, category: classified, branch: classified };
+        break;
+      }
+
+      case 'document_extractor': {
+        const content = String(ctx.variables._lastOutput ?? '');
+        // Extract structured data using LLM
+        const extractSchema = (config.schema as string) ?? 'Extract all key information as JSON';
+        const resp = await chatCompletion(ctx.db, ctx.workspaceId, [
+          { role: 'system', content: `${extractSchema}\nRespond with valid JSON only.` },
+          { role: 'user', content: content },
+        ], { temperature: 0 });
+        try { result = { output: JSON.parse(resp.content) }; } catch { result = { output: resp.content }; }
+        break;
+      }
+
+      case 'parameter_extractor': {
+        const text = String(ctx.variables._lastOutput ?? '');
+        const params = (config.parameters as string[]) ?? [];
+        const resp = await chatCompletion(ctx.db, ctx.workspaceId, [
+          { role: 'system', content: `Extract these parameters from the text: ${params.join(', ')}. Respond as JSON with parameter names as keys.` },
+          { role: 'user', content: text },
+        ], { temperature: 0 });
+        try { result = { output: JSON.parse(resp.content) }; } catch { result = { output: resp.content }; }
+        break;
+      }
+
+      case 'list_operator': {
+        const items = Array.isArray(ctx.variables._lastOutput) ? ctx.variables._lastOutput : [];
+        const operation = (config.operation as string) ?? 'filter';
+        if (operation === 'filter') {
+          result = { output: items.filter(Boolean) };
+        } else if (operation === 'sort') {
+          result = { output: [...items].sort() };
+        } else if (operation === 'unique') {
+          result = { output: [...new Set(items)] };
+        } else if (operation === 'flatten') {
+          result = { output: items.flat() };
+        } else if (operation === 'reverse') {
+          result = { output: [...items].reverse() };
+        } else if (operation === 'count') {
+          result = { output: items.length };
+        } else {
+          result = { output: items };
+        }
+        break;
+      }
+
+      case 'trigger_webhook':
+      case 'trigger_schedule':
+        // Triggers are entry points — they pass their payload as output
+        result = { output: ctx.input, triggerType: node.nodeType };
+        break;
+
       case 'image_gen':
       case 'emitter':
       case 'receiver':
