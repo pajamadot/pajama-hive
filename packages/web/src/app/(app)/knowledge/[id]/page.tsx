@@ -42,6 +42,8 @@ export default function KnowledgeDetailPage({ params }: { params: Promise<{ id: 
   const [uploadName, setUploadName] = useState('');
   const [uploadContent, setUploadContent] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [uploadMode, setUploadMode] = useState<'text' | 'url'>('text');
+  const [uploadUrl, setUploadUrl] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<unknown[]>([]);
   const [searching, setSearching] = useState(false);
@@ -132,11 +134,11 @@ export default function KnowledgeDetailPage({ params }: { params: Promise<{ id: 
     <div className="h-screen flex flex-col">
       {/* Header */}
       <div className="border-b px-6 py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
-          <Link href="/knowledge" className="text-sm text-muted-foreground hover:text-foreground">← Knowledge</Link>
-          <h1 className="text-lg font-semibold">{kb.name}</h1>
-          <span className={`text-xs px-2 py-0.5 rounded-full ${
-            kb.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
+        <div className="flex items-center gap-3">
+          <Link href="/knowledge" className="text-xs text-muted-foreground hover:text-foreground">←</Link>
+          <h1 className="text-sm font-medium">{kb.name}</h1>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+            kb.status === 'active' ? 'bg-green-500/10 text-green-600' : 'bg-muted text-muted-foreground'
           }`}>{kb.status}</span>
           <span className="text-xs text-muted-foreground">{kb.documentCount} docs · {kb.totalChunks} chunks</span>
         </div>
@@ -161,21 +163,66 @@ export default function KnowledgeDetailPage({ params }: { params: Promise<{ id: 
           <div className="max-w-4xl">
             {/* Upload form */}
             <div className="border rounded-lg p-4 mb-6">
-              <h3 className="text-sm font-medium mb-3">Add Document</h3>
+              <div className="flex items-center gap-2 mb-3">
+                <h3 className="text-sm font-medium">Add Document</h3>
+                <div className="flex border rounded overflow-hidden text-xs">
+                  <button onClick={() => setUploadMode('text')}
+                    className={`px-2.5 py-1 ${uploadMode === 'text' ? 'bg-accent text-foreground' : 'text-muted-foreground'}`}>
+                    Text
+                  </button>
+                  <button onClick={() => setUploadMode('url')}
+                    className={`px-2.5 py-1 ${uploadMode === 'url' ? 'bg-accent text-foreground' : 'text-muted-foreground'}`}>
+                    URL
+                  </button>
+                </div>
+              </div>
               <div className="space-y-3">
                 <input type="text" value={uploadName}
                   onChange={(e) => setUploadName(e.target.value)}
                   placeholder="Document name"
-                  className="w-full px-3 py-2 border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-                <textarea value={uploadContent}
-                  onChange={(e) => setUploadContent(e.target.value)}
-                  placeholder="Paste document content..."
-                  rows={6}
-                  className="w-full px-3 py-2 border rounded-lg bg-background text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary resize-y" />
-                <button onClick={handleUploadText} disabled={uploading || !uploadName.trim() || !uploadContent.trim()}
-                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50">
-                  {uploading ? 'Uploading...' : 'Upload Text'}
-                </button>
+                  className="w-full px-3 py-2 border rounded-lg bg-background text-sm focus:outline-none focus:ring-1 focus:ring-foreground/20" />
+
+                {uploadMode === 'text' ? (
+                  <>
+                    <textarea value={uploadContent}
+                      onChange={(e) => setUploadContent(e.target.value)}
+                      placeholder="Paste document content..."
+                      rows={6}
+                      className="w-full px-3 py-2 border rounded-lg bg-background text-sm font-mono focus:outline-none focus:ring-1 focus:ring-foreground/20 resize-y" />
+                    <button onClick={handleUploadText} disabled={uploading || !uploadName.trim() || !uploadContent.trim()}
+                      className="px-3 py-1.5 bg-foreground text-background text-xs rounded hover:opacity-90 disabled:opacity-30">
+                      {uploading ? '...' : 'Upload Text'}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <input type="url" value={uploadUrl}
+                      onChange={(e) => setUploadUrl(e.target.value)}
+                      placeholder="https://docs.example.com/guide"
+                      className="w-full px-3 py-2 border rounded-lg bg-background text-sm font-mono focus:outline-none focus:ring-1 focus:ring-foreground/20" />
+                    <button onClick={async () => {
+                      if (!uploadName.trim() || !uploadUrl.trim()) return;
+                      setUploading(true);
+                      const token = await getToken();
+                      if (token) {
+                        await fetch(`${API_URL}/v1/knowledge/${id}/documents`, {
+                          method: 'POST',
+                          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ name: uploadName, sourceType: 'url', sourceUrl: uploadUrl }),
+                        });
+                        const data = await api.getKnowledgeBase(token, id);
+                        setKb(data.knowledgeBase);
+                        setDocuments(data.documents ?? []);
+                        setUploadName('');
+                        setUploadUrl('');
+                      }
+                      setUploading(false);
+                    }} disabled={uploading || !uploadName.trim() || !uploadUrl.trim()}
+                      className="px-3 py-1.5 bg-foreground text-background text-xs rounded hover:opacity-90 disabled:opacity-30">
+                      {uploading ? '...' : 'Import URL'}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
 

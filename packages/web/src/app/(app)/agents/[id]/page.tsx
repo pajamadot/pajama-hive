@@ -153,11 +153,11 @@ export default function AgentEditorPage({ params }: { params: Promise<{ id: stri
         </div>
         <div className="flex items-center gap-2">
           <button onClick={handleSave} disabled={saving}
-            className="px-3 py-1.5 text-sm border rounded-md hover:bg-accent/50 disabled:opacity-50">
-            {saving ? 'Saving...' : 'Save'}
+            className="px-2.5 py-1 text-xs border rounded hover:bg-accent/50 disabled:opacity-30">
+            {saving ? '...' : 'Save'}
           </button>
           <button onClick={handlePublish}
-            className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            className="px-2.5 py-1 text-xs bg-foreground text-background rounded hover:opacity-90">
             Publish
           </button>
         </div>
@@ -182,6 +182,14 @@ export default function AgentEditorPage({ params }: { params: Promise<{ id: stri
         {activeTab === 'persona' && config && (
           <div className="max-w-3xl space-y-6">
             <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Model Config ID</label>
+              <input
+                type="text"
+                value={config.modelConfigId ?? ''}
+                onChange={(e) => setConfig({ ...config, modelConfigId: e.target.value || null })}
+                placeholder="Leave empty for workspace default"
+                className="w-full px-3 py-2 border rounded-lg bg-background text-sm font-mono focus:outline-none focus:ring-1 focus:ring-foreground/20 mb-4"
+              />
               <label className="block text-sm font-medium mb-2">System Prompt</label>
               <textarea
                 value={config.systemPrompt ?? ''}
