@@ -17,6 +17,24 @@ const app = new Hono<HonoEnv>();
 
 app.use('/*', clerkAuth);
 
+// List annotations (MUST be before /:id to avoid being caught by param route)
+app.get('/annotations', async (c) => {
+  const db = createDb(c.env);
+  const agentId = c.req.query('agentId');
+  const workspaceId = c.req.query('workspaceId');
+  const limit = Math.min(parseInt(c.req.query('limit') ?? '50', 10), 200);
+
+  const conditions = [];
+  if (agentId) conditions.push(eq(annotations.agentId, agentId));
+  if (workspaceId) conditions.push(eq(annotations.workspaceId, workspaceId));
+
+  const result = conditions.length > 0
+    ? await db.select().from(annotations).where(and(...conditions)).orderBy(desc(annotations.createdAt)).limit(limit)
+    : await db.select().from(annotations).orderBy(desc(annotations.createdAt)).limit(limit);
+
+  return c.json({ annotations: result });
+});
+
 // List conversations
 app.get('/', async (c) => {
   const db = createDb(c.env);
@@ -546,24 +564,6 @@ app.post('/messages/:msgId/annotate', async (c) => {
   });
 
   return c.json({ annotation: { id, question, answer: body.answer ?? msg.content, rating: body.rating } }, 201);
-});
-
-// List annotations for an agent/workspace
-app.get('/annotations', async (c) => {
-  const db = createDb(c.env);
-  const agentId = c.req.query('agentId');
-  const workspaceId = c.req.query('workspaceId');
-  const limit = Math.min(parseInt(c.req.query('limit') ?? '50', 10), 200);
-
-  const conditions = [];
-  if (agentId) conditions.push(eq(annotations.agentId, agentId));
-  if (workspaceId) conditions.push(eq(annotations.workspaceId, workspaceId));
-
-  const result = conditions.length > 0
-    ? await db.select().from(annotations).where(and(...conditions)).orderBy(desc(annotations.createdAt)).limit(limit)
-    : await db.select().from(annotations).orderBy(desc(annotations.createdAt)).limit(limit);
-
-  return c.json({ annotations: result });
 });
 
 export default app;
