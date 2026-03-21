@@ -121,7 +121,7 @@ export default function WorkflowPreviewPage({ params }: { params: Promise<{ id: 
             {running ? 'Running...' : 'Run Workflow'}
           </button>
 
-          {result && (
+          {result != null && (
             <div className="flex-1 overflow-y-auto">
               <div className="text-xs text-muted-foreground mb-1">Result</div>
               <pre className="text-xs bg-muted p-3 rounded-lg overflow-x-auto whitespace-pre-wrap">
