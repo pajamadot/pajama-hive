@@ -29,6 +29,7 @@ import marketplaceRouter from './routes/marketplace.js';
 import replicationRouter from './routes/replication.js';
 import uploadsRouter from './routes/uploads.js';
 import cozeCompatRouter from './routes/coze-compat.js';
+import mcpRouter from './routes/mcp.js';
 import { standardRateLimit } from './lib/rate-limiter.js';
 import { maxPayloadSize, requestId, securityHeaders, responseTime } from './lib/validation.js';
 import { resolveWorkspaceId } from './lib/workspace.js';
@@ -103,6 +104,9 @@ app.route('/v1/apps', appsRouter);
 app.route('/v1/marketplace', marketplaceRouter);
 app.route('/v1/replication', replicationRouter);
 app.route('/v1/uploads', uploadsRouter);
+
+// MCP Server (AI tool integration)
+app.route('/mcp', mcpRouter);
 
 // Coze API compatibility layer (maps Coze paths → Hive)
 app.route('/', cozeCompatRouter);
