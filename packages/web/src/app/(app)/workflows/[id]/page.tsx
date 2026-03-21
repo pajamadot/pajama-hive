@@ -82,19 +82,25 @@ function getNodeColor(nodeType: string) {
 }
 
 // Custom node component for React Flow
-function WorkflowNodeComponent({ data }: { data: { label: string; nodeType: string } }) {
+function WorkflowNodeComponent({ data }: { data: { label: string; nodeType: string; execStatus?: string } }) {
   const color = getNodeColor(data.nodeType);
+  const statusBorder = data.execStatus === 'completed' ? '#22c55e'
+    : data.execStatus === 'failed' ? '#ef4444'
+    : data.execStatus === 'running' ? '#eab308' : color;
+  const statusGlow = data.execStatus === 'completed' ? 'shadow-green-500/20 shadow-lg'
+    : data.execStatus === 'failed' ? 'shadow-red-500/20 shadow-lg' : '';
+
   return (
-    <div className="rounded-lg border-2 px-4 py-2 min-w-[140px] text-center bg-card shadow-md"
-      style={{ borderColor: color }}>
-      <Handle type="target" position={Position.Top} className="!bg-muted-foreground !w-3 !h-3" />
-      <div className="text-[10px] uppercase font-bold tracking-wider" style={{ color }}>{data.nodeType.replace('_', ' ')}</div>
-      <div className="text-sm font-medium text-foreground">{data.label}</div>
-      <Handle type="source" position={Position.Bottom} className="!bg-muted-foreground !w-3 !h-3" />
+    <div className={`rounded-lg border-2 px-4 py-2 min-w-[140px] text-center bg-card ${statusGlow}`}
+      style={{ borderColor: statusBorder }}>
+      <Handle type="target" position={Position.Top} className="!bg-muted-foreground !w-2.5 !h-2.5" />
+      <div className="text-[10px] uppercase font-medium tracking-wider text-muted-foreground">{data.nodeType.replace(/_/g, ' ')}</div>
+      <div className="text-[13px] font-medium text-foreground">{data.label}</div>
+      <Handle type="source" position={Position.Bottom} className="!bg-muted-foreground !w-2.5 !h-2.5" />
       {data.nodeType === 'condition' && (
         <>
-          <Handle type="source" position={Position.Right} id="true" className="!bg-green-500 !w-3 !h-3" style={{ top: '50%' }} />
-          <Handle type="source" position={Position.Left} id="false" className="!bg-red-500 !w-3 !h-3" style={{ top: '50%' }} />
+          <Handle type="source" position={Position.Right} id="true" className="!bg-green-500 !w-2.5 !h-2.5" style={{ top: '50%' }} />
+          <Handle type="source" position={Position.Left} id="false" className="!bg-red-500 !w-2.5 !h-2.5" style={{ top: '50%' }} />
         </>
       )}
     </div>
@@ -115,6 +121,7 @@ export default function WorkflowEditorPage({ params }: { params: Promise<{ id: s
   const [backendNodes, setBackendNodes] = useState<WfNode[]>([]);
   const [runResult, setRunResult] = useState<Record<string, unknown> | null>(null);
   const [running, setRunning] = useState(false);
+  const [nodeStatuses, setNodeStatuses] = useState<Record<string, 'completed' | 'failed' | 'running'>>({});
   const [history, setHistory] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [copiedNodeId, setCopiedNodeId] = useState<string | null>(null);
@@ -332,16 +339,43 @@ export default function WorkflowEditorPage({ params }: { params: Promise<{ id: s
     if (running) return;
     setRunning(true);
     setRunResult(null);
+    setNodeStatuses({});
     const token = await getToken();
     if (!token) { setRunning(false); return; }
     try {
       const result = await api.runWorkflow(token, id, {});
       setRunResult(result as Record<string, unknown>);
+
+      // Fetch traces to show per-node status
+      const runData = (result as { run?: { id?: string } }).run;
+      if (runData?.id) {
+        const traceRes = await fetch(`${API_URL}/v1/workflows/runs/${runData.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (traceRes.ok) {
+          const traceData = await traceRes.json();
+          const traces = (traceData.traces ?? []) as { nodeId: string; status: string }[];
+          const statuses: Record<string, 'completed' | 'failed' | 'running'> = {};
+          for (const t of traces) {
+            statuses[t.nodeId] = t.status === 'completed' ? 'completed' : t.status === 'failed' ? 'failed' : 'running';
+          }
+          setNodeStatuses(statuses);
+        }
+      }
     } catch (err) {
       setRunResult({ error: err instanceof Error ? err.message : 'Run failed' });
     }
     setRunning(false);
   }
+
+  // Update node visual status after run
+  useEffect(() => {
+    if (Object.keys(nodeStatuses).length === 0) return;
+    setNodes((nds) => nds.map((n) => ({
+      ...n,
+      data: { ...n.data, execStatus: nodeStatuses[n.id] ?? undefined },
+    })));
+  }, [nodeStatuses, setNodes]);
 
   const selectedNode = useMemo(() => {
     if (!selectedNodeId) return null;
