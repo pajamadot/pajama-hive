@@ -33,7 +33,7 @@ import mcpRouter from './routes/mcp.js';
 import { standardRateLimit } from './lib/rate-limiter.js';
 import { maxPayloadSize, requestId, securityHeaders, responseTime } from './lib/validation.js';
 import { resolveWorkspaceId } from './lib/workspace.js';
-import { createDb } from './db/client.js';
+import { createDb, markHyperdriveBroken } from './db/client.js';
 import type { Env } from './types/index.js';
 
 export { WsRoom } from './durable-objects/ws-room.js';
@@ -57,6 +57,17 @@ app.use('/*', cors({
 app.use('/*', logger());
 app.use('/*', maxPayloadSize(2_097_152)); // 2MB max
 app.use('/v1/*', standardRateLimit);
+
+// Global error handler — catch Hyperdrive 1016 and mark broken
+app.onError((err, c) => {
+  const msg = err instanceof Error ? err.message : '';
+  if (msg.includes('1016') || msg.includes('530')) {
+    markHyperdriveBroken();
+    return c.json({ error: 'Database connection error — please retry' }, 503);
+  }
+  console.error('Unhandled error:', msg);
+  return c.json({ error: 'Internal Server Error' }, 500);
+});
 
 // Health check
 app.get('/', (c) => c.json({
